@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Content Safety Lock</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      width: 400px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+    }
+    
+    .popup-content {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+    
+    .header {
+      margin-bottom: 20px;
+    }
+    
+    .header h2 {
+      font-size: 20px;
+      color: #333;
+      margin-bottom: 4px;
+    }
+    
+    .header p {
+      font-size: 13px;
+      color: #666;
+    }
+    
+    .status-box {
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .status-label {
+      font-size: 12px;
+      color: #999;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    
+    .status-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #333;
+    }
+    
+    .status-value.active {
+      color: #667eea;
+    }
+    
+    .status-value.inactive {
+      color: #999;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    
+    .button-group:last-child {
+      margin-bottom: 0;
+    }
+    
+    button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #5568d3;
+    }
+    
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    
+    .divider {
+      height: 1px;
+      background: #f0f0f0;
+      margin: 16px 0;
+    }
+    
+    .info-box {
+      background: #f0f7ff;
+      border-left: 3px solid #667eea;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #0c5460;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="popup-content">
+    <div class="header">
+      <h2>🔒 Content Safety Lock</h2>
+      <p>Voluntary content blocker</p>
+    </div>
+    
+    <div class="status-box">
+      <div class="status-label">Self-Lock Status</div>
+      <div class="status-value" id="lock-status">Loading...</div>
+    </div>
+    
+    <div class="button-group">
+      <button class="btn-primary" id="open-settings-btn">Settings</button>
+      <button class="btn-secondary" id="open-options-btn">Full Options</button>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <div class="info-box">
+      <strong>How it works:</strong> This extension blocks pages that self-label as adult content using voluntary labels (RTA, ICRA, SafeSurf).
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
