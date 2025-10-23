@@ -11,13 +11,21 @@
   "permissions": [
     "storage",
     "tabs",
-    "alarms"
+    "alarms",
+    "webRequest",
+    "webRequestBlocking"
   ],
   "host_permissions": [
     "<all_urls>"
   ],
   "background": {
-    "scripts": ["utils.js", "background.js"]
+    "scripts": [
+      "utils.js",
+      "safe-request-config.js",
+      "safe-request-utils.js",
+      "safe-request-handler.js",
+      "background.js"
+    ]
   },
   "content_scripts": [
     {

@@ -1,0 +1,295 @@
+/**
+ * Time Interval Picker Styles
+ * Responsive, accessible, themeable duration selector
+ */
+
+.time-interval-picker {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  width: 100%;
+}
+
+/* Fields Container */
+.tip-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+/* Individual Field */
+.tip-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 90px;
+}
+
+.tip-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+}
+
+/* Input Group with Steppers */
+.tip-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: relative;
+}
+
+.tip-stepper {
+  min-height: 36px;
+  height: 36px;
+  width: 100%;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.tip-stepper:hover:not(:disabled) {
+  background: #e8e8e8;
+  border-color: #667eea;
+}
+
+.tip-stepper:active:not(:disabled) {
+  background: #d8d8d8;
+}
+
+.tip-stepper:disabled,
+.tip-stepper-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #f5f5f5;
+}
+
+.tip-stepper:disabled .tip-stepper-icon,
+.tip-stepper-disabled .tip-stepper-icon {
+  color: #ccc;
+}
+
+.tip-stepper-up {
+  border-radius: 4px 4px 0 0;
+}
+
+.tip-stepper-down {
+  border-radius: 0 0 4px 4px;
+}
+
+.tip-stepper-icon {
+  font-size: 10px;
+  line-height: 1;
+  color: #666;
+}
+
+.tip-stepper:hover .tip-stepper-icon {
+  color: #667eea;
+}
+
+.tip-input {
+  width: 100%;
+  height: 36px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  border: 2px solid #ddd;
+  border-radius: 0;
+  padding: 0 4px;
+  -moz-appearance: textfield;
+  appearance: textfield;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.tip-input::-webkit-inner-spin-button,
+.tip-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.tip-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.tip-bounds {
+  font-size: 10px;
+  color: #666;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Summary */
+.tip-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #f0f4ff;
+  border: 2px solid #667eea;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.tip-summary-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #667eea;
+}
+
+.tip-summary-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  font-family: 'Courier New', monospace;
+}
+
+/* Helper Text */
+.tip-helper {
+  display: none;
+  padding: 8px 12px;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #856404;
+  margin-bottom: 12px;
+}
+
+/* Description */
+.tip-description {
+  font-size: 11px;
+  color: #999;
+  text-align: center;
+}
+
+/* Responsive Breakpoints */
+
+/* Small screens: adjust grid to be more compact */
+@media (max-width: 767px) {
+  .tip-fields {
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 10px;
+    padding: 12px;
+  }
+  
+  .tip-summary {
+    flex-direction: column;
+    text-align: center;
+    gap: 4px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .tip-stepper {
+    min-height: 40px;
+    height: 40px;
+  }
+  
+  .tip-input {
+    height: 48px;
+    font-size: 18px;
+  }
+  
+  .tip-fields {
+    gap: 14px;
+  }
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+  .time-interval-picker[data-theme="auto"] .tip-label,
+  .time-interval-picker[data-theme="dark"] .tip-label {
+    color: #e0e0e0;
+  }
+  
+  .time-interval-picker[data-theme="auto"] .tip-stepper,
+  .time-interval-picker[data-theme="dark"] .tip-stepper {
+    background: #2a2a2a;
+    border-color: #444;
+  }
+  
+  .time-interval-picker[data-theme="auto"] .tip-stepper:hover,
+  .time-interval-picker[data-theme="dark"] .tip-stepper:hover {
+    background: #333;
+  }
+  
+  .time-interval-picker[data-theme="auto"] .tip-stepper-icon,
+  .time-interval-picker[data-theme="dark"] .tip-stepper-icon {
+    color: #aaa;
+  }
+  
+  .time-interval-picker[data-theme="auto"] .tip-input,
+  .time-interval-picker[data-theme="dark"] .tip-input {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+  
+  .time-interval-picker[data-theme="auto"] .tip-summary,
+  .time-interval-picker[data-theme="dark"] .tip-summary {
+    background: #1a2332;
+    border-color: #667eea;
+  }
+  
+  .time-interval-picker[data-theme="auto"] .tip-summary-value,
+  .time-interval-picker[data-theme="dark"] .tip-summary-value {
+    color: #e0e0e0;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .tip-stepper {
+    border-width: 2px;
+  }
+  
+  .tip-input {
+    border-width: 3px;
+  }
+  
+  .tip-input:focus {
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.3);
+  }
+}
+
+/* Focus visible for keyboard navigation */
+.tip-stepper:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+.tip-input:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* Animation for helper text */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tip-helper {
+  animation: slideDown 0.2s ease-out;
+}
