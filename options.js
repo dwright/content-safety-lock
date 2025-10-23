@@ -8,6 +8,13 @@ let currentState = null;
 let selectedDuration = null;
 let pinLockTimeout = null;
 let pinUnlockCheckInterval = null;
+let isGeneralTabLocked = false;
+
+// Time interval pickers
+let selfLockDurationPicker = null;
+let cooldownDurationPicker = null;
+let incrementDurationPicker = null;
+let autoSaveTimeout = null;
 
 /**
  * Load state from background
@@ -35,15 +42,29 @@ document.querySelectorAll('.tab-button').forEach(button => {
   button.addEventListener('click', async () => {
     const tabName = button.dataset.tab;
     
-    // Check PIN lock if accessing general tab
+    // Check PIN lock and self-lock if accessing general tab
     if (tabName === 'general') {
-      const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
-      if (pinStatus.isLocked) {
-        showPINUnlockDialog();
-        return;
+      await loadState();
+      
+      // If self-lock is active, general tab is always locked
+      if (currentState.selfLock.active) {
+        isGeneralTabLocked = true;
+      } else {
+        // Otherwise check PIN status
+        const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
+        if (pinStatus.isLocked) {
+          isGeneralTabLocked = true;
+        } else {
+          isGeneralTabLocked = false;
+        }
       }
-      // Reset inactivity timer when accessing general tab
-      resetPINInactivityTimer();
+      
+      updateGeneralTabView();
+      
+      // Only reset inactivity timer if not locked
+      if (!isGeneralTabLocked) {
+        resetPINInactivityTimer();
+      }
     }
     
     // Update active button
@@ -60,6 +81,142 @@ document.querySelectorAll('.tab-button').forEach(button => {
     }
   });
 });
+
+// ============ General Tab View Management ============
+
+/**
+ * Update general tab view based on PIN lock status
+ */
+async function updateGeneralTabView() {
+  const lockedView = document.getElementById('general-locked-view');
+  const editableView = document.getElementById('general-editable-view');
+  const lockButtonContainer = document.getElementById('lock-button-container');
+  
+  if (isGeneralTabLocked) {
+    // Show locked view with current settings
+    displayLockedSettings();
+    lockedView.style.display = 'block';
+    editableView.style.display = 'none';
+    if (lockButtonContainer) lockButtonContainer.style.display = 'none';
+  } else {
+    // Show editable view
+    lockedView.style.display = 'none';
+    editableView.style.display = 'block';
+    
+    // Show lock button only if PIN is set
+    try {
+      const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
+      if (lockButtonContainer) {
+        lockButtonContainer.style.display = pinStatus.hasPIN ? 'block' : 'none';
+      }
+    } catch (err) {
+      console.error('Error checking PIN status:', err);
+      if (lockButtonContainer) lockButtonContainer.style.display = 'none';
+    }
+  }
+}
+
+/**
+ * Lock general settings manually
+ */
+function lockGeneralSettings() {
+  isGeneralTabLocked = true;
+  updateGeneralTabView();
+  showAlert('general-alerts', 'Settings locked', 'info');
+  
+  // Clear the inactivity timer since we're manually locking
+  if (pinLockTimeout) {
+    clearTimeout(pinLockTimeout);
+    pinLockTimeout = null;
+  }
+}
+
+/**
+ * Display current settings in locked view
+ */
+async function displayLockedSettings() {
+  const display = document.getElementById('locked-settings-display');
+  const lockedViewText = document.querySelector('#general-locked-view .locked-view-text');
+  const unlockBtn = document.getElementById('unlock-general-btn');
+  
+  if (!display || !currentState) return;
+  
+  // Update message based on why it's locked
+  if (currentState.selfLock.active) {
+    if (lockedViewText) {
+      lockedViewText.textContent = 'Settings are locked because Self-Lock is active. View your current configuration below. Self-Lock must expire before you can make changes.';
+    }
+    if (unlockBtn) {
+      unlockBtn.style.display = 'none'; // Hide unlock button during self-lock
+    }
+  } else {
+    if (lockedViewText) {
+      lockedViewText.textContent = 'Your settings are protected by a PIN. View your current configuration below. Click "Unlock Settings" to make changes.';
+    }
+    if (unlockBtn) {
+      unlockBtn.style.display = 'block'; // Show unlock button when only PIN locked
+    }
+  }
+  
+  const parental = currentState.parental;
+  const safeRequest = currentState.safeRequestMode;
+  
+  // Build categories list
+  const enabledCategories = [];
+  if (parental.categories.sexual) enabledCategories.push('Sexual/Nudity');
+  if (parental.categories.violence) enabledCategories.push('Violence');
+  if (parental.categories.profanity) enabledCategories.push('Profanity');
+  if (parental.categories.drugs) enabledCategories.push('Drugs/Alcohol');
+  if (parental.categories.gambling) enabledCategories.push('Gambling');
+  if (parental.categories.ageVerification) enabledCategories.push('Age Verification');
+  
+  // Build provider list
+  const enabledProviders = [];
+  if (safeRequest.providers.google.enabled) enabledProviders.push('Google');
+  if (safeRequest.providers.bing.enabled) enabledProviders.push('Bing');
+  if (safeRequest.providers.yahoo.enabled) enabledProviders.push('Yahoo');
+  if (safeRequest.providers.ddg.enabled) enabledProviders.push('DuckDuckGo');
+  if (safeRequest.providers.youtube.enabled) enabledProviders.push('YouTube');
+  
+  const allowListCount = parental.allowList.length;
+  const blockListCount = parental.blockList.length;
+  
+  display.innerHTML = `
+    <div class="locked-view-item">
+      <div class="locked-view-item-label">Content Filtering</div>
+      <div class="locked-view-item-value">${parental.enabled ? '✓ Enabled' : '✗ Disabled'}</div>
+    </div>
+    
+    ${parental.enabled ? `
+    <div class="locked-view-item">
+      <div class="locked-view-item-label">Blocked Categories (${enabledCategories.length})</div>
+      <div class="locked-view-item-value">${enabledCategories.length > 0 ? enabledCategories.join(', ') : 'None'}</div>
+    </div>
+    ` : ''}
+    
+    <div class="locked-view-item">
+      <div class="locked-view-item-label">Allow-List (bypasses filtering & safe request)</div>
+      <div class="locked-view-item-value">${allowListCount} domain${allowListCount !== 1 ? 's' : ''}</div>
+    </div>
+    
+    <div class="locked-view-item">
+      <div class="locked-view-item-label">Block-List</div>
+      <div class="locked-view-item-value">${blockListCount} domain${blockListCount !== 1 ? 's' : ''}</div>
+    </div>
+    
+    <div class="locked-view-item">
+      <div class="locked-view-item-label">Safe Request Mode</div>
+      <div class="locked-view-item-value">${safeRequest.enabled ? '✓ Enabled' : '✗ Disabled'}</div>
+    </div>
+    
+    ${safeRequest.enabled ? `
+    <div class="locked-view-item">
+      <div class="locked-view-item-label">Active Providers (${enabledProviders.length})</div>
+      <div class="locked-view-item-value">${enabledProviders.length > 0 ? enabledProviders.join(', ') : 'None'}</div>
+    </div>
+    ` : ''}
+  `;
+}
 
 // ============ General Tab ============
 
@@ -88,12 +245,37 @@ async function loadGeneralSettings() {
     .map(item => item.value)
     .join('\n');
   document.getElementById('block-list').value = blockListText;
+  
+  // Load Safe Request Mode settings
+  const config = currentState.safeRequestMode;
+  document.getElementById('safe-request-enabled').checked = config.enabled;
+  document.getElementById('safe-request-prefer-header').checked = config.addPreferSafeHeader;
+  document.getElementById('safe-request-block-downgrade').checked = config.blockUserParamDowngrade;
+  document.getElementById('safe-request-frame-enforcement').value = config.perFrameEnforcement;
+  document.getElementById('safe-request-private-windows').checked = config.applyInPrivateWindows;
+  
+  // Load provider settings
+  document.getElementById('provider-google-enabled').checked = config.providers.google.enabled;
+  document.getElementById('provider-bing-enabled').checked = config.providers.bing.enabled;
+  document.getElementById('provider-bing-redirect').checked = config.providers.bing.useRedirect;
+  document.getElementById('provider-yahoo-enabled').checked = config.providers.yahoo.enabled;
+  document.getElementById('provider-ddg-enabled').checked = config.providers.ddg.enabled;
+  document.getElementById('provider-youtube-enabled').checked = config.providers.youtube.enabled;
+  document.getElementById('provider-youtube-mode').value = config.providers.youtube.headerMode;
+  
+  // Update collapsible sections based on checkbox states
+  updateCollapsibleSections();
 }
 
 /**
- * Save general settings
+ * Save general settings (includes Safe Request settings)
  */
-async function saveGeneralSettings() {
+async function saveGeneralSettings(showSuccessMessage = false) {
+  // Ensure state is loaded
+  if (!currentState) {
+    await loadState();
+  }
+  
   const updates = {
     parental: {
       ...currentState.parental,
@@ -115,15 +297,144 @@ async function saveGeneralSettings() {
         .split('\n')
         .filter(line => line.trim())
         .map(domain => ({ type: 'domain', value: domain.trim() }))
+    },
+    safeRequestMode: {
+      ...currentState.safeRequestMode,
+      enabled: document.getElementById('safe-request-enabled').checked,
+      addPreferSafeHeader: document.getElementById('safe-request-prefer-header').checked,
+      blockUserParamDowngrade: document.getElementById('safe-request-block-downgrade').checked,
+      perFrameEnforcement: document.getElementById('safe-request-frame-enforcement').value,
+      applyInPrivateWindows: document.getElementById('safe-request-private-windows').checked,
+      providers: {
+        google: {
+          ...currentState.safeRequestMode.providers.google,
+          enabled: document.getElementById('provider-google-enabled').checked
+        },
+        bing: {
+          ...currentState.safeRequestMode.providers.bing,
+          enabled: document.getElementById('provider-bing-enabled').checked,
+          useRedirect: document.getElementById('provider-bing-redirect').checked
+        },
+        yahoo: {
+          ...currentState.safeRequestMode.providers.yahoo,
+          enabled: document.getElementById('provider-yahoo-enabled').checked
+        },
+        ddg: {
+          ...currentState.safeRequestMode.providers.ddg,
+          enabled: document.getElementById('provider-ddg-enabled').checked
+        },
+        youtube: {
+          ...currentState.safeRequestMode.providers.youtube,
+          enabled: document.getElementById('provider-youtube-enabled').checked,
+          headerMode: document.getElementById('provider-youtube-mode').value
+        }
+      }
     }
   };
   
   await updateState(updates);
-  showAlert('general-alerts', 'Settings saved successfully!', 'success');
+  if (showSuccessMessage) {
+    showAlert('general-alerts', 'Settings saved successfully!', 'success');
+  }
   resetPINInactivityTimer();
 }
 
-document.getElementById('save-settings-btn').addEventListener('click', saveGeneralSettings);
+/**
+ * Auto-save general settings with debounce
+ */
+function autoSaveGeneralSettings() {
+  // Clear existing timeout
+  if (autoSaveTimeout) {
+    clearTimeout(autoSaveTimeout);
+  }
+  
+  // Set new timeout to save after 500ms of inactivity
+  autoSaveTimeout = setTimeout(async () => {
+    try {
+      await saveGeneralSettings(false);
+    } catch (err) {
+      console.error('[CSL] Error auto-saving settings:', err);
+    }
+  }, 500);
+}
+
+/**
+ * Setup collapsible sections
+ */
+function setupCollapsibleSections() {
+  // Content Categories collapsible
+  const contentCategoriesHeader = document.getElementById('content-categories-header');
+  if (contentCategoriesHeader) {
+    contentCategoriesHeader.addEventListener('click', () => {
+      toggleCollapsible('content-categories');
+    });
+  }
+}
+
+/**
+ * Toggle collapsible section
+ */
+function toggleCollapsible(sectionId) {
+  const content = document.getElementById(`${sectionId}-content`);
+  const toggle = document.querySelector(`#${sectionId}-header .collapsible-toggle`);
+  
+  if (content && toggle) {
+    content.classList.toggle('collapsed');
+    toggle.classList.toggle('collapsed');
+  }
+}
+
+/**
+ * Update collapsible sections based on checkbox states
+ */
+function updateCollapsibleSections() {
+  // Content Categories - expand only when filtering is enabled
+  const contentFilterEnabled = document.getElementById('enable-filter').checked;
+  const contentCategoriesContent = document.getElementById('content-categories-content');
+  const contentCategoriesToggle = document.querySelector('#content-categories-header .collapsible-toggle');
+  
+  if (contentFilterEnabled) {
+    contentCategoriesContent.classList.remove('collapsed');
+    contentCategoriesToggle.classList.remove('collapsed');
+  } else {
+    contentCategoriesContent.classList.add('collapsed');
+    contentCategoriesToggle.classList.add('collapsed');
+  }
+  
+  // Safe Request Mode details - show only when enabled
+  const safeRequestEnabled = document.getElementById('safe-request-enabled').checked;
+  const safeRequestDetails = document.getElementById('safe-request-details');
+  
+  if (safeRequestDetails) {
+    safeRequestDetails.style.display = safeRequestEnabled ? 'block' : 'none';
+  }
+}
+
+/**
+ * Setup auto-save listeners on all form inputs
+ */
+function setupAutoSave() {
+  const editableView = document.getElementById('general-editable-view');
+  if (!editableView) return;
+  
+  // Attach change listeners to all inputs in the editable view
+  const inputs = editableView.querySelectorAll('input, select, textarea');
+  inputs.forEach(input => {
+    // Use 'input' event for real-time changes, 'change' for select/checkboxes
+    const eventType = input.type === 'checkbox' || input.tagName === 'SELECT' ? 'change' : 'input';
+    
+    input.addEventListener(eventType, () => {
+      // Update collapsible sections if relevant checkboxes changed
+      if (input.id === 'enable-filter' || input.id === 'safe-request-enabled') {
+        updateCollapsibleSections();
+      }
+      
+      // Auto-save settings
+      autoSaveGeneralSettings();
+    });
+  });
+}
+
 
 // ============ PIN Management ============
 
@@ -134,69 +445,59 @@ async function updatePINStatusDisplay() {
   try {
     const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
     const display = document.getElementById('pin-status-display');
-    const managementSection = document.getElementById('pin-management-section');
-    
-    if (!display || !managementSection) {
-      console.error('PIN display elements not found');
-      return;
-    }
-  
-    if (pinStatus.hasPIN) {
-      display.innerHTML = `
-        <div class="lock-status" style="border-left-color: #667eea;">
-          <div class="lock-status-title">🔐 PIN Protection Enabled</div>
-          <p class="help-text">Your settings are protected with a PIN. Click below to change or disable it.</p>
-          <button class="btn-secondary" id="manage-pin-btn" style="width: 100%; margin-top: 12px;">Change or Disable PIN</button>
-        </div>
-      `;
-    } else {
-      display.innerHTML = `
-        <div class="lock-status" style="border-left-color: #999; background: #f0f0f0;">
-          <div class="lock-status-title" style="color: #666;">No PIN Set</div>
-          <p class="help-text">Set a PIN to protect your settings.</p>
-          <button class="btn-secondary" id="set-pin-btn" style="width: 100%; margin-top: 12px;">Set PIN</button>
-        </div>
-      `;
-    }
-    
-    // Update form based on PIN status
     const currentPinGroup = document.getElementById('current-pin-group');
     const newPinLabel = document.getElementById('new-pin-label');
-    const updatePinBtn = document.getElementById('update-pin-btn');
     const newPinInput = document.getElementById('new-pin');
+    const updatePinBtn = document.getElementById('update-pin-btn');
+    const lockButtonContainer = document.getElementById('lock-button-container');
     
     if (pinStatus.hasPIN) {
-      currentPinGroup.style.display = 'block';
-      newPinLabel.textContent = 'New PIN (leave blank to keep current):';
-      newPinInput.placeholder = 'Leave blank to keep unchanged';
-      updatePinBtn.textContent = 'Update PIN';
-    } else {
-      currentPinGroup.style.display = 'none';
-      newPinLabel.textContent = 'New PIN:';
-      newPinInput.placeholder = 'Enter PIN';
-      updatePinBtn.textContent = 'Set PIN';
-    }
-    
-    // Use event delegation for dynamically created buttons
-    // Remove old listener if it exists
-    const oldListener = display._pinButtonListener;
-    if (oldListener) {
-      display.removeEventListener('click', oldListener);
-    }
-    
-    const newListener = (e) => {
-      if (e.target.id === 'manage-pin-btn' || e.target.id === 'set-pin-btn') {
-        managementSection.style.display = 'block';
-        if (e.target.id === 'manage-pin-btn') {
-          setTimeout(() => document.getElementById('current-pin').focus(), 0);
-        } else {
-          setTimeout(() => document.getElementById('new-pin').focus(), 0);
-        }
+      display.innerHTML = `
+        <div class="pin-status">
+          <div class="pin-status-icon">🔒</div>
+          <div class="pin-status-text">PIN Protection Enabled</div>
+        </div>
+        <button class="btn-secondary" id="manage-pin-btn" style="margin-top: 12px;">Change or Remove PIN</button>
+      `;
+      
+      // Show current PIN field when PIN exists
+      if (currentPinGroup) currentPinGroup.style.display = 'block';
+      if (newPinLabel) newPinLabel.textContent = 'New PIN (leave blank to remove):';
+      if (newPinInput) newPinInput.placeholder = 'Leave blank to remove PIN';
+      if (updatePinBtn) updatePinBtn.textContent = 'Update PIN';
+      
+      // Show lock button if general tab is unlocked
+      if (lockButtonContainer && !isGeneralTabLocked) {
+        lockButtonContainer.style.display = 'block';
       }
-    };
+    } else {
+      display.innerHTML = `
+        <div class="pin-status">
+          <div class="pin-status-icon">🔓</div>
+          <div class="pin-status-text">No PIN Set</div>
+        </div>
+        <button class="btn-primary" id="manage-pin-btn" style="margin-top: 12px;">Set PIN</button>
+      `;
+      
+      // Hide current PIN field when no PIN exists
+      if (currentPinGroup) currentPinGroup.style.display = 'none';
+      if (newPinLabel) newPinLabel.textContent = 'New PIN:';
+      if (newPinInput) newPinInput.placeholder = 'Enter PIN';
+      if (updatePinBtn) updatePinBtn.textContent = 'Set PIN';
+      
+      // Hide lock button if no PIN is set
+      if (lockButtonContainer) {
+        lockButtonContainer.style.display = 'none';
+      }
+    }
     
-    display._pinButtonListener = newListener;
-    display.addEventListener('click', newListener);
+    // Attach event listener to manage button
+    const manageBtn = document.getElementById('manage-pin-btn');
+    if (manageBtn) {
+      manageBtn.addEventListener('click', () => {
+        document.getElementById('pin-management-section').style.display = 'block';
+      });
+    }
   } catch (err) {
     console.error('Error updating PIN status display:', err);
   }
@@ -259,17 +560,15 @@ function showPINUnlockDialog() {
       
       if (response.success) {
         dialog.remove();
-        // Show general tab content
-        const generalTab = document.getElementById('general');
-        if (generalTab) {
-          generalTab.style.display = 'block';
-        }
+        // Unlock the general tab
+        isGeneralTabLocked = false;
+        updateGeneralTabView();
         // Switch to general tab
         document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
         document.querySelector('[data-tab="general"]').classList.add('active');
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.getElementById('general').classList.add('active');
-        // Load settings after showing the tab
+        // Load settings after unlocking
         await loadGeneralSettings();
         await updatePINStatusDisplay();
         resetPINInactivityTimer();
@@ -302,15 +601,12 @@ function resetPINInactivityTimer() {
   pinLockTimeout = setTimeout(async () => {
     const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
     if (pinStatus.hasPIN) {
-      // Lock the general tab
+      // Lock the general tab view
       const generalTab = document.getElementById('general');
       if (generalTab && generalTab.classList.contains('active')) {
-        // Switch to another tab
-        document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-        document.querySelector('[data-tab="self-lock"]').classList.add('active');
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.getElementById('self-lock').classList.add('active');
-        showAlert('self-lock-alerts', 'Settings locked due to inactivity', 'info');
+        isGeneralTabLocked = true;
+        updateGeneralTabView();
+        showAlert('general-alerts', 'Settings locked due to inactivity', 'info');
       }
     }
   }, 5 * 60 * 1000); // 5 minutes
@@ -428,6 +724,114 @@ document.getElementById('cancel-pin-btn').addEventListener('click', cancelPINMan
 // ============ Self-Lock Tab ============
 
 /**
+ * Disable self-lock with passphrase verification if required
+ */
+async function disableSelfLock() {
+  await loadState();
+  
+  // Check if password is required
+  if (currentState.selfLock.requiresPassword && currentState.selfLock.passphraseHash) {
+    // Show passphrase dialog
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+    
+    dialog.innerHTML = `
+      <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-width: 400px; width: 90%;">
+        <h3 style="margin: 0 0 20px 0; color: #333;">Unlock Self-Lock Early</h3>
+        <p style="margin: 0 0 20px 0; color: #666;">Enter your self-lock passphrase to disable early:</p>
+        <input type="password" id="unlock-passphrase" placeholder="Enter passphrase" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; margin-bottom: 20px;">
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button id="cancel-unlock-btn" style="padding: 10px 20px; border: none; background: #999; color: white; border-radius: 6px; cursor: pointer; font-size: 14px;">Cancel</button>
+          <button id="confirm-unlock-btn" style="padding: 10px 20px; border: none; background: #dc3545; color: white; border-radius: 6px; cursor: pointer; font-size: 14px;">Unlock</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(dialog);
+    
+    const passphraseInput = document.getElementById('unlock-passphrase');
+    passphraseInput.focus();
+    
+    // Handle cancel
+    document.getElementById('cancel-unlock-btn').addEventListener('click', () => {
+      dialog.remove();
+    });
+    
+    // Handle unlock
+    const handleUnlock = async () => {
+      const passphrase = passphraseInput.value;
+      
+      if (!passphrase) {
+        alert('Please enter your passphrase');
+        passphraseInput.focus();
+        return;
+      }
+      
+      try {
+        // Verify passphrase
+        const hash = await hashPassphrase(passphrase);
+        
+        if (hash === currentState.selfLock.passphraseHash) {
+          // Passphrase correct - disable self-lock
+          dialog.remove();
+          currentState.selfLock.active = false;
+          await updateState({ selfLock: currentState.selfLock });
+          await refreshSelfLockStatus();
+          showAlert('self-lock-alerts', 'Self-Lock disabled', 'success');
+          
+          // Unlock general tab if we're on it
+          if (document.getElementById('general').classList.contains('active')) {
+            isGeneralTabLocked = false;
+            await updateGeneralTabView();
+          }
+        } else {
+          alert('Incorrect passphrase');
+          passphraseInput.value = '';
+          passphraseInput.focus();
+        }
+      } catch (err) {
+        console.error('Error verifying passphrase:', err);
+        alert('Error verifying passphrase');
+      }
+    };
+    
+    document.getElementById('confirm-unlock-btn').addEventListener('click', handleUnlock);
+    
+    // Allow Enter key to submit
+    passphraseInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        handleUnlock();
+      }
+    });
+  } else {
+    // No password required - just confirm
+    if (confirm('Are you sure you want to disable Self-Lock?')) {
+      currentState.selfLock.active = false;
+      await updateState({ selfLock: currentState.selfLock });
+      await refreshSelfLockStatus();
+      showAlert('self-lock-alerts', 'Self-Lock disabled', 'info');
+      
+      // Unlock general tab if we're on it
+      if (document.getElementById('general').classList.contains('active')) {
+        isGeneralTabLocked = false;
+        await updateGeneralTabView();
+      }
+    }
+  }
+}
+
+/**
  * Refresh self-lock status display
  */
 async function refreshSelfLockStatus() {
@@ -443,20 +847,15 @@ async function refreshSelfLockStatus() {
     panel.innerHTML = `
       <div class="lock-status">
         <div class="lock-status-title">🔒 Self-Lock Active</div>
-        <div class="lock-status-detail"><strong>Scope:</strong> ${currentState.selfLock.scope}</div>
         <div class="lock-status-detail"><strong>Ends:</strong> ${formatEpochTime(currentState.selfLock.endsAtEpochMs)}</div>
         <div class="lock-status-detail"><strong>Remaining:</strong> ${formatDuration(remaining)}</div>
+        <div class="lock-status-detail" style="margin-top: 8px; font-style: italic;">General settings tab is locked until self-lock expires</div>
         <button class="btn-danger" id="disable-lock-btn" style="margin-top: 12px; width: 100%;">Disable Self-Lock</button>
       </div>
     `;
     
     document.getElementById('disable-lock-btn').addEventListener('click', async () => {
-      if (confirm('Are you sure you want to disable Self-Lock?')) {
-        currentState.selfLock.active = false;
-        await updateState({ selfLock: currentState.selfLock });
-        refreshSelfLockStatus();
-        showAlert('self-lock-alerts', 'Self-Lock disabled', 'info');
-      }
+      await disableSelfLock();
     });
     
     // Hide the activate section when self-lock is active
@@ -473,35 +872,99 @@ async function refreshSelfLockStatus() {
     activateLockSection.style.display = 'block';
   }
   
-  // Load lock settings
-  document.getElementById('lock-scope').value = currentState.selfLock.scope;
-  document.getElementById('lock-ignore-allowlist').checked = currentState.selfLock.ignoreAllowlist;
+  // Load lock settings into checkboxes
   document.getElementById('lock-require-password').checked = currentState.selfLock.requiresPassword;
-  document.getElementById('lock-cooldown').value = currentState.selfLock.cooldownMinutes * 60 * 1000;
   document.getElementById('lock-increment-on-block').checked = currentState.selfLock.incrementOnBlock;
-  document.getElementById('lock-increment-minutes').value = currentState.selfLock.incrementMinutes;
+  
+  // Load settings into time interval pickers if they exist
+  if (cooldownDurationPicker && currentState.selfLock.cooldownMinutes !== undefined) {
+    const cooldownValue = fromTotalMinutes(currentState.selfLock.cooldownMinutes, cooldownDurationPicker.config);
+    cooldownDurationPicker.setValue(cooldownValue);
+  }
+  
+  if (incrementDurationPicker && currentState.selfLock.incrementMinutes !== undefined) {
+    const incrementValue = fromTotalMinutes(currentState.selfLock.incrementMinutes, incrementDurationPicker.config);
+    incrementDurationPicker.setValue(incrementValue);
+  }
+  
+  // Toggle conditional sections visibility
+  togglePassphraseSection();
+  toggleIncrementSection();
 }
 
 /**
- * Setup duration chips
+ * Toggle passphrase section visibility based on require password checkbox
  */
-function setupDurationChips() {
-  document.querySelectorAll('.duration-chips .chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('.duration-chips .chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      selectedDuration = parseInt(chip.dataset.duration);
-      document.getElementById('custom-duration').value = '';
-    });
-  });
+function togglePassphraseSection() {
+  const requirePassword = document.getElementById('lock-require-password').checked;
+  const passphraseSection = document.getElementById('passphrase-section');
   
-  document.getElementById('custom-duration-btn').addEventListener('click', () => {
-    const minutes = parseInt(document.getElementById('custom-duration').value);
-    if (minutes > 0) {
-      selectedDuration = minutes * 60 * 1000;
-      document.querySelectorAll('.duration-chips .chip').forEach(c => c.classList.remove('active'));
+  if (passphraseSection) {
+    passphraseSection.style.display = requirePassword ? 'block' : 'none';
+  }
+}
+
+/**
+ * Toggle increment duration picker visibility based on increment checkbox
+ */
+function toggleIncrementSection() {
+  const incrementEnabled = document.getElementById('lock-increment-on-block').checked;
+  const incrementSection = document.getElementById('increment-duration-section');
+  
+  if (incrementSection) {
+    incrementSection.style.display = incrementEnabled ? 'block' : 'none';
+  }
+}
+
+/**
+ * Setup time interval pickers
+ */
+function setupTimeIntervalPickers() {
+  // Self-Lock Duration Picker (1 minute to 12 months)
+  selfLockDurationPicker = new TimeIntervalPicker(
+    document.getElementById('self-lock-duration-picker'),
+    {
+      defaultValue: { months: 0, weeks: 0, days: 0, hours: 1, minutes: 0 },
+      config: {
+        minTotalMinutes: 1,
+        maxTotalMonths: 12,
+        stepBehavior: 'rollover'
+      },
+      onValidChange: (change) => {
+        selectedDuration = change.normalizedMinutes * 60 * 1000; // Convert to milliseconds
+      }
     }
-  });
+  );
+  
+  // Cooldown Duration Picker (0 minutes to 4 hours)
+  cooldownDurationPicker = new TimeIntervalPicker(
+    document.getElementById('cooldown-duration-picker'),
+    {
+      defaultValue: { months: 0, weeks: 0, days: 0, hours: 1, minutes: 0 },
+      config: {
+        minTotalMinutes: 0,
+        maxTotalMinutes: 240, // 4 hours
+        stepBehavior: 'rollover'
+      }
+    }
+  );
+  
+  // Increment Duration Picker (1 minute to 24 hours)
+  incrementDurationPicker = new TimeIntervalPicker(
+    document.getElementById('increment-duration-picker'),
+    {
+      defaultValue: { months: 0, weeks: 0, days: 0, hours: 0, minutes: 5 },
+      config: {
+        minTotalMinutes: 1,
+        maxTotalMinutes: 1440, // 24 hours
+        stepBehavior: 'rollover'
+      }
+    }
+  );
+  
+  // Initialize visibility of conditional sections
+  togglePassphraseSection();
+  toggleIncrementSection();
 }
 
 /**
@@ -513,28 +976,52 @@ async function activateSelfLock() {
     return;
   }
   
-  if (currentState.selfLock.requiresPassword && !currentState.selfLock.passphraseHash) {
-    showAlert('self-lock-alerts', 'Please set a Self-Lock passphrase in the Security tab first', 'error');
-    return;
+  const requirePassword = document.getElementById('lock-require-password').checked;
+  const passphrase = document.getElementById('self-lock-pass').value;
+  
+  // If password is required, validate passphrase
+  if (requirePassword) {
+    if (!passphrase || passphrase.trim().length === 0) {
+      showAlert('self-lock-alerts', 'Please enter a passphrase for early unlock', 'error');
+      return;
+    }
+    if (passphrase.length < 4) {
+      showAlert('self-lock-alerts', 'Passphrase must be at least 4 characters', 'error');
+      return;
+    }
   }
   
-  if (confirm(`Activate Self-Lock for ${formatDuration(selectedDuration)}?`)) {
+  if (confirm(`Activate Self-Lock for ${formatDuration(selectedDuration)}?\n\nThe General settings tab will be locked until the self-lock expires.`)) {
     try {
+      // Hash the passphrase if password is required
+      let passphraseHash = null;
+      if (requirePassword && passphrase) {
+        passphraseHash = await hashPassphrase(passphrase);
+      }
+      
+      // Get values from time interval pickers
+      const cooldownValue = cooldownDurationPicker.getValue();
+      const cooldownMinutes = toTotalMinutes(cooldownValue, cooldownDurationPicker.config);
+      
+      const incrementValue = incrementDurationPicker.getValue();
+      const incrementMinutes = toTotalMinutes(incrementValue, incrementDurationPicker.config);
+      
       await browser.runtime.sendMessage({
         type: 'ACTIVATE_SELF_LOCK',
         durationMs: selectedDuration,
-        scope: document.getElementById('lock-scope').value,
-        ignoreAllowlist: document.getElementById('lock-ignore-allowlist').checked,
-        requiresPassword: document.getElementById('lock-require-password').checked,
-        cooldownMinutes: parseInt(document.getElementById('lock-cooldown').value) / (60 * 1000),
+        requiresPassword: requirePassword,
+        passphraseHash: passphraseHash,
+        cooldownMinutes: cooldownMinutes,
         incrementOnBlock: document.getElementById('lock-increment-on-block').checked,
-        incrementMinutes: parseInt(document.getElementById('lock-increment-minutes').value)
+        incrementMinutes: incrementMinutes
       });
       
-      showAlert('self-lock-alerts', 'Self-Lock activated!', 'success');
+      showAlert('self-lock-alerts', 'Self-Lock activated! General settings tab is now locked.', 'success');
       selectedDuration = null;
-      document.querySelectorAll('.duration-chips .chip').forEach(c => c.classList.remove('active'));
-      document.getElementById('custom-duration').value = '';
+      
+      // Reset pickers to defaults
+      selfLockDurationPicker.setValue({ months: 0, weeks: 0, days: 0, hours: 1, minutes: 0 });
+      document.getElementById('self-lock-pass').value = '';
       
       setTimeout(() => refreshSelfLockStatus(), 500);
     } catch (err) {
@@ -546,39 +1033,13 @@ async function activateSelfLock() {
 
 document.getElementById('activate-lock-btn').addEventListener('click', activateSelfLock);
 
+// Add listener for require password checkbox to toggle passphrase section
+document.getElementById('lock-require-password').addEventListener('change', togglePassphraseSection);
+
+// Add listener for increment checkbox to toggle increment duration section
+document.getElementById('lock-increment-on-block').addEventListener('change', toggleIncrementSection);
+
 // ============ Security Tab ============
-
-/**
- * Set self-lock passphrase
- */
-async function setSelfLockPassphrase() {
-  const passphrase = document.getElementById('self-lock-pass').value;
-  
-  if (!passphrase) {
-    showAlert('security-alerts', 'Please enter a passphrase', 'error');
-    return;
-  }
-  
-  if (passphrase.length < 6) {
-    showAlert('security-alerts', 'Passphrase must be at least 6 characters', 'error');
-    return;
-  }
-  
-  try {
-    await browser.runtime.sendMessage({
-      type: 'SET_SELF_LOCK_PASSPHRASE',
-      passphrase
-    });
-    
-    document.getElementById('self-lock-pass').value = '';
-    showAlert('security-alerts', 'Self-Lock passphrase set successfully!', 'success');
-  } catch (err) {
-    showAlert('security-alerts', 'Failed to set passphrase', 'error');
-    console.error(err);
-  }
-}
-
-document.getElementById('set-self-lock-pass-btn').addEventListener('click', setSelfLockPassphrase);
 
 /**
  * Generate recovery codes
@@ -632,28 +1093,59 @@ function showAlert(containerId, message, type) {
 // ============ Initialization ============
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Check if PIN is set and locked on page load
-  const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
+  // Load state first
+  await loadState();
   
-  if (pinStatus.isLocked) {
-    // PIN is set and locked - show unlock dialog and disable general tab access
-    showPINUnlockDialog();
-    // Hide the general tab content
-    const generalTab = document.getElementById('general');
-    if (generalTab) {
-      generalTab.style.display = 'none';
-    }
-    // Switch to self-lock tab
-    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-    document.querySelector('[data-tab="self-lock"]').classList.add('active');
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    document.getElementById('self-lock').classList.add('active');
+  // Check if self-lock is active or PIN is locked
+  if (currentState.selfLock.active) {
+    // Self-lock is active - general tab is locked
+    isGeneralTabLocked = true;
   } else {
-    // PIN is not locked, proceed normally
-    await loadGeneralSettings();
-    setupDurationChips();
-    refreshSelfLockStatus();
-    await updatePINStatusDisplay();
+    // Check PIN status
+    const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
+    if (pinStatus.isLocked) {
+      // PIN is set and locked - show locked view
+      isGeneralTabLocked = true;
+    } else {
+      // PIN is not locked
+      isGeneralTabLocked = false;
+    }
+  }
+  
+  // Load general settings (includes Safe Request settings)
+  await loadGeneralSettings();
+  
+  // Update the view based on lock status
+  await updateGeneralTabView();
+  
+  // Setup collapsible sections
+  setupCollapsibleSections();
+  
+  // Setup auto-save listeners
+  setupAutoSave();
+  
+  // Setup other tabs
+  setupTimeIntervalPickers();
+  refreshSelfLockStatus();
+  await updatePINStatusDisplay();
+  
+  if (!isGeneralTabLocked) {
     resetPINInactivityTimer();
+  }
+  
+  // Attach unlock button listener
+  const unlockBtn = document.getElementById('unlock-general-btn');
+  if (unlockBtn) {
+    unlockBtn.addEventListener('click', () => {
+      showPINUnlockDialog();
+    });
+  }
+  
+  // Attach lock button listener
+  const lockBtn = document.getElementById('lock-general-btn');
+  if (lockBtn) {
+    lockBtn.addEventListener('click', () => {
+      lockGeneralSettings();
+    });
   }
 });

@@ -3,6 +3,19 @@
  * Handles policy engine, state management, and alarms
  */
 
+// Initialize safe request handlers after a small delay
+setTimeout(() => {
+  if (typeof initializeSafeRequestHandlers === 'function') {
+    try {
+      initializeSafeRequestHandlers();
+    } catch (err) {
+      console.error('[CSL] Failed to initialize Safe Request Mode handlers:', err);
+    }
+  } else {
+    console.error('[CSL] initializeSafeRequestHandlers is not defined');
+  }
+}, 100);
+
 // ============ Default State ============
 
 const DEFAULT_STATE = {
@@ -41,6 +54,22 @@ const DEFAULT_STATE = {
   pinLock: {
     locked: false,
     unlockedUntilEpochMs: 0
+  },
+  safeRequestMode: {
+    enabled: false,
+    addPreferSafeHeader: true,
+    applyInPrivateWindows: true,
+    forceUnderSelfLock: true,
+    ignoreAllowlistUnderSelfLock: true,
+    blockUserParamDowngrade: true,
+    perFrameEnforcement: 'any',
+    providers: {
+      google: { enabled: true, useParam: true, enforceCookie: false, useRedirect: false },
+      bing: { enabled: true, useParam: true, usePreferSafeHonor: true, useRedirect: false },
+      yahoo: { enabled: true, useParam: true },
+      ddg: { enabled: true, useParam: true, useRedirect: false },
+      youtube: { enabled: true, headerMode: 'strict', useRestrictHostRedirect: false }
+    }
   }
 };
 
@@ -51,15 +80,17 @@ const DEFAULT_STATE = {
  */
 async function loadState() {
   const result = await browser.storage.local.get('state');
-  const state = result.state || DEFAULT_STATE;
+  const stored = result.state || {};
   
-  // Ensure pinLock property exists (for migration from older versions)
-  if (!state.pinLock) {
-    state.pinLock = {
-      locked: false,
-      unlockedUntilEpochMs: 0
-    };
-  }
+  // Deep merge with defaults to ensure all properties exist
+  const state = {
+    ...DEFAULT_STATE,
+    ...stored,
+    parental: { ...DEFAULT_STATE.parental, ...stored.parental },
+    selfLock: { ...DEFAULT_STATE.selfLock, ...stored.selfLock },
+    pinLock: { ...DEFAULT_STATE.pinLock, ...stored.pinLock },
+    safeRequestMode: { ...DEFAULT_STATE.safeRequestMode, ...stored.safeRequestMode }
+  };
   
   return state;
 }
@@ -214,13 +245,27 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
   
   if (message.type === 'UPDATE_STATE') {
     const state = await loadState();
-    Object.assign(state, message.updates);
+    console.log('[BG] UPDATE_STATE received, updates:', message.updates);
+    
+    // Deep merge for nested objects
+    for (const key in message.updates) {
+      if (typeof message.updates[key] === 'object' && message.updates[key] !== null && !Array.isArray(message.updates[key])) {
+        // Merge nested objects
+        state[key] = { ...state[key], ...message.updates[key] };
+      } else {
+        // Replace primitive values and arrays
+        state[key] = message.updates[key];
+      }
+    }
+    
+    console.log('[BG] State after merge:', state);
     await saveState(state);
+    console.log('[BG] State saved successfully');
     return { success: true };
   }
   
   if (message.type === 'ACTIVATE_SELF_LOCK') {
-    const { durationMs, scope, ignoreAllowlist, requiresPassword, cooldownMinutes, incrementOnBlock, incrementMinutes } = message;
+    const { durationMs, requiresPassword, passphraseHash, cooldownMinutes, incrementOnBlock, incrementMinutes } = message;
     const now = Date.now();
     const mono = performance.now();
     
@@ -228,9 +273,8 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
     state.selfLock = {
       ...state.selfLock,
       active: true,
-      scope,
-      ignoreAllowlist,
       requiresPassword,
+      passphraseHash: passphraseHash || null,
       cooldownMinutes,
       startedAtEpochMs: now,
       endsAtEpochMs: now + durationMs,

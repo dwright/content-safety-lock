@@ -292,6 +292,15 @@
       border-color: #667eea;
     }
     
+    #custom-duration.has-value {
+      border-color: #28a745;
+      background: #f0fff4;
+    }
+    
+    #custom-duration.has-value:focus {
+      border-color: #28a745;
+    }
+    
     .recovery-codes {
       background: #f9f9f9;
       border-radius: 6px;
@@ -318,6 +327,166 @@
       color: #666;
       margin-top: 8px;
     }
+    
+    .collapsible-section {
+      margin-bottom: 30px;
+    }
+    
+    .collapsible-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      user-select: none;
+      padding: 12px 0;
+      border-bottom: 2px solid #f0f0f0;
+      margin-bottom: 16px;
+    }
+    
+    .collapsible-header:hover {
+      opacity: 0.8;
+    }
+    
+    .collapsible-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      transition: transform 0.2s;
+    }
+    
+    .collapsible-toggle.collapsed {
+      transform: rotate(-90deg);
+    }
+    
+    .collapsible-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #333;
+      margin: 0;
+    }
+    
+    .collapsible-content {
+      max-height: 1000px;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    
+    .collapsible-content.collapsed {
+      max-height: 0;
+    }
+    
+    .locked-view {
+      background: #f9f9f9;
+      border-radius: 6px;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .locked-view-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 12px;
+    }
+    
+    .locked-view-text {
+      color: #666;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    
+    .locked-view-item {
+      text-align: left;
+      background: white;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 8px;
+      border-left: 4px solid #667eea;
+    }
+    
+    .locked-view-item-label {
+      font-weight: 600;
+      color: #333;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    
+    .locked-view-item-value {
+      color: #666;
+      font-size: 13px;
+    }
+    
+    .btn-unlock {
+      background: #667eea;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-unlock:hover {
+      background: #5568d3;
+    }
+    
+    .form-inputs-disabled input,
+    .form-inputs-disabled select,
+    .form-inputs-disabled textarea {
+      opacity: 0.5;
+      pointer-events: none;
+      background: #f5f5f5;
+    }
+    
+    .form-inputs-disabled .checkbox-group {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    
+    .form-inputs-disabled input[type="checkbox"] {
+      cursor: not-allowed;
+    }
+    
+    .form-inputs-disabled .checkbox-label {
+      cursor: not-allowed;
+    }
+    
+    /* Time Interval Picker Integration */
+    .form-group .time-interval-picker {
+      margin-top: 8px;
+    }
+    
+    .form-group label + .time-interval-picker {
+      margin-top: 12px;
+    }
+    
+    /* Settings Subsections */
+    .settings-subsection {
+      margin: 24px 0;
+      padding: 20px;
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      border-radius: 6px;
+    }
+    
+    .settings-subsection:first-of-type {
+      margin-top: 20px;
+    }
+    
+    .subsection-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #667eea;
+      margin: 0 0 16px 0;
+    }
+    
+    .settings-subsection .form-group:last-child {
+      margin-bottom: 0;
+    }
   </style>
 </head>
 <body>
@@ -337,96 +506,212 @@
     <div id="general" class="tab-content active">
       <div id="general-alerts"></div>
       
-      <div class="section">
-        <div class="section-title">Filtering Settings</div>
-        
-        <div class="form-group">
-          <div class="checkbox-group">
-            <input type="checkbox" id="enable-filter" checked>
-            <label class="checkbox-label" for="enable-filter">Enable Content Filtering</label>
+      <div id="general-locked-view" style="display: none;">
+        <div class="locked-view">
+          <div class="locked-view-title">🔒 Settings Locked</div>
+          <div class="locked-view-text">Your settings are protected by a PIN. View your current configuration below. Click "Unlock Settings" to make changes.</div>
+          <button class="btn-unlock" id="unlock-general-btn">Unlock Settings</button>
+          
+          <div id="locked-settings-display" style="margin-top: 20px;">
+            <!-- Settings will be populated here by JavaScript -->
           </div>
         </div>
       </div>
       
-      <div class="section">
-        <div class="section-title">Content Categories</div>
-        <p class="help-text" style="margin-bottom: 16px;">Select which content types to block:</p>
-        
-        <div class="form-group">
-          <div class="checkbox-group">
-            <input type="checkbox" id="cat-sexual" checked>
-            <label class="checkbox-label" for="cat-sexual">Sexual/Nudity</label>
-          </div>
-          <div class="checkbox-group">
-            <input type="checkbox" id="cat-violence">
-            <label class="checkbox-label" for="cat-violence">Violence</label>
-          </div>
-          <div class="checkbox-group">
-            <input type="checkbox" id="cat-profanity">
-            <label class="checkbox-label" for="cat-profanity">Profanity</label>
-          </div>
-          <div class="checkbox-group">
-            <input type="checkbox" id="cat-drugs">
-            <label class="checkbox-label" for="cat-drugs">Drugs/Alcohol</label>
-          </div>
-          <div class="checkbox-group">
-            <input type="checkbox" id="cat-gambling">
-            <label class="checkbox-label" for="cat-gambling">Gambling</label>
-          </div>
-          <div class="checkbox-group">
-            <input type="checkbox" id="cat-age-verification">
-            <label class="checkbox-label" for="cat-age-verification">Age Verification Services</label>
-          </div>
+      <div id="general-editable-view">
+        <div id="lock-button-container" style="display: none; text-align: right; margin-bottom: 20px;">
+          <button class="btn-secondary" id="lock-general-btn" style="padding: 8px 16px; font-size: 13px;">🔒 Lock Settings</button>
         </div>
         
-        <div class="checkbox-group">
-          <input type="checkbox" id="treat-mature" checked>
-          <label class="checkbox-label" for="treat-mature">Treat "mature" and "restricted" as adult content</label>
-        </div>
-      </div>
-      
-      <div class="section">
-        <div class="section-title">Allow-List</div>
-        <p class="help-text">Domains to always allow (one per line):</p>
-        <textarea id="allow-list" style="width: 100%; height: 120px; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-family: monospace; font-size: 13px; resize: vertical;"></textarea>
-      </div>
-      
-      <div class="section">
-        <div class="section-title">Block-List</div>
-        <p class="help-text">Domains to always block (one per line):</p>
-        <textarea id="block-list" style="width: 100%; height: 120px; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-family: monospace; font-size: 13px; resize: vertical;"></textarea>
-      </div>
-      
-      <div class="section">
-        <div class="section-title">Settings PIN</div>
-        <p class="help-text">Protect your settings with a PIN (5-minute inactivity timeout):</p>
-        
-        <div id="pin-status-display"></div>
-        
-        <div id="pin-management-section" style="display: none;">
-          <div id="current-pin-group" class="form-group" style="display: none;">
-            <label for="current-pin">Current PIN:</label>
-            <input type="password" id="current-pin" placeholder="Enter current PIN">
-          </div>
+        <div class="section">
+          <div class="section-title">Filtering Settings</div>
           
           <div class="form-group">
-            <label for="new-pin" id="new-pin-label">New PIN:</label>
-            <input type="password" id="new-pin" placeholder="Enter PIN">
-          </div>
-          
-          <div class="button-group">
-            <button class="btn-secondary" id="cancel-pin-btn">Cancel</button>
-            <button class="btn-primary" id="update-pin-btn">Set PIN</button>
+            <div class="checkbox-group">
+              <input type="checkbox" id="enable-filter" checked>
+              <label class="checkbox-label" for="enable-filter">Enable Content Filtering</label>
+            </div>
           </div>
         </div>
-      </div>
-      
-      <div class="section">
-        <div class="button-group">
-          <button class="btn-primary" id="save-settings-btn">Save Settings</button>
+        
+        <div class="collapsible-section">
+          <div class="collapsible-header" id="content-categories-header">
+            <span class="collapsible-toggle">▼</span>
+            <h3 class="collapsible-title">Content Categories</h3>
+          </div>
+          <div class="collapsible-content" id="content-categories-content">
+            <p class="help-text" style="margin-bottom: 16px;">Select which content types to block:</p>
+            
+            <div class="form-group">
+              <div class="checkbox-group">
+                <input type="checkbox" id="cat-sexual" checked>
+                <label class="checkbox-label" for="cat-sexual">Sexual/Nudity</label>
+              </div>
+              <div class="checkbox-group">
+                <input type="checkbox" id="cat-violence">
+                <label class="checkbox-label" for="cat-violence">Violence</label>
+              </div>
+              <div class="checkbox-group">
+                <input type="checkbox" id="cat-profanity">
+                <label class="checkbox-label" for="cat-profanity">Profanity</label>
+              </div>
+              <div class="checkbox-group">
+                <input type="checkbox" id="cat-drugs">
+                <label class="checkbox-label" for="cat-drugs">Drugs/Alcohol</label>
+              </div>
+              <div class="checkbox-group">
+                <input type="checkbox" id="cat-gambling">
+                <label class="checkbox-label" for="cat-gambling">Gambling</label>
+              </div>
+              <div class="checkbox-group">
+                <input type="checkbox" id="cat-age-verification">
+                <label class="checkbox-label" for="cat-age-verification">Age Verification Services</label>
+              </div>
+            </div>
+            
+            <div class="checkbox-group">
+              <input type="checkbox" id="treat-mature" checked>
+              <label class="checkbox-label" for="treat-mature">Treat "mature" and "restricted" as adult content</label>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">Safe Request Mode</div>
+          <p class="help-text" style="margin-bottom: 16px;">
+            Send standardized safety headers and provider-specific SafeSearch/Restricted-Mode controls to supported search engines and video platforms. This does not analyze pages—it asks providers to filter results at the source.
+          </p>
+          
+          <div class="form-group">
+            <div class="checkbox-group">
+              <input type="checkbox" id="safe-request-enabled">
+              <label class="checkbox-label" for="safe-request-enabled">Enable Safe Request Mode</label>
+            </div>
+          </div>
+          
+          <div id="safe-request-details" style="display: none; margin-top: 16px;">
+            <div class="checkbox-group">
+              <input type="checkbox" id="safe-request-prefer-header" checked>
+              <label class="checkbox-label" for="safe-request-prefer-header">Add "Prefer: safe" header to all requests</label>
+            </div>
+            
+            <div style="margin-top: 20px;">
+              <h4 style="font-size: 14px; font-weight: 600; color: #333; margin-bottom: 12px;">Provider Settings</h4>
+              
+              <div style="background: #f9f9f9; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
+                <h5 style="margin: 0 0 12px 0; font-size: 13px; color: #333; font-weight: 600;">Google Search</h5>
+                <div class="checkbox-group" style="margin-bottom: 0;">
+                  <input type="checkbox" id="provider-google-enabled" checked>
+                  <label class="checkbox-label" for="provider-google-enabled">Enforce SafeSearch (safe=active)</label>
+                </div>
+              </div>
+              
+              <div style="background: #f9f9f9; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
+                <h5 style="margin: 0 0 12px 0; font-size: 13px; color: #333; font-weight: 600;">Bing Search</h5>
+                <div class="checkbox-group" style="margin-bottom: 8px;">
+                  <input type="checkbox" id="provider-bing-enabled" checked>
+                  <label class="checkbox-label" for="provider-bing-enabled">Enforce Strict Mode (adlt=strict)</label>
+                </div>
+                <div class="checkbox-group" style="margin-bottom: 0;">
+                  <input type="checkbox" id="provider-bing-redirect">
+                  <label class="checkbox-label" for="provider-bing-redirect">Redirect to strict.bing.com (may affect sign-in)</label>
+                </div>
+              </div>
+              
+              <div style="background: #f9f9f9; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
+                <h5 style="margin: 0 0 12px 0; font-size: 13px; color: #333; font-weight: 600;">Yahoo Search</h5>
+                <div class="checkbox-group" style="margin-bottom: 0;">
+                  <input type="checkbox" id="provider-yahoo-enabled" checked>
+                  <label class="checkbox-label" for="provider-yahoo-enabled">Enforce Strict Mode (vm=r)</label>
+                </div>
+              </div>
+              
+              <div style="background: #f9f9f9; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
+                <h5 style="margin: 0 0 12px 0; font-size: 13px; color: #333; font-weight: 600;">DuckDuckGo</h5>
+                <div class="checkbox-group" style="margin-bottom: 0;">
+                  <input type="checkbox" id="provider-ddg-enabled" checked>
+                  <label class="checkbox-label" for="provider-ddg-enabled">Enforce Strict Mode (kp=1)</label>
+                </div>
+              </div>
+              
+              <div style="background: #f9f9f9; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
+                <h5 style="margin: 0 0 12px 0; font-size: 13px; color: #333; font-weight: 600;">YouTube</h5>
+                <div class="checkbox-group" style="margin-bottom: 12px;">
+                  <input type="checkbox" id="provider-youtube-enabled" checked>
+                  <label class="checkbox-label" for="provider-youtube-enabled">Enforce Restricted Mode</label>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="provider-youtube-mode" style="font-size: 13px;">Restriction Level:</label>
+                  <select id="provider-youtube-mode" style="width: 100%; padding: 8px 10px; border: 2px solid #ddd; border-radius: 4px; font-size: 13px;">
+                    <option value="strict">Strict</option>
+                    <option value="moderate">Moderate</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e0e0e0;">
+                <h5 style="margin: 0 0 12px 0; font-size: 13px; color: #333; font-weight: 600;">Advanced Options</h5>
+                
+                <div class="checkbox-group">
+                  <input type="checkbox" id="safe-request-block-downgrade" checked>
+                  <label class="checkbox-label" for="safe-request-block-downgrade">Block user attempts to disable safe parameters</label>
+                </div>
+                
+                <div class="form-group">
+                  <label for="safe-request-frame-enforcement" style="font-size: 13px;">Frame Enforcement:</label>
+                  <select id="safe-request-frame-enforcement" style="width: 100%; padding: 8px 10px; border: 2px solid #ddd; border-radius: 4px; font-size: 13px;">
+                    <option value="any">All frames and subresources (stronger)</option>
+                    <option value="top">Top frame only (faster)</option>
+                  </select>
+                </div>
+                
+                <div class="checkbox-group">
+                  <input type="checkbox" id="safe-request-private-windows" checked>
+                  <label class="checkbox-label" for="safe-request-private-windows">Apply in private windows</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">Allow-List</div>
+          <p class="help-text">Domains to always allow (one per line). These domains will bypass both content filtering and Safe Request Mode:</p>
+          <textarea id="allow-list" style="width: 100%; height: 120px; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-family: monospace; font-size: 13px; resize: vertical;"></textarea>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">Block-List</div>
+          <p class="help-text">Domains to always block (one per line):</p>
+          <textarea id="block-list" style="width: 100%; height: 120px; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-family: monospace; font-size: 13px; resize: vertical;"></textarea>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">Settings PIN</div>
+          <p class="help-text">Protect your settings with a PIN (5-minute inactivity timeout):</p>
+          
+          <div id="pin-status-display"></div>
+          
+          <div id="pin-management-section" style="display: none;">
+            <div id="current-pin-group" class="form-group" style="display: none;">
+              <label for="current-pin">Current PIN:</label>
+              <input type="password" id="current-pin" placeholder="Enter current PIN">
+            </div>
+            
+            <div class="form-group">
+              <label for="new-pin" id="new-pin-label">New PIN:</label>
+              <input type="password" id="new-pin" placeholder="Enter PIN">
+            </div>
+            
+            <div class="button-group">
+              <button class="btn-secondary" id="cancel-pin-btn">Cancel</button>
+              <button class="btn-primary" id="update-pin-btn">Set PIN</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+    
     
     <!-- Self-Lock Tab -->
     <div id="self-lock" class="tab-content">
@@ -439,62 +724,56 @@
       
       <div class="section" id="activate-lock-section">
         <div class="section-title">Activate Self-Lock</div>
+        <p class="help-text">When self-lock is active, the General settings tab will be locked with no option to unlock until the self-lock expires.</p>
         
-        <div class="form-group">
-          <label>Blocking Scope:</label>
-          <select id="lock-scope">
-            <option value="sexual">Sexual/Nudity only</option>
-            <option value="sexual-violence">Sexual/Nudity + Violence</option>
-            <option value="all">All adult labels</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>Duration:</label>
-          <div class="duration-chips">
-            <div class="chip" data-duration="3600000">1 hour</div>
-            <div class="chip" data-duration="14400000">4 hours</div>
-            <div class="chip" data-duration="86400000">24 hours</div>
-            <div class="chip" data-duration="604800000">1 week</div>
-          </div>
-          <div style="display: flex; gap: 10px;">
-            <input type="number" id="custom-duration" placeholder="Minutes" style="flex: 1;">
-            <button class="btn-secondary" id="custom-duration-btn" style="flex: 0;">Custom</button>
+        <!-- Duration Setting -->
+        <div class="settings-subsection">
+          <h3 class="subsection-title">Lock Duration</h3>
+          <div class="form-group">
+            <label>Self-Lock Duration:</label>
+            <div id="self-lock-duration-picker"></div>
           </div>
         </div>
         
-        <div class="form-group">
-          <div class="checkbox-group">
-            <input type="checkbox" id="lock-ignore-allowlist" checked>
-            <label class="checkbox-label" for="lock-ignore-allowlist">Ignore allow-list during lock</label>
+        <!-- Early Unlock Settings -->
+        <div class="settings-subsection">
+          <h3 class="subsection-title">Early Unlock Protection</h3>
+          <div class="form-group">
+            <div class="checkbox-group">
+              <input type="checkbox" id="lock-require-password" checked>
+              <label class="checkbox-label" for="lock-require-password">Require password for early unlock</label>
+            </div>
           </div>
-          <div class="checkbox-group">
-            <input type="checkbox" id="lock-require-password" checked>
-            <label class="checkbox-label" for="lock-require-password">Require password for early unlock</label>
+          
+          <div class="form-group" id="passphrase-section" style="display: none;">
+            <label for="self-lock-pass">Self-Lock Passphrase:</label>
+            <input type="password" id="self-lock-pass" placeholder="Enter passphrase">
+            <p class="help-text" style="margin-top: 8px;">This passphrase will be required to unlock self-lock early</p>
+          </div>
+          
+          <div class="form-group">
+            <label>Early Unlock Cool-down:</label>
+            <p class="help-text" style="margin-bottom: 12px;">Time to wait before allowing another early unlock attempt</p>
+            <div id="cooldown-duration-picker"></div>
           </div>
         </div>
         
-        <div class="form-group">
-          <label for="lock-cooldown">Early unlock cool-down:</label>
-          <select id="lock-cooldown">
-            <option value="0">None</option>
-            <option value="1800000">30 minutes</option>
-            <option value="3600000" selected>1 hour</option>
-            <option value="14400000">4 hours</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <div class="checkbox-group">
-            <input type="checkbox" id="lock-increment-on-block">
-            <label class="checkbox-label" for="lock-increment-on-block">Increment timer when blocked</label>
+        <!-- Auto-Increment Settings -->
+        <div class="settings-subsection">
+          <h3 class="subsection-title">Auto-Increment on Blocked Access</h3>
+          <div class="form-group">
+            <div class="checkbox-group">
+              <input type="checkbox" id="lock-increment-on-block">
+              <label class="checkbox-label" for="lock-increment-on-block">Increment timer when blocked</label>
+            </div>
+            <p class="help-text">Automatically extend the lock duration each time a blocked page is accessed</p>
           </div>
-          <p class="help-text">Automatically extend the lock duration each time a blocked page is accessed</p>
-        </div>
-        
-        <div class="form-group">
-          <label for="lock-increment-minutes">Increment duration (minutes):</label>
-          <input type="number" id="lock-increment-minutes" min="1" max="1440" value="5" placeholder="Minutes">
+          
+          <div class="form-group" id="increment-duration-section" style="display: none;">
+            <label>Increment Duration:</label>
+            <p class="help-text" style="margin-bottom: 12px;">Amount of time to add when a blocked page is accessed</p>
+            <div id="increment-duration-picker"></div>
+          </div>
         </div>
         
         <div class="button-group">
@@ -508,17 +787,8 @@
       <div id="security-alerts"></div>
       
       <div class="section">
-        <div class="section-title">Self-Lock Passphrase</div>
-        <p class="help-text">Set a passphrase to unlock self-lock early:</p>
-        
-        <div class="form-group">
-          <label for="self-lock-pass">Passphrase:</label>
-          <input type="password" id="self-lock-pass" placeholder="Enter passphrase">
-        </div>
-        
-        <div class="button-group">
-          <button class="btn-primary" id="set-self-lock-pass-btn">Set Passphrase</button>
-        </div>
+        <div class="section-title">Security Settings</div>
+        <p class="help-text">Additional security options will appear here.</p>
       </div>
       
       <div class="section">
@@ -546,7 +816,11 @@
     </div>
   </div>
   
+  <link rel="stylesheet" href="time-interval-picker.css">
+  <script src="time-interval-picker.js"></script>
   <script src="utils.js"></script>
+  <script src="safe-request-config.js"></script>
+  <script src="safe-request-utils.js"></script>
   <script src="options.js"></script>
 </body>
 </html>
