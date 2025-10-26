@@ -1,0 +1,7 @@
+time-interval-picker-demo.html
+time-interval-picker-demo.js
+TIME_INTERVAL_PICKER_INTEGRATION.md
+*.md
+.git
+.DS_Store
+web-ext-artifacts

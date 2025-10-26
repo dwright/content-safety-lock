@@ -237,16 +237,24 @@ function injectBlockOverlay(blockData) {
     lockInfo.appendChild(lockTitle);
     
     const lockDetails = document.createElement('p');
-    lockDetails.innerHTML = `
-      <strong>Ends:</strong> ${blockData.lockInfo.endsAt}<br>
-      <strong>Remaining:</strong> ${blockData.lockInfo.remainingFormatted}
-    `;
     lockDetails.style.cssText = `
       margin: 0;
       font-size: 14px;
       color: #666;
       line-height: 1.6;
     `;
+    
+    const endsStrong = document.createElement('strong');
+    endsStrong.textContent = 'Ends:';
+    lockDetails.appendChild(endsStrong);
+    lockDetails.appendChild(document.createTextNode(' ' + blockData.lockInfo.endsAt));
+    lockDetails.appendChild(document.createElement('br'));
+    
+    const remainingStrong = document.createElement('strong');
+    remainingStrong.textContent = 'Remaining:';
+    lockDetails.appendChild(remainingStrong);
+    lockDetails.appendChild(document.createTextNode(' ' + blockData.lockInfo.remainingFormatted));
+    
     lockInfo.appendChild(lockDetails);
     
     box.appendChild(lockInfo);

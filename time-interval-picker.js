@@ -255,9 +255,6 @@ class TimeIntervalPicker {
     // Determine which fields to show based on max constraint
     const visibleFields = this.getVisibleFields();
     
-    // Build field HTML
-    const fieldsHTML = visibleFields.map(field => this.renderField(field, labels[field])).join('');
-    
     // Calculate max display text using verbose format
     let maxText = '';
     if (this.config.maxTotalMinutes !== null) {
@@ -267,23 +264,57 @@ class TimeIntervalPicker {
       maxText = `${this.config.maxTotalMonths} month${this.config.maxTotalMonths !== 1 ? 's' : ''}`;
     }
     
-    this.container.innerHTML = `
-      <div class="time-interval-picker" role="group" aria-label="${this.ariaLabel}" aria-describedby="tip-description">
-        <div class="tip-fields">
-          ${fieldsHTML}
-        </div>
-        <div class="tip-summary" role="status" aria-live="${this.config.announceAriaLive ? 'polite' : 'off'}">
-          <div class="tip-summary-label">Total:</div>
-          <div class="tip-summary-value" id="tip-summary-value"></div>
-        </div>
-        <div class="tip-helper" id="tip-helper" aria-live="polite"></div>
-        <div class="tip-description" id="tip-description">
-          Min: ${this.config.minTotalMinutes} minute${this.config.minTotalMinutes !== 1 ? 's' : ''} • 
-          Max: ${maxText}
-        </div>
-      </div>
-    `;
+    // Clear container
+    this.container.textContent = '';
     
+    // Create main picker container
+    const picker = document.createElement('div');
+    picker.className = 'time-interval-picker';
+    picker.setAttribute('role', 'group');
+    picker.setAttribute('aria-label', this.ariaLabel);
+    picker.setAttribute('aria-describedby', 'tip-description');
+    
+    // Create fields container
+    const fieldsContainer = document.createElement('div');
+    fieldsContainer.className = 'tip-fields';
+    visibleFields.forEach(field => {
+      fieldsContainer.appendChild(this.renderFieldElement(field, labels[field]));
+    });
+    picker.appendChild(fieldsContainer);
+    
+    // Create summary container
+    const summary = document.createElement('div');
+    summary.className = 'tip-summary';
+    summary.setAttribute('role', 'status');
+    summary.setAttribute('aria-live', this.config.announceAriaLive ? 'polite' : 'off');
+    
+    const summaryLabel = document.createElement('div');
+    summaryLabel.className = 'tip-summary-label';
+    summaryLabel.textContent = 'Total:';
+    summary.appendChild(summaryLabel);
+    
+    const summaryValue = document.createElement('div');
+    summaryValue.className = 'tip-summary-value';
+    summaryValue.id = 'tip-summary-value';
+    summary.appendChild(summaryValue);
+    
+    picker.appendChild(summary);
+    
+    // Create helper container
+    const helper = document.createElement('div');
+    helper.className = 'tip-helper';
+    helper.id = 'tip-helper';
+    helper.setAttribute('aria-live', 'polite');
+    picker.appendChild(helper);
+    
+    // Create description container
+    const description = document.createElement('div');
+    description.className = 'tip-description';
+    description.id = 'tip-description';
+    description.textContent = `Min: ${this.config.minTotalMinutes} minute${this.config.minTotalMinutes !== 1 ? 's' : ''} • Max: ${maxText}`;
+    picker.appendChild(description);
+    
+    this.container.appendChild(picker);
     this.updateDisplay();
   }
   
@@ -322,7 +353,7 @@ class TimeIntervalPicker {
     return fields;
   }
   
-  renderField(field, label) {
+  renderFieldElement(field, label) {
     const bounds = this.getEffectiveBounds(field);
     const value = this.value[field];
     
@@ -330,41 +361,71 @@ class TimeIntervalPicker {
     const isAtMin = value <= bounds.min;
     const isAtMax = value >= bounds.max;
     
-    return `
-      <div class="tip-field">
-        <label for="tip-${field}" class="tip-label">${label}</label>
-        <div class="tip-input-group">
-          <button type="button" 
-                  class="tip-stepper tip-stepper-up ${isAtMax ? 'tip-stepper-disabled' : ''}" 
-                  data-field="${field}" 
-                  data-action="inc" 
-                  aria-label="Increase ${label.toLowerCase()}" 
-                  ${isAtMax ? 'disabled' : ''}
-                  tabindex="-1">
-            <span class="tip-stepper-icon">▲</span>
-          </button>
-          <input type="number" 
-                 id="tip-${field}" 
-                 class="tip-input" 
-                 data-field="${field}"
-                 value="${value}" 
-                 min="${bounds.min}" 
-                 max="${bounds.max}"
-                 aria-describedby="tip-bounds-${field}"
-                 inputmode="numeric">
-          <button type="button" 
-                  class="tip-stepper tip-stepper-down ${isAtMin ? 'tip-stepper-disabled' : ''}" 
-                  data-field="${field}" 
-                  data-action="dec"
-                  aria-label="Decrease ${label.toLowerCase()}" 
-                  ${isAtMin ? 'disabled' : ''}
-                  tabindex="-1">
-            <span class="tip-stepper-icon">▼</span>
-          </button>
-        </div>
-        <div class="tip-bounds" id="tip-bounds-${field}">${bounds.min}–${bounds.max}</div>
-      </div>
-    `;
+    const fieldDiv = document.createElement('div');
+    fieldDiv.className = 'tip-field';
+    
+    const labelEl = document.createElement('label');
+    labelEl.setAttribute('for', `tip-${field}`);
+    labelEl.className = 'tip-label';
+    labelEl.textContent = label;
+    fieldDiv.appendChild(labelEl);
+    
+    const inputGroup = document.createElement('div');
+    inputGroup.className = 'tip-input-group';
+    
+    // Up button
+    const upBtn = document.createElement('button');
+    upBtn.type = 'button';
+    upBtn.className = `tip-stepper tip-stepper-up${isAtMax ? ' tip-stepper-disabled' : ''}`;
+    upBtn.setAttribute('data-field', field);
+    upBtn.setAttribute('data-action', 'inc');
+    upBtn.setAttribute('aria-label', `Increase ${label.toLowerCase()}`);
+    upBtn.setAttribute('tabindex', '-1');
+    if (isAtMax) upBtn.disabled = true;
+    const upIcon = document.createElement('span');
+    upIcon.className = 'tip-stepper-icon';
+    upIcon.textContent = '▲';
+    upBtn.appendChild(upIcon);
+    inputGroup.appendChild(upBtn);
+    
+    // Input
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.id = `tip-${field}`;
+    input.className = 'tip-input';
+    input.setAttribute('data-field', field);
+    input.value = value;
+    input.min = bounds.min;
+    input.max = bounds.max;
+    input.setAttribute('aria-describedby', `tip-bounds-${field}`);
+    input.setAttribute('inputmode', 'numeric');
+    inputGroup.appendChild(input);
+    
+    // Down button
+    const downBtn = document.createElement('button');
+    downBtn.type = 'button';
+    downBtn.className = `tip-stepper tip-stepper-down${isAtMin ? ' tip-stepper-disabled' : ''}`;
+    downBtn.setAttribute('data-field', field);
+    downBtn.setAttribute('data-action', 'dec');
+    downBtn.setAttribute('aria-label', `Decrease ${label.toLowerCase()}`);
+    downBtn.setAttribute('tabindex', '-1');
+    if (isAtMin) downBtn.disabled = true;
+    const downIcon = document.createElement('span');
+    downIcon.className = 'tip-stepper-icon';
+    downIcon.textContent = '▼';
+    downBtn.appendChild(downIcon);
+    inputGroup.appendChild(downBtn);
+    
+    fieldDiv.appendChild(inputGroup);
+    
+    // Bounds display
+    const boundsDiv = document.createElement('div');
+    boundsDiv.className = 'tip-bounds';
+    boundsDiv.id = `tip-bounds-${field}`;
+    boundsDiv.textContent = `${bounds.min}–${bounds.max}`;
+    fieldDiv.appendChild(boundsDiv);
+    
+    return fieldDiv;
   }
   
   getEffectiveBounds(field) {
