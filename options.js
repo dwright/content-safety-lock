@@ -181,41 +181,60 @@ async function displayLockedSettings() {
   const allowListCount = parental.allowList.length;
   const blockListCount = parental.blockList.length;
   
-  display.innerHTML = `
-    <div class="locked-view-item">
-      <div class="locked-view-item-label">Content Filtering</div>
-      <div class="locked-view-item-value">${parental.enabled ? '✓ Enabled' : '✗ Disabled'}</div>
-    </div>
+  // Clear display
+  display.textContent = '';
+  
+  // Helper function to create locked view items
+  const createItem = (label, value) => {
+    const item = document.createElement('div');
+    item.className = 'locked-view-item';
     
-    ${parental.enabled ? `
-    <div class="locked-view-item">
-      <div class="locked-view-item-label">Blocked Categories (${enabledCategories.length})</div>
-      <div class="locked-view-item-value">${enabledCategories.length > 0 ? enabledCategories.join(', ') : 'None'}</div>
-    </div>
-    ` : ''}
+    const labelDiv = document.createElement('div');
+    labelDiv.className = 'locked-view-item-label';
+    labelDiv.textContent = label;
     
-    <div class="locked-view-item">
-      <div class="locked-view-item-label">Allow-List (bypasses filtering & safe request)</div>
-      <div class="locked-view-item-value">${allowListCount} domain${allowListCount !== 1 ? 's' : ''}</div>
-    </div>
+    const valueDiv = document.createElement('div');
+    valueDiv.className = 'locked-view-item-value';
+    valueDiv.textContent = value;
     
-    <div class="locked-view-item">
-      <div class="locked-view-item-label">Block-List</div>
-      <div class="locked-view-item-value">${blockListCount} domain${blockListCount !== 1 ? 's' : ''}</div>
-    </div>
-    
-    <div class="locked-view-item">
-      <div class="locked-view-item-label">Safe Request Mode</div>
-      <div class="locked-view-item-value">${safeRequest.enabled ? '✓ Enabled' : '✗ Disabled'}</div>
-    </div>
-    
-    ${safeRequest.enabled ? `
-    <div class="locked-view-item">
-      <div class="locked-view-item-label">Active Providers (${enabledProviders.length})</div>
-      <div class="locked-view-item-value">${enabledProviders.length > 0 ? enabledProviders.join(', ') : 'None'}</div>
-    </div>
-    ` : ''}
-  `;
+    item.appendChild(labelDiv);
+    item.appendChild(valueDiv);
+    return item;
+  };
+  
+  // Content Filtering
+  display.appendChild(createItem('Content Filtering', parental.enabled ? '✓ Enabled' : '✗ Disabled'));
+  
+  // Blocked Categories (only if filtering enabled)
+  if (parental.enabled) {
+    display.appendChild(createItem(
+      `Blocked Categories (${enabledCategories.length})`,
+      enabledCategories.length > 0 ? enabledCategories.join(', ') : 'None'
+    ));
+  }
+  
+  // Allow-List
+  display.appendChild(createItem(
+    'Allow-List (bypasses filtering & safe request)',
+    `${allowListCount} domain${allowListCount !== 1 ? 's' : ''}`
+  ));
+  
+  // Block-List
+  display.appendChild(createItem(
+    'Block-List',
+    `${blockListCount} domain${blockListCount !== 1 ? 's' : ''}`
+  ));
+  
+  // Safe Request Mode
+  display.appendChild(createItem('Safe Request Mode', safeRequest.enabled ? '✓ Enabled' : '✗ Disabled'));
+  
+  // Active Providers (only if safe request enabled)
+  if (safeRequest.enabled) {
+    display.appendChild(createItem(
+      `Active Providers (${enabledProviders.length})`,
+      enabledProviders.length > 0 ? enabledProviders.join(', ') : 'None'
+    ));
+  }
 }
 
 // ============ General Tab ============
@@ -844,29 +863,76 @@ async function refreshSelfLockStatus() {
     const now = Date.now();
     const remaining = Math.max(0, currentState.selfLock.endsAtEpochMs - now);
     
-    panel.innerHTML = `
-      <div class="lock-status">
-        <div class="lock-status-title">🔒 Self-Lock Active</div>
-        <div class="lock-status-detail"><strong>Ends:</strong> ${formatEpochTime(currentState.selfLock.endsAtEpochMs)}</div>
-        <div class="lock-status-detail"><strong>Remaining:</strong> ${formatDuration(remaining)}</div>
-        <div class="lock-status-detail" style="margin-top: 8px; font-style: italic;">General settings tab is locked until self-lock expires</div>
-        <button class="btn-danger" id="disable-lock-btn" style="margin-top: 12px; width: 100%;">Disable Self-Lock</button>
-      </div>
-    `;
+    // Clear and build active status
+    panel.textContent = '';
     
-    document.getElementById('disable-lock-btn').addEventListener('click', async () => {
+    const statusDiv = document.createElement('div');
+    statusDiv.className = 'lock-status';
+    
+    const title = document.createElement('div');
+    title.className = 'lock-status-title';
+    title.textContent = '🔒 Self-Lock Active';
+    statusDiv.appendChild(title);
+    
+    const endsDetail = document.createElement('div');
+    endsDetail.className = 'lock-status-detail';
+    const endsStrong = document.createElement('strong');
+    endsStrong.textContent = 'Ends:';
+    endsDetail.appendChild(endsStrong);
+    endsDetail.appendChild(document.createTextNode(' ' + formatEpochTime(currentState.selfLock.endsAtEpochMs)));
+    statusDiv.appendChild(endsDetail);
+    
+    const remainingDetail = document.createElement('div');
+    remainingDetail.className = 'lock-status-detail';
+    const remainingStrong = document.createElement('strong');
+    remainingStrong.textContent = 'Remaining:';
+    remainingDetail.appendChild(remainingStrong);
+    remainingDetail.appendChild(document.createTextNode(' ' + formatDuration(remaining)));
+    statusDiv.appendChild(remainingDetail);
+    
+    const noteDetail = document.createElement('div');
+    noteDetail.className = 'lock-status-detail';
+    noteDetail.style.marginTop = '8px';
+    noteDetail.style.fontStyle = 'italic';
+    noteDetail.textContent = 'General settings tab is locked until self-lock expires';
+    statusDiv.appendChild(noteDetail);
+    
+    const disableBtn = document.createElement('button');
+    disableBtn.className = 'btn-danger';
+    disableBtn.id = 'disable-lock-btn';
+    disableBtn.style.marginTop = '12px';
+    disableBtn.style.width = '100%';
+    disableBtn.textContent = 'Disable Self-Lock';
+    disableBtn.addEventListener('click', async () => {
       await disableSelfLock();
     });
+    statusDiv.appendChild(disableBtn);
+    
+    panel.appendChild(statusDiv);
     
     // Hide the activate section when self-lock is active
     activateLockSection.style.display = 'none';
   } else {
-    panel.innerHTML = `
-      <div class="lock-status" style="border-left-color: #999; background: #f0f0f0;">
-        <div class="lock-status-title" style="color: #666;">Self-Lock Inactive</div>
-        <p class="help-text">No active lock. Configure and activate below.</p>
-      </div>
-    `;
+    // Clear and build inactive status
+    panel.textContent = '';
+    
+    const statusDiv = document.createElement('div');
+    statusDiv.className = 'lock-status';
+    statusDiv.style.borderLeftColor = '#999';
+    statusDiv.style.background = '#f0f0f0';
+    
+    const title = document.createElement('div');
+    title.className = 'lock-status-title';
+    title.style.color = '#666';
+    title.textContent = 'Self-Lock Inactive';
+    statusDiv.appendChild(title);
+    
+    const helpText = document.createElement('p');
+    helpText.className = 'help-text';
+    helpText.textContent = 'No active lock. Configure and activate below.';
+    statusDiv.appendChild(helpText);
+    
+    panel.appendChild(statusDiv);
     
     // Show the activate section when self-lock is inactive
     activateLockSection.style.display = 'block';
@@ -1048,20 +1114,39 @@ async function generateRecoveryCodes() {
   const codes = generateRecoveryCodes(5);
   
   const display = document.getElementById('recovery-codes-display');
-  display.innerHTML = `
-    <div class="recovery-codes">
-      <p class="help-text" style="margin-bottom: 12px;">Save these codes in a safe place. Each can be used once to unlock:</p>
-      ${codes.map(code => `<div class="recovery-code">${code}</div>`).join('')}
-      <button class="btn-secondary" id="copy-codes-btn" style="width: 100%; margin-top: 12px;">Copy All</button>
-    </div>
-  `;
+  display.textContent = '';
   
-  document.getElementById('copy-codes-btn').addEventListener('click', () => {
+  const container = document.createElement('div');
+  container.className = 'recovery-codes';
+  
+  const helpText = document.createElement('p');
+  helpText.className = 'help-text';
+  helpText.style.marginBottom = '12px';
+  helpText.textContent = 'Save these codes in a safe place. Each can be used once to unlock:';
+  container.appendChild(helpText);
+  
+  codes.forEach(code => {
+    const codeDiv = document.createElement('div');
+    codeDiv.className = 'recovery-code';
+    codeDiv.textContent = code;
+    container.appendChild(codeDiv);
+  });
+  
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'btn-secondary';
+  copyBtn.id = 'copy-codes-btn';
+  copyBtn.style.width = '100%';
+  copyBtn.style.marginTop = '12px';
+  copyBtn.textContent = 'Copy All';
+  copyBtn.addEventListener('click', () => {
     const text = codes.join('\n');
     navigator.clipboard.writeText(text).then(() => {
       showAlert('security-alerts', 'Recovery codes copied to clipboard', 'success');
     });
   });
+  container.appendChild(copyBtn);
+  
+  display.appendChild(container);
   
   // Store hashed codes
   const hashedCodes = await Promise.all(codes.map(code => hashPassphrase(code)));
