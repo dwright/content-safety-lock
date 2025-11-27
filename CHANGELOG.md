@@ -5,7 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-10-21
+## [1.2.0] - 2025-11-27
+
+### Added
+
+#### Safe Request Mode
+- **Tumblr Safe Mode Integration**:
+  - Intercepts network requests to Tumblr API endpoints
+  - Filters JSON responses to remove posts labeled as "Potentially mature content", "Adult content", or "Explicit"
+  - Filters posts flagged as NSFW or classified as "adult"/"nsfw"
+  - Seamless integration with no visual gaps in the feed
+  - Configurable via "Safe Request Mode" settings
+
+### Changed
+- Updated Safe Request Mode configuration UI to include Tumblr specific controls
+
+## [1.1.0] - 2025-10-24
 
 ### Added
 

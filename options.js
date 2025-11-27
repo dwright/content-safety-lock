@@ -169,6 +169,20 @@ async function displayLockedSettings() {
   if (parental.categories.drugs) enabledCategories.push('Drugs/Alcohol');
   if (parental.categories.gambling) enabledCategories.push('Gambling');
   if (parental.categories.ageVerification) enabledCategories.push('Age Verification');
+  if (parental.categories.adultProductSales) {
+    const vendors = parental.adultProductSalesVendors;
+    const enabledVendors = [];
+    if (vendors.etsy) enabledVendors.push('Etsy');
+    if (vendors.redbubble) enabledVendors.push('Redbubble');
+    if (vendors.teepublic) enabledVendors.push('TeePublic');
+    if (vendors.zazzle) enabledVendors.push('Zazzle');
+    if (vendors.itchIo) enabledVendors.push('itch.io');
+    if (vendors.ebay) enabledVendors.push('eBay');
+    if (vendors.amazon) enabledVendors.push('Amazon');
+    if (vendors.patreon) enabledVendors.push('Patreon');
+    if (vendors.shopify) enabledVendors.push('Shopify');
+    enabledCategories.push(`Adult Product Sales (${enabledVendors.length} vendors: ${enabledVendors.join(', ')})`);
+  }
   
   // Build provider list
   const enabledProviders = [];
@@ -177,6 +191,7 @@ async function displayLockedSettings() {
   if (safeRequest.providers.yahoo.enabled) enabledProviders.push('Yahoo');
   if (safeRequest.providers.ddg.enabled) enabledProviders.push('DuckDuckGo');
   if (safeRequest.providers.youtube.enabled) enabledProviders.push('YouTube');
+  if (safeRequest.providers.tumblr?.enabled) enabledProviders.push('Tumblr');
   
   const allowListCount = parental.allowList.length;
   const blockListCount = parental.blockList.length;
@@ -252,6 +267,20 @@ async function loadGeneralSettings() {
   document.getElementById('cat-drugs').checked = currentState.parental.categories.drugs;
   document.getElementById('cat-gambling').checked = currentState.parental.categories.gambling;
   document.getElementById('cat-age-verification').checked = currentState.parental.categories.ageVerification;
+  document.getElementById('cat-adult-product-sales').checked = currentState.parental.categories.adultProductSales;
+  
+  // Load vendor settings
+  const vendors = currentState.parental.adultProductSalesVendors;
+  document.getElementById('vendor-etsy').checked = vendors.etsy;
+  document.getElementById('vendor-redbubble').checked = vendors.redbubble;
+  document.getElementById('vendor-teepublic').checked = vendors.teepublic;
+  document.getElementById('vendor-zazzle').checked = vendors.zazzle;
+  document.getElementById('vendor-itch-io').checked = vendors.itchIo;
+  document.getElementById('vendor-ebay').checked = vendors.ebay;
+  document.getElementById('vendor-amazon').checked = vendors.amazon;
+  document.getElementById('vendor-patreon').checked = vendors.patreon;
+  document.getElementById('vendor-shopify').checked = vendors.shopify;
+  
   document.getElementById('treat-mature').checked = currentState.parental.treatMatureAsAdult;
   
   // Load lists
@@ -281,6 +310,9 @@ async function loadGeneralSettings() {
   document.getElementById('provider-ddg-enabled').checked = config.providers.ddg.enabled;
   document.getElementById('provider-youtube-enabled').checked = config.providers.youtube.enabled;
   document.getElementById('provider-youtube-mode').value = config.providers.youtube.headerMode;
+  if (config.providers.tumblr) {
+    document.getElementById('provider-tumblr-enabled').checked = config.providers.tumblr.enabled;
+  }
   
   // Update collapsible sections based on checkbox states
   updateCollapsibleSections();
@@ -305,7 +337,19 @@ async function saveGeneralSettings(showSuccessMessage = false) {
         profanity: document.getElementById('cat-profanity').checked,
         drugs: document.getElementById('cat-drugs').checked,
         gambling: document.getElementById('cat-gambling').checked,
-        ageVerification: document.getElementById('cat-age-verification').checked
+        ageVerification: document.getElementById('cat-age-verification').checked,
+        adultProductSales: document.getElementById('cat-adult-product-sales').checked
+      },
+      adultProductSalesVendors: {
+        etsy: document.getElementById('vendor-etsy').checked,
+        redbubble: document.getElementById('vendor-redbubble').checked,
+        teepublic: document.getElementById('vendor-teepublic').checked,
+        zazzle: document.getElementById('vendor-zazzle').checked,
+        itchIo: document.getElementById('vendor-itch-io').checked,
+        ebay: document.getElementById('vendor-ebay').checked,
+        amazon: document.getElementById('vendor-amazon').checked,
+        patreon: document.getElementById('vendor-patreon').checked,
+        shopify: document.getElementById('vendor-shopify').checked
       },
       treatMatureAsAdult: document.getElementById('treat-mature').checked,
       allowList: document.getElementById('allow-list').value
@@ -346,6 +390,10 @@ async function saveGeneralSettings(showSuccessMessage = false) {
           ...currentState.safeRequestMode.providers.youtube,
           enabled: document.getElementById('provider-youtube-enabled').checked,
           headerMode: document.getElementById('provider-youtube-mode').value
+        },
+        tumblr: {
+          ...(currentState.safeRequestMode.providers.tumblr || {}),
+          enabled: document.getElementById('provider-tumblr-enabled').checked
         }
       }
     }
@@ -406,18 +454,24 @@ function toggleCollapsible(sectionId) {
 /**
  * Update collapsible sections based on checkbox states
  */
-function updateCollapsibleSections() {
+function updateCollapsibleSections(sourceId) {
   // Content Categories - expand only when filtering is enabled
-  const contentFilterEnabled = document.getElementById('enable-filter').checked;
-  const contentCategoriesContent = document.getElementById('content-categories-content');
-  const contentCategoriesToggle = document.querySelector('#content-categories-header .collapsible-toggle');
-  
-  if (contentFilterEnabled) {
-    contentCategoriesContent.classList.remove('collapsed');
-    contentCategoriesToggle.classList.remove('collapsed');
-  } else {
-    contentCategoriesContent.classList.add('collapsed');
-    contentCategoriesToggle.classList.add('collapsed');
+  // Only adjust this section when called without a specific source (initial load)
+  // or when the Enable Content Filtering checkbox itself changes.
+  if (!sourceId || sourceId === 'enable-filter') {
+    const contentFilterEnabled = document.getElementById('enable-filter').checked;
+    const contentCategoriesContent = document.getElementById('content-categories-content');
+    const contentCategoriesToggle = document.querySelector('#content-categories-header .collapsible-toggle');
+    
+    if (contentCategoriesContent && contentCategoriesToggle) {
+      if (contentFilterEnabled) {
+        contentCategoriesContent.classList.remove('collapsed');
+        contentCategoriesToggle.classList.remove('collapsed');
+      } else {
+        contentCategoriesContent.classList.add('collapsed');
+        contentCategoriesToggle.classList.add('collapsed');
+      }
+    }
   }
   
   // Safe Request Mode details - show only when enabled
@@ -426,6 +480,14 @@ function updateCollapsibleSections() {
   
   if (safeRequestDetails) {
     safeRequestDetails.style.display = safeRequestEnabled ? 'block' : 'none';
+  }
+  
+  // Adult Product Sales Vendors - show only when category is enabled
+  const adultProductSalesEnabled = document.getElementById('cat-adult-product-sales').checked;
+  const adultProductSalesVendors = document.getElementById('adult-product-sales-vendors');
+  
+  if (adultProductSalesVendors) {
+    adultProductSalesVendors.style.display = adultProductSalesEnabled ? 'block' : 'none';
   }
 }
 
@@ -444,8 +506,20 @@ function setupAutoSave() {
     
     input.addEventListener(eventType, () => {
       // Update collapsible sections if relevant checkboxes changed
-      if (input.id === 'enable-filter' || input.id === 'safe-request-enabled') {
-        updateCollapsibleSections();
+      if (input.id === 'enable-filter' || input.id === 'safe-request-enabled' || input.id === 'cat-adult-product-sales') {
+        updateCollapsibleSections(input.id);
+        
+        // When Adult Product Sales is enabled, check all vendor checkboxes by default
+        if (input.id === 'cat-adult-product-sales' && input.checked) {
+          const vendorCheckboxes = [
+            'vendor-etsy', 'vendor-redbubble', 'vendor-teepublic', 'vendor-zazzle',
+            'vendor-itch-io', 'vendor-ebay', 'vendor-amazon', 'vendor-patreon', 'vendor-shopify'
+          ];
+          vendorCheckboxes.forEach(id => {
+            const checkbox = document.getElementById(id);
+            if (checkbox) checkbox.checked = true;
+          });
+        }
       }
       
       // Auto-save settings

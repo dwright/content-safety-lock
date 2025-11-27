@@ -224,8 +224,13 @@ function matchesCategoryPolicy(signals, parentalConfig) {
   
   const signalSet = new Set(signals);
   
-  // Always block generic adult or RTA
-  if (signalSet.has('GENERIC:adult') || signalSet.has('RTA')) {
+  // RTA always blocks (industry standard adult content label)
+  if (signalSet.has('RTA')) {
+    return true;
+  }
+  
+  // GENERIC:adult only blocks if Sexual/Nudity category is enabled
+  if (parentalConfig.categories.sexual && signalSet.has('GENERIC:adult')) {
     return true;
   }
   
@@ -249,6 +254,22 @@ function matchesCategoryPolicy(signals, parentalConfig) {
     return true;
   }
   
+  // Check Adult Product Sales category with vendor-specific toggles
+  if (parentalConfig.categories.adultProductSales) {
+    const vendors = parentalConfig.adultProductSalesVendors;
+    
+    // Check each vendor signal
+    if (vendors.etsy && signalSet.has('VENDOR:etsy:mature')) return true;
+    if (vendors.redbubble && signalSet.has('VENDOR:redbubble:mature')) return true;
+    if (vendors.teepublic && signalSet.has('VENDOR:teepublic:mature')) return true;
+    if (vendors.zazzle && signalSet.has('VENDOR:zazzle:mature')) return true;
+    if (vendors.itchIo && signalSet.has('VENDOR:itch.io:mature')) return true;
+    if (vendors.ebay && signalSet.has('VENDOR:ebay:mature')) return true;
+    if (vendors.amazon && signalSet.has('VENDOR:amazon:mature')) return true;
+    if (vendors.patreon && signalSet.has('VENDOR:patreon:mature')) return true;
+    if (vendors.shopify && signalSet.has('VENDOR:shopify:mature')) return true;
+  }
+  
   // Handle mature/restricted as adult
   if (parentalConfig.treatMatureAsAdult && signalSet.has('GENERIC:mature')) {
     return true;
@@ -259,20 +280,35 @@ function matchesCategoryPolicy(signals, parentalConfig) {
 
 /**
  * Get human-readable reason for blocking
+ * Prioritizes vendor-specific reasons over generic ones
  */
 function getBlockReason(signals) {
   const reasons = [];
   const signalSet = new Set(signals);
   
-  if (signalSet.has('RTA')) reasons.push('RTA Label');
-  if (signalSet.has('GENERIC:adult')) reasons.push('Adult Content');
-  if (signalSet.has('GENERIC:mature')) reasons.push('Mature Content');
+  // Check vendor-specific signals first (most specific)
+  if (signalSet.has('VENDOR:etsy:mature')) reasons.push('Adult Product Sales (Etsy)');
+  if (signalSet.has('VENDOR:redbubble:mature')) reasons.push('Adult Product Sales (Redbubble)');
+  if (signalSet.has('VENDOR:teepublic:mature')) reasons.push('Adult Product Sales (TeePublic)');
+  if (signalSet.has('VENDOR:zazzle:mature')) reasons.push('Adult Product Sales (Zazzle)');
+  if (signalSet.has('VENDOR:itch.io:mature')) reasons.push('Adult Product Sales (itch.io)');
+  if (signalSet.has('VENDOR:ebay:mature')) reasons.push('Adult Product Sales (eBay)');
+  if (signalSet.has('VENDOR:amazon:mature')) reasons.push('Adult Product Sales (Amazon)');
+  if (signalSet.has('VENDOR:patreon:mature')) reasons.push('Adult Product Sales (Patreon)');
+  if (signalSet.has('VENDOR:shopify:mature')) reasons.push('Adult Product Sales (Shopify)');
+  
+  // Category-specific signals
+  if (signalSet.has('RTA')) reasons.push('Sexual/Nudity (RTA Label)');
   if (signalSet.has('ICRA:sexual')) reasons.push('Sexual/Nudity');
   if (signalSet.has('ICRA:violence')) reasons.push('Violence');
   if (signalSet.has('ICRA:profanity')) reasons.push('Profanity');
   if (signalSet.has('ICRA:drugs')) reasons.push('Drugs/Alcohol');
   if (signalSet.has('ICRA:gambling')) reasons.push('Gambling');
   if (signalSet.has('ICRA:ageVerification')) reasons.push('Age Verification Required');
+  
+  // Generic signals (least specific, shown last)
+  if (signalSet.has('GENERIC:adult')) reasons.push('Sexual/Nudity (Adult Content)');
+  if (signalSet.has('GENERIC:mature')) reasons.push('Mature Content');
   
   return reasons;
 }

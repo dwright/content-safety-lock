@@ -567,6 +567,53 @@
                 <input type="checkbox" id="cat-age-verification">
                 <label class="checkbox-label" for="cat-age-verification">Age Verification Services</label>
               </div>
+              <div class="checkbox-group">
+                <input type="checkbox" id="cat-adult-product-sales">
+                <label class="checkbox-label" for="cat-adult-product-sales">Adult Product Sales (e-commerce platforms)</label>
+              </div>
+            </div>
+            
+            <!-- Adult Product Sales Vendors (collapsible) -->
+            <div id="adult-product-sales-vendors" style="display: none; margin-top: 16px; padding: 16px; background: #f0f0f0; border-radius: 6px;">
+              <h4 style="font-size: 13px; font-weight: 600; color: #333; margin-bottom: 12px;">Select Vendors to Monitor:</h4>
+              <div class="form-group">
+                <div class="checkbox-group">
+                  <input type="checkbox" id="vendor-etsy">
+                  <label class="checkbox-label" for="vendor-etsy">Etsy (mature-tagged listings)</label>
+                </div>
+                <div class="checkbox-group">
+                  <input type="checkbox" id="vendor-redbubble">
+                  <label class="checkbox-label" for="vendor-redbubble">Redbubble (mature content)</label>
+                </div>
+                <div class="checkbox-group">
+                  <input type="checkbox" id="vendor-teepublic">
+                  <label class="checkbox-label" for="vendor-teepublic">TeePublic (explicit content)</label>
+                </div>
+                <div class="checkbox-group">
+                  <input type="checkbox" id="vendor-zazzle">
+                  <label class="checkbox-label" for="vendor-zazzle">Zazzle (R-rated products)</label>
+                </div>
+                <div class="checkbox-group">
+                  <input type="checkbox" id="vendor-itch-io">
+                  <label class="checkbox-label" for="vendor-itch-io">itch.io (adult content)</label>
+                </div>
+                <div class="checkbox-group">
+                  <input type="checkbox" id="vendor-ebay">
+                  <label class="checkbox-label" for="vendor-ebay">eBay (Sexual Wellness category)</label>
+                </div>
+                <div class="checkbox-group">
+                  <input type="checkbox" id="vendor-amazon">
+                  <label class="checkbox-label" for="vendor-amazon">Amazon (Sexual Wellness category)</label>
+                </div>
+                <div class="checkbox-group">
+                  <input type="checkbox" id="vendor-patreon">
+                  <label class="checkbox-label" for="vendor-patreon">Patreon (18+ creators)</label>
+                </div>
+                <div class="checkbox-group">
+                  <input type="checkbox" id="vendor-shopify">
+                  <label class="checkbox-label" for="vendor-shopify">Shopify stores (age-gated content)</label>
+                </div>
+              </div>
             </div>
             
             <div class="checkbox-group">
@@ -646,6 +693,14 @@
                     <option value="strict">Strict</option>
                     <option value="moderate">Moderate</option>
                   </select>
+                </div>
+              </div>
+              
+              <div style="background: #f9f9f9; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
+                <h5 style="margin: 0 0 12px 0; font-size: 13px; color: #333; font-weight: 600;">Tumblr</h5>
+                <div class="checkbox-group" style="margin-bottom: 0;">
+                  <input type="checkbox" id="provider-tumblr-enabled" checked>
+                  <label class="checkbox-label" for="provider-tumblr-enabled">Block posts labeled mature</label>
                 </div>
               </div>
               

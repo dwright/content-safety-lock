@@ -32,7 +32,8 @@ function detectAgeVerificationElements() {
     /restricted\s+to\s+(?:ages?\s+)?1[68]\+/i,
     /18\s+(?:and\s+)?(?:over|older|above)/i,
     /21\s+(?:and\s+)?(?:over|older|above)/i,
-    /age\s+(?:gate|verification|check)\s+required/i,
+    /you\s+are\s+21\s+years?\s+of\s+age\s+or\s+older/i,
+    /age\s+(?:gate|verification|check)\b/i,
     /confirm\s+you\s+are\s+(?:at\s+least\s+)?1[68]/i
   ];
   
@@ -52,6 +53,7 @@ function detectAgeVerificationElements() {
   
   // Check page text content for age requirement patterns
   const bodyText = document.body ? document.body.innerText : '';
+  console.log('[CSL] Checking body text, length:', bodyText.length, 'first 200 chars:', bodyText.substring(0, 200));
   for (const pattern of ageRequirementPatterns) {
     if (pattern.test(bodyText)) {
       console.log('[CSL] Found age requirement text matching pattern:', pattern);
@@ -59,6 +61,7 @@ function detectAgeVerificationElements() {
     }
   }
   
+  console.log('[CSL] No age verification patterns matched in body text');
   return false;
 }
 
@@ -78,6 +81,8 @@ function detectLabels() {
   // Check rating meta tag (case-insensitive)
   const allMetas = head.querySelectorAll('meta');
   console.log('[CSL] Found', allMetas.length, 'meta tags');
+  console.log('[CSL] Document readyState:', document.readyState);
+  console.log('[CSL] Body exists:', !!document.body);
   
   for (const meta of allMetas) {
     const name = (meta.getAttribute('name') || '').toLowerCase();
@@ -141,8 +146,32 @@ function detectLabels() {
   }
   
   // Check for age verification DOM elements
-  if (detectAgeVerificationElements()) {
+  const hasAgeVerification = detectAgeVerificationElements();
+  console.log('[CSL] Age verification check result:', hasAgeVerification);
+  if (hasAgeVerification) {
     signals.push('ICRA:ageVerification');
+  }
+  
+  // Check for mature content on e-commerce platforms
+  // Note: generateMatureContentSignals() is defined in mature-content-detectors.js
+  if (typeof generateMatureContentSignals === 'function') {
+    const matureSignals = generateMatureContentSignals();
+    console.log('[CSL] Mature content signals:', matureSignals);
+    
+    // If vendor-specific signals are detected, remove generic adult/mature signals
+    // to prevent them from bypassing vendor toggles
+    if (matureSignals.length > 0) {
+      const vendorSignalsDetected = matureSignals.some(s => s.startsWith('VENDOR:'));
+      if (vendorSignalsDetected) {
+        // Remove generic signals that would bypass vendor toggles
+        const filteredSignals = signals.filter(s => s !== 'GENERIC:adult' && s !== 'GENERIC:mature');
+        signals.length = 0;
+        signals.push(...filteredSignals);
+        console.log('[CSL] Vendor signals detected - removed generic adult/mature signals');
+      }
+    }
+    
+    signals.push(...matureSignals);
   }
   
   console.log('[CSL] Detected signals (final):', signals, 'Total signals:', signals.length);
@@ -170,17 +199,18 @@ function injectBlockOverlay(blockData) {
   const overlay = document.createElement('div');
   overlay.id = 'csl-block-overlay';
   overlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 999999;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 2147483647 !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
+    pointer-events: auto !important;
   `;
   
   // Create content box
@@ -308,6 +338,60 @@ function injectBlockOverlay(blockData) {
   
   // Block all interactions
   document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+  
+  // Aggressively prevent removal or hiding of overlay
+  const protectOverlay = () => {
+    const currentOverlay = document.getElementById('csl-block-overlay');
+    if (!currentOverlay || currentOverlay.style.display === 'none' || currentOverlay.style.visibility === 'hidden') {
+      console.log('[CSL] Overlay was removed or hidden, re-injecting...');
+      injectBlockOverlay(blockData);
+    }
+  };
+  
+  // Watch for attempts to remove or hide the overlay
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.type === 'childList') {
+        for (const node of mutation.removedNodes) {
+          if (node.id === 'csl-block-overlay') {
+            console.log('[CSL] Overlay removed by site script, re-injecting...');
+            setTimeout(() => protectOverlay(), 0);
+          }
+        }
+      }
+    }
+  });
+  
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  });
+  
+  // Also check periodically
+  setInterval(protectOverlay, 500);
+  
+  // Prevent site from removing overflow hidden
+  const styleObserver = new MutationObserver(() => {
+    if (document.documentElement.style.overflow !== 'hidden') {
+      document.documentElement.style.overflow = 'hidden';
+    }
+    if (document.body && document.body.style.overflow !== 'hidden') {
+      document.body.style.overflow = 'hidden';
+    }
+  });
+  
+  styleObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['style']
+  });
+  
+  if (document.body) {
+    styleObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['style']
+    });
+  }
 }
 
 /**
@@ -513,6 +597,11 @@ function showPhraseVerification(box, unlockPhrase, cooldownMs, blockData) {
  */
 async function checkAndBlock() {
   console.log('[CSL] *** checkAndBlock() CALLED ***');
+  console.log('[CSL] URL:', window.location.href);
+  console.log('[CSL] readyState:', document.readyState);
+  console.log('[CSL] head exists:', !!document.head);
+  console.log('[CSL] body exists:', !!document.body);
+  
   // Don't block the extension's own pages
   if (location.protocol === 'moz-extension:') {
     console.log('[CSL] Skipping extension page');
@@ -584,15 +673,84 @@ function watchForDynamicLabels() {
 
 // Run check at document_start
 console.log('[CSL] Content script loaded for:', window.location.href);
+console.log('[CSL] Initial readyState:', document.readyState);
 
+// Always check immediately (for meta tags in head)
+if (document.head) {
+  console.log('[CSL] Head available immediately, running initial check');
+  checkAndBlock();
+}
+
+// Also check when DOM is ready (for body text and dynamic content)
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     console.log('[CSL] DOMContentLoaded - checking for labels');
     checkAndBlock();
     watchForDynamicLabels();
+    
+    // Check again after a short delay to catch dynamically loaded age gates
+    setTimeout(() => {
+      console.log('[CSL] Delayed check (500ms) - catching dynamic content');
+      checkAndBlock();
+    }, 500);
+    
+    setTimeout(() => {
+      console.log('[CSL] Delayed check (2000ms) - final catch');
+      checkAndBlock();
+    }, 2000);
   });
 } else {
   console.log('[CSL] Document already loaded - checking for labels');
   checkAndBlock();
   watchForDynamicLabels();
+  
+  // Check again after a short delay to catch dynamically loaded age gates
+  setTimeout(() => {
+    console.log('[CSL] Delayed check (500ms) - catching dynamic content');
+    checkAndBlock();
+  }, 500);
+  
+  setTimeout(() => {
+    console.log('[CSL] Delayed check (2000ms) - final catch');
+    checkAndBlock();
+  }, 2000);
 }
+
+// ============ Tumblr Safe Mode Interceptor ============
+
+/**
+ * Initialize Tumblr interception if enabled
+ */
+async function initTumblrInterception() {
+  if (!window.location.hostname.includes('tumblr.com')) {
+    return;
+  }
+
+  console.log('[CSL] Tumblr detected, checking Safe Request Mode settings...');
+
+  try {
+    const response = await browser.runtime.sendMessage({ type: 'GET_STATE' });
+    const state = response.state;
+    
+    // Check if Safe Request Mode is active and Tumblr provider is enabled
+    const safeRequest = state.safeRequestMode;
+    const tumblrConfig = safeRequest.providers.tumblr;
+    
+    const shouldEnable = (safeRequest.enabled || (state.selfLock.active && safeRequest.forceUnderSelfLock)) && 
+                         tumblrConfig && tumblrConfig.enabled;
+                         
+    if (!shouldEnable) {
+      console.log('[CSL] Tumblr Safe Mode not enabled');
+      return;
+    }
+    
+    console.log('[CSL] Requesting Tumblr Safe Mode interception injection');
+    await browser.runtime.sendMessage({ type: 'INJECT_TUMBLR_INTERCEPTOR' });
+    
+  } catch (err) {
+    console.error('[CSL] Error initializing Tumblr interception:', err);
+  }
+}
+
+// Run initialization
+initTumblrInterception();
