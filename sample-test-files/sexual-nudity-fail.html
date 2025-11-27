@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sexual/Nudity Test - FAIL (Should NOT Block)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-card {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .status {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    .status-fail {
+      background: #4caf50;
+      color: white;
+    }
+    .info {
+      background: #e8f5e9;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 20px;
+    }
+    code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-card">
+    <span class="status status-fail">FAIL TEST</span>
+    <h1>Sexual/Nudity Category Test</h1>
+    <h2>Expected Behavior: NOT BLOCKED</h2>
+    
+    <p><strong>If you can read this, the test PASSED.</strong></p>
+    <p>This page should NOT be blocked by the Content Safety Lock extension.</p>
+    
+    <div class="info">
+      <h3>Test Details</h3>
+      <ul>
+        <li><strong>Category:</strong> Sexual/Nudity</li>
+        <li><strong>Signal:</strong> None (clean page)</li>
+        <li><strong>Meta Tags:</strong> No rating or adult content meta tags</li>
+        <li><strong>Expected Signal:</strong> <code>[]</code> (empty)</li>
+      </ul>
+      
+      <h3>How to Verify</h3>
+      <ol>
+        <li>Enable "Content Filtering" in extension options</li>
+        <li>Enable "Sexual/Nudity" category</li>
+        <li>Open this file in Firefox</li>
+        <li>You should see this page normally (no block overlay)</li>
+        <li>Check console (F12) for: <code>[CSL] No signals detected - page allowed</code></li>
+      </ol>
+    </div>
+  </div>
+</body>
+</html>

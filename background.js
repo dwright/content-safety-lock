@@ -27,7 +27,19 @@ const DEFAULT_STATE = {
       profanity: false,
       drugs: false,
       gambling: false,
-      ageVerification: false
+      ageVerification: false,
+      adultProductSales: false
+    },
+    adultProductSalesVendors: {
+      etsy: false,
+      redbubble: false,
+      teepublic: false,
+      zazzle: false,
+      itchIo: false,
+      ebay: false,
+      amazon: false,
+      patreon: false,
+      shopify: false
     },
     treatMatureAsAdult: true,
     allowList: [],
@@ -86,7 +98,12 @@ async function loadState() {
   const state = {
     ...DEFAULT_STATE,
     ...stored,
-    parental: { ...DEFAULT_STATE.parental, ...stored.parental },
+    parental: { 
+      ...DEFAULT_STATE.parental, 
+      ...stored.parental,
+      categories: { ...DEFAULT_STATE.parental.categories, ...stored.parental?.categories },
+      adultProductSalesVendors: { ...DEFAULT_STATE.parental.adultProductSalesVendors, ...stored.parental?.adultProductSalesVendors }
+    },
     selfLock: { ...DEFAULT_STATE.selfLock, ...stored.selfLock },
     pinLock: { ...DEFAULT_STATE.pinLock, ...stored.pinLock },
     safeRequestMode: { ...DEFAULT_STATE.safeRequestMode, ...stored.safeRequestMode }
@@ -452,6 +469,21 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
     }
     
     return { success: false };
+  }
+  
+  if (message.type === 'INJECT_TUMBLR_INTERCEPTOR') {
+    console.log('[BG] Injecting Tumblr interceptor into tab', sender.tab.id);
+    try {
+      await browser.scripting.executeScript({
+        target: { tabId: sender.tab.id },
+        files: ['tumblr-interceptor.js'],
+        world: 'MAIN'
+      });
+      return { success: true };
+    } catch (err) {
+      console.error('[BG] Failed to inject Tumblr interceptor:', err);
+      return { success: false, error: err.message };
+    }
   }
 });
 

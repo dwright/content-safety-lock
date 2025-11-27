@@ -15,6 +15,16 @@ A voluntary adult content blocker with self-lock mode for adults seeking structu
   - Category toggles (Sexual/Nudity, Violence, Profanity, Drugs/Alcohol, Gambling)
   - Allow-list and block-list management
   - Settings PIN protection
+  
+### Safe Request Mode (New)
+- **Server-Side Filtering**: Requests safer content directly from providers
+- **Supported Providers**:
+  - **Google**: Enforces SafeSearch
+  - **Bing**: Enforces Strict Mode (optional redirect to strict.bing.com)
+  - **Yahoo**: Enforces Strict Mode
+  - **DuckDuckGo**: Enforces Strict Mode
+  - **YouTube**: Enforces Restricted Mode (Strict or Moderate)
+  - **Tumblr**: Filters posts labeled as mature/explicit/adult
 
 ### Self-Lock Mode (New)
 - **Voluntary Commitment**: Adults can activate self-lock to block adult content for a set period

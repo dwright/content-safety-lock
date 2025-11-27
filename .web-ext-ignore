@@ -5,3 +5,5 @@ TIME_INTERVAL_PICKER_INTEGRATION.md
 .git
 .DS_Store
 web-ext-artifacts
+sample-test-files
+sample-test-files/**

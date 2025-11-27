@@ -89,6 +89,12 @@ const PROVIDER_RULES = {
     name: 'YouTube',
     match: (hostname) => /(^|\.)((youtube|youtu|ytimg|googlevideo)\.com|youtu\.be)$/.test(hostname),
     isHeaderOnly: true
+  },
+  
+  tumblr: {
+    name: 'Tumblr',
+    match: (hostname) => /(^|\.)tumblr\.com$/.test(hostname),
+    isJsonFilter: true
   }
 };
 
@@ -128,6 +134,10 @@ const DEFAULT_SAFE_REQUEST_CONFIG = {
       enabled: true,
       headerMode: 'strict',
       useRestrictHostRedirect: false
+    },
+    tumblr: {
+      enabled: true,
+      filterMature: true
     }
   }
 };

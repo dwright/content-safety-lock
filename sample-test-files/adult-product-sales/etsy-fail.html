@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="test-domain" content="www.etsy.com">
+  <title>Etsy Clean Content Test - FAIL</title>
+  <style>body{font-family:Arial;max-width:800px;margin:50px auto;padding:20px;background:#f5f5f5}.test-card{background:white;padding:30px;border-radius:8px}.status-fail{background:#4caf50;color:white;padding:8px 16px;border-radius:4px;font-weight:bold}.related-searches{margin:30px 0;padding:20px;background:#f9f9f9;border-radius:8px}.tag-btn{display:inline-block;padding:8px 16px;background:#e0e0e0;border-radius:20px;margin:5px;text-decoration:none;color:#333}</style>
+</head>
+<body>
+  <div class="test-card">
+    <span class="status-fail">FAIL TEST</span>
+    <h1>Etsy Clean Content Test</h1>
+    <h2>Expected: NOT BLOCKED</h2>
+    <p><strong>If you can read this, test PASSED.</strong></p>
+    
+    <h3>Product Title: Beautiful Handmade Pottery</h3>
+    <p>This is a clean listing with no mature content tags.</p>
+    
+    <div class="related-searches">
+      <h2 class="wt-mb-xs-2 wt-text-heading-small">Explore more related searches</h2>
+      <div data-clg-id="WtActionGroup" class="wt-action-group">
+        <a href="https://www.etsy.com/market/pottery?ref=lp" class="tag-btn">Pottery</a>
+        <a href="https://www.etsy.com/market/handmade?ref=lp" class="tag-btn">Handmade</a>
+        <a href="https://www.etsy.com/market/ceramic?ref=lp" class="tag-btn">Ceramic</a>
+        <a href="https://www.etsy.com/market/home_decor?ref=lp" class="tag-btn">Home Decor</a>
+      </div>
+    </div>
+    
+    <div style="background:#e8f5e9;padding:15px;border-radius:4px;margin-top:20px">
+      <h4>Test Details</h4>
+      <ul>
+        <li><strong>Vendor:</strong> Etsy</li>
+        <li><strong>Tags:</strong> pottery, handmade, ceramic, home_decor</li>
+        <li><strong>Expected:</strong> No "mature" or "mature_*" tags detected</li>
+        <li><strong>Result:</strong> Should NOT be blocked</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

@@ -45,7 +45,8 @@ safeRequestMode: {
     bing: { enabled: true, useParam: true, usePreferSafeHonor: true, useRedirect: false },
     yahoo: { enabled: true, useParam: true },
     ddg: { enabled: true, useParam: true, useRedirect: false },
-    youtube: { enabled: true, headerMode: "strict", useRestrictHostRedirect: false }
+    youtube: { enabled: true, headerMode: "strict", useRestrictHostRedirect: false },
+    tumblr: { enabled: true, filterMature: true }
   }
 }
 ```
@@ -116,6 +117,27 @@ safeRequestMode: {
 **Header**: `YouTube-Restrict: Strict` or `Moderate`
 
 **Apply to**: All requests to YouTube hosts
+
+---
+
+### 3.7 Tumblr (Hybrid Interception)
+
+**Hosts**: `*.tumblr.com`
+
+**Triggers**:
+- **Network**: Intercepts `window.fetch` for API requests (`/v2/blog/*/posts`, `/api/v2/timeline`, `/api/v2/search`)
+- **Hydration**: Intercepts `JSON.parse` to catch initial state hydration
+- **DOM**: MutationObserver scans for pre-rendered mature content
+
+**Logic**:
+1. **Network/JSON**: Filters JSON responses/objects to remove posts with:
+   - `headerContext.label.text` IN ["Potentially mature content", "Adult content", "Explicit"]
+   - `isNsfw` is true
+   - `classification` IN ["adult", "nsfw"]
+   - `communityLabel.isNsfw` is true
+2. **DOM**: Scans for elements containing specific warning text and replaces their parent container with a block message.
+
+**Implementation**: Main World script injection via `browser.scripting` (bypasses CSP).
 
 ---
 

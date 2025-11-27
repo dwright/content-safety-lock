@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Content Safety Lock - Test Files Index</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    h1 { color: #333; margin-bottom: 10px; }
+    .subtitle { color: #666; margin-bottom: 30px; }
+    .category {
+      margin-bottom: 40px;
+      padding: 20px;
+      background: #f9f9f9;
+      border-radius: 8px;
+    }
+    .category h2 {
+      color: #667eea;
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+    .test-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .test-link {
+      display: block;
+      padding: 15px;
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      text-decoration: none;
+      color: #333;
+      transition: all 0.2s;
+    }
+    .test-link:hover {
+      border-color: #667eea;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .test-link.pass {
+      border-left: 4px solid #ff6b6b;
+    }
+    .test-link.fail {
+      border-left: 4px solid #4caf50;
+    }
+    .test-title {
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    .test-desc {
+      font-size: 13px;
+      color: #666;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+    .badge-pass {
+      background: #ffe0e0;
+      color: #d32f2f;
+    }
+    .badge-fail {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .info-box {
+      background: #e3f2fd;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+    .info-box h3 {
+      color: #1976d2;
+      margin-bottom: 10px;
+    }
+    .info-box ul {
+      margin-left: 20px;
+    }
+    .info-box li {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🛡️ Content Safety Lock Test Files</h1>
+    <p class="subtitle">Local test files for verifying extension detection and blocking behavior</p>
+    
+    <div class="info-box">
+      <h3>How to Use These Tests</h3>
+      <ul>
+        <li><strong>PASS tests</strong> should be <strong>BLOCKED</strong> (you should see purple overlay)</li>
+        <li><strong>FAIL tests</strong> should <strong>NOT be blocked</strong> (you should see the page normally)</li>
+        <li>Enable the relevant category/vendor in extension settings before testing</li>
+        <li>Open browser console (F12) to see detection logs</li>
+        <li>See <a href="README.md">README.md</a> for detailed instructions</li>
+      </ul>
+    </div>
+
+    <!-- Basic Categories -->
+    <div class="category">
+      <h2>📋 Basic Content Categories</h2>
+      <div class="test-grid">
+        <a href="sexual-nudity-pass.html" class="test-link pass">
+          <div class="test-title">Sexual/Nudity <span class="badge badge-pass">PASS</span></div>
+          <div class="test-desc">RTA label - should block</div>
+        </a>
+        <a href="sexual-nudity-fail.html" class="test-link fail">
+          <div class="test-title">Sexual/Nudity <span class="badge badge-fail">FAIL</span></div>
+          <div class="test-desc">No signals - should NOT block</div>
+        </a>
+        
+        <a href="violence-pass.html" class="test-link pass">
+          <div class="test-title">Violence <span class="badge badge-pass">PASS</span></div>
+          <div class="test-desc">ICRA violence - should block</div>
+        </a>
+        <a href="violence-fail.html" class="test-link fail">
+          <div class="test-title">Violence <span class="badge badge-fail">FAIL</span></div>
+          <div class="test-desc">No signals - should NOT block</div>
+        </a>
+        
+        <a href="profanity-pass.html" class="test-link pass">
+          <div class="test-title">Profanity <span class="badge badge-pass">PASS</span></div>
+          <div class="test-desc">ICRA profanity - should block</div>
+        </a>
+        <a href="profanity-fail.html" class="test-link fail">
+          <div class="test-title">Profanity <span class="badge badge-fail">FAIL</span></div>
+          <div class="test-desc">No signals - should NOT block</div>
+        </a>
+        
+        <a href="drugs-pass.html" class="test-link pass">
+          <div class="test-title">Drugs/Alcohol <span class="badge badge-pass">PASS</span></div>
+          <div class="test-desc">ICRA drugs - should block</div>
+        </a>
+        <a href="drugs-fail.html" class="test-link fail">
+          <div class="test-title">Drugs/Alcohol <span class="badge badge-fail">FAIL</span></div>
+          <div class="test-desc">No signals - should NOT block</div>
+        </a>
+        
+        <a href="gambling-pass.html" class="test-link pass">
+          <div class="test-title">Gambling <span class="badge badge-pass">PASS</span></div>
+          <div class="test-desc">ICRA gambling - should block</div>
+        </a>
+        <a href="gambling-fail.html" class="test-link fail">
+          <div class="test-title">Gambling <span class="badge badge-fail">FAIL</span></div>
+          <div class="test-desc">No signals - should NOT block</div>
+        </a>
+        
+        <a href="age-verification-pass.html" class="test-link pass">
+          <div class="test-title">Age Verification <span class="badge badge-pass">PASS</span></div>
+          <div class="test-desc">Age gate detected - should block</div>
+        </a>
+        <a href="age-verification-fail.html" class="test-link fail">
+          <div class="test-title">Age Verification <span class="badge badge-fail">FAIL</span></div>
+          <div class="test-desc">No age gate - should NOT block</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Adult Product Sales -->
+    <div class="category">
+      <h2>🛒 Adult Product Sales (E-commerce Vendors)</h2>
+      <div class="test-grid">
+        <a href="adult-product-sales/etsy-pass.html" class="test-link pass">
+          <div class="test-title">Etsy <span class="badge badge-pass">PASS</span></div>
+          <div class="test-desc">Mature tag - should block</div>
+        </a>
+        <a href="adult-product-sales/etsy-fail.html" class="test-link fail">
+          <div class="test-title">Etsy <span class="badge badge-fail">FAIL</span></div>
+          <div class="test-desc">No mature tag - should NOT block</div>
+        </a>
+        
+        <a href="adult-product-sales/redbubble-pass.html" class="test-link pass">
+          <div class="test-title">Redbubble <span class="badge badge-pass">PASS</span></div>
+          <div class="test-desc">Mature content visible - should block</div>
+        </a>
+        <a href="adult-product-sales/redbubble-fail.html" class="test-link fail">
+          <div class="test-title">Redbubble <span class="badge badge-fail">FAIL</span></div>
+          <div class="test-desc">No status indicator - should NOT block</div>
+        </a>
+        
+        <a href="adult-product-sales/teepublic-pass.html" class="test-link pass">
+          <div class="test-title">TeePublic <span class="badge badge-pass">PASS</span></div>
+          <div class="test-desc">Safe Search Off - should block</div>
+        </a>
+        <a href="adult-product-sales/teepublic-fail.html" class="test-link fail">
+          <div class="test-title">TeePublic <span class="badge badge-fail">FAIL</span></div>
+          <div class="test-desc">Safe Search On - should NOT block</div>
+        </a>
+        
+        <a href="adult-product-sales/zazzle-pass.html" class="test-link pass">
+          <div class="test-title">Zazzle <span class="badge badge-pass">PASS</span></div>
+          <div class="test-desc">R rating - should block</div>
+        </a>
+        <a href="adult-product-sales/zazzle-fail.html" class="test-link fail">
+          <div class="test-title">Zazzle <span class="badge badge-fail">FAIL</span></div>
+          <div class="test-desc">G rating - should NOT block</div>
+        </a>
+        
+        <a href="adult-product-sales/itch-io-pass.html" class="test-link pass">
+          <div class="test-title">itch.io <span class="badge badge-pass">PASS</span></div>
+          <div class="test-desc">Adult warning - should block</div>
+        </a>
+        <a href="adult-product-sales/itch-io-fail.html" class="test-link fail">
+          <div class="test-title">itch.io <span class="badge badge-fail">FAIL</span></div>
+          <div class="test-desc">No warning - should NOT block</div>
+        </a>
+        
+        <a href="adult-product-sales/ebay-pass.html" class="test-link pass">
+          <div class="test-title">eBay <span class="badge badge-pass">PASS</span></div>
+          <div class="test-desc">Sexual Wellness - should block</div>
+        </a>
+        <a href="adult-product-sales/ebay-fail.html" class="test-link fail">
+          <div class="test-title">eBay <span class="badge badge-fail">FAIL</span></div>
+          <div class="test-desc">Regular category - should NOT block</div>
+        </a>
+        
+        <a href="adult-product-sales/amazon-pass.html" class="test-link pass">
+          <div class="test-title">Amazon <span class="badge badge-pass">PASS</span></div>
+          <div class="test-desc">Sexual Wellness - should block</div>
+        </a>
+        <a href="adult-product-sales/amazon-fail.html" class="test-link fail">
+          <div class="test-title">Amazon <span class="badge badge-fail">FAIL</span></div>
+          <div class="test-desc">Regular category - should NOT block</div>
+        </a>
+        
+        <a href="adult-product-sales/patreon-pass.html" class="test-link pass">
+          <div class="test-title">Patreon <span class="badge badge-pass">PASS</span></div>
+          <div class="test-desc">18+ interstitial - should block</div>
+        </a>
+        <a href="adult-product-sales/patreon-fail.html" class="test-link fail">
+          <div class="test-title">Patreon <span class="badge badge-fail">FAIL</span></div>
+          <div class="test-desc">Regular creator - should NOT block</div>
+        </a>
+        
+        <a href="adult-product-sales/shopify-pass.html" class="test-link pass">
+          <div class="test-title">Shopify <span class="badge badge-pass">PASS</span></div>
+          <div class="test-desc">Age gate - should block</div>
+        </a>
+        <a href="adult-product-sales/shopify-fail.html" class="test-link fail">
+          <div class="test-title">Shopify <span class="badge badge-fail">FAIL</span></div>
+          <div class="test-desc">No age gate - should NOT block</div>
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
