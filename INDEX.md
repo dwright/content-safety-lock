@@ -173,15 +173,16 @@ A voluntary commitment tool that:
 
 ### 🔮 Future Enhancements
 
-- [ ] Sync self-lock across devices (opt-in)
-- [ ] Custom unlock phrases
-- [ ] Email notifications
-- [ ] Activity statistics
-- [ ] Scheduled self-lock windows
-- [ ] Two-factor unlock
-- [ ] Parental controls for children
+- [ ] Multi-browser support (Chrome, Safari)
+- [ ] Mobile support (iOS Safari, Firefox Android)
+- [ ] File-based sync across devices (user-controlled cloud storage)
+- [ ] Scheduled self-lock windows (with US Holidays support)
+- [ ] Accountability partner features
+- [ ] Custom block pages with configurable information disclosure
+- [ ] Anti-cheat/tamper resistance improvements
+- [ ] iOS Screen Time integration
 
-See [CHANGELOG.md](CHANGELOG.md) for full roadmap.
+See [documentation/ROADMAP.md](documentation/ROADMAP.md) for comprehensive long-term vision.
 
 ## 🆘 Troubleshooting
 

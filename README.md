@@ -201,11 +201,26 @@ Add meta tags to test pages:
 - **No external requests**: All processing happens locally
 - **No tracking**: No analytics or telemetry
 
+## Future Vision
+
+This project has an ambitious long-term roadmap including:
+- Multi-browser support (Chrome, Safari desktop and mobile)
+- File-based sync across devices using user-controlled cloud storage
+- Accountability partner features
+- Enhanced anti-tamper protections
+- iOS Screen Time integration
+
+See [documentation/ROADMAP.md](documentation/ROADMAP.md) for the complete long-term vision.
+
 ## License
 
-This extension is provided as-is for voluntary content safety purposes.
+MIT License - See LICENSE file for details.
 
 ## Support
+
+**Author**: Dan Wright  
+**Email**: dwright@dwright.org  
+**GitHub**: @dwright
 
 For issues, feature requests, or security concerns, please file an issue in the repository.
 
