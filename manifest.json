@@ -25,24 +25,24 @@
   ],
   "background": {
     "scripts": [
-      "utils.js",
-      "safe-request-config.js",
-      "safe-request-utils.js",
-      "safe-request-handler.js",
-      "background.js"
+      "js/utils.js",
+      "js/safe-request/safe-request-config.js",
+      "js/safe-request/safe-request-utils.js",
+      "js/safe-request/safe-request-handler.js",
+      "js/background.js"
     ]
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["utils.js", "mature-content-detectors.js", "content.js"],
+      "js": ["js/utils.js", "js/detectors/mature-content-detectors.js", "js/content.js"],
       "run_at": "document_start",
       "all_frames": true
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["reddit-interceptor.js", "tumblr-interceptor.js"],
+      "resources": ["js/interceptors/reddit-interceptor.js", "js/interceptors/tumblr-interceptor.js"],
       "matches": ["*://*.reddit.com/*", "*://*.tumblr.com/*"]
     }
   ],
