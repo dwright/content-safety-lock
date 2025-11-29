@@ -80,7 +80,8 @@ const DEFAULT_STATE = {
       bing: { enabled: true, useParam: true, usePreferSafeHonor: true, useRedirect: false },
       yahoo: { enabled: true, useParam: true },
       ddg: { enabled: true, useParam: true, useRedirect: false },
-      youtube: { enabled: true, headerMode: 'strict', useRestrictHostRedirect: false }
+      youtube: { enabled: true, headerMode: 'strict', useRestrictHostRedirect: false },
+      reddit: { enabled: true }
     }
   }
 };
@@ -106,7 +107,14 @@ async function loadState() {
     },
     selfLock: { ...DEFAULT_STATE.selfLock, ...stored.selfLock },
     pinLock: { ...DEFAULT_STATE.pinLock, ...stored.pinLock },
-    safeRequestMode: { ...DEFAULT_STATE.safeRequestMode, ...stored.safeRequestMode }
+    safeRequestMode: { 
+      ...DEFAULT_STATE.safeRequestMode, 
+      ...stored.safeRequestMode,
+      providers: {
+        ...DEFAULT_STATE.safeRequestMode.providers,
+        ...stored.safeRequestMode?.providers
+      }
+    }
   };
   
   return state;
@@ -482,6 +490,21 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
       return { success: true };
     } catch (err) {
       console.error('[BG] Failed to inject Tumblr interceptor:', err);
+      return { success: false, error: err.message };
+    }
+  }
+
+  if (message.type === 'INJECT_REDDIT_INTERCEPTOR') {
+    console.log('[BG] Injecting Reddit interceptor into tab', sender.tab.id);
+    try {
+      await browser.scripting.executeScript({
+        target: { tabId: sender.tab.id },
+        files: ['reddit-interceptor.js'],
+        world: 'MAIN'
+      });
+      return { success: true };
+    } catch (err) {
+      console.error('[BG] Failed to inject Reddit interceptor:', err);
       return { success: false, error: err.message };
     }
   }

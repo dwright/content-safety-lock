@@ -3,6 +3,8 @@
  * Detects labels and communicates with background worker
  */
 
+console.error('[CSL] Content script STARTING EXECUTION');
+
 // Import utilities
 // Note: utils.js functions are available globally since it's loaded before this script
 
@@ -719,6 +721,33 @@ if (document.readyState === 'loading') {
 // ============ Tumblr Safe Mode Interceptor ============
 
 /**
+ * Helper to inject a script with nonce support
+ */
+function injectScript(filename) {
+  try {
+    console.error('[CSL] Injecting script:', filename);
+    const script = document.createElement('script');
+    script.src = browser.runtime.getURL(filename);
+    
+    // Try to find a nonce from existing scripts
+    // Reddit uses nonces for CSP
+    const existingScript = document.querySelector('script[nonce]');
+    if (existingScript) {
+      const nonce = existingScript.nonce || existingScript.getAttribute('nonce');
+      if (nonce) {
+        script.setAttribute('nonce', nonce);
+        console.error('[CSL] Applied nonce to injected script');
+      }
+    }
+    
+    (document.head || document.documentElement).appendChild(script);
+    console.error('[CSL] Script injection command issued');
+  } catch (err) {
+    console.error('[CSL] Failed to inject script:', err);
+  }
+}
+
+/**
  * Initialize Tumblr interception if enabled
  */
 async function initTumblrInterception() {
@@ -726,7 +755,7 @@ async function initTumblrInterception() {
     return;
   }
 
-  console.log('[CSL] Tumblr detected, checking Safe Request Mode settings...');
+  console.error('[CSL] Tumblr detected, checking Safe Request Mode settings...');
 
   try {
     const response = await browser.runtime.sendMessage({ type: 'GET_STATE' });
@@ -740,17 +769,125 @@ async function initTumblrInterception() {
                          tumblrConfig && tumblrConfig.enabled;
                          
     if (!shouldEnable) {
-      console.log('[CSL] Tumblr Safe Mode not enabled');
+      console.error('[CSL] Tumblr Safe Mode not enabled');
       return;
     }
     
-    console.log('[CSL] Requesting Tumblr Safe Mode interception injection');
-    await browser.runtime.sendMessage({ type: 'INJECT_TUMBLR_INTERCEPTOR' });
+    console.error('[CSL] Injecting Tumblr Safe Mode interceptor');
+    injectScript('tumblr-interceptor.js');
     
   } catch (err) {
     console.error('[CSL] Error initializing Tumblr interception:', err);
   }
 }
 
+// ============ Reddit Safe Mode Interceptor ============
+
+/**
+ * Initialize Reddit interception if enabled
+ */
+async function initRedditInterception() {
+  if (!window.location.hostname.includes('reddit.com')) {
+    return;
+  }
+
+  console.error('[CSL] Reddit detected, checking Safe Request Mode settings...');
+
+  try {
+    const response = await browser.runtime.sendMessage({ type: 'GET_STATE' });
+    const state = response.state;
+    
+    // Check if Safe Request Mode is active and Reddit provider is enabled
+    const safeRequest = state.safeRequestMode;
+    // Handle case where reddit config doesn't exist yet in old state
+    const redditConfig = safeRequest.providers.reddit;
+    
+    const shouldEnable = (safeRequest.enabled || (state.selfLock.active && safeRequest.forceUnderSelfLock)) && 
+                         redditConfig && redditConfig.enabled;
+                         
+    if (!shouldEnable) {
+      console.error('[CSL] Reddit Safe Mode not enabled');
+      return;
+    }
+    
+    console.error('[CSL] Injecting Reddit Safe Mode interceptor');
+    injectScript('reddit-interceptor.js');
+    
+    // Check if this is an NSFW user profile or subreddit page
+    checkRedditNsfwPages();
+    
+  } catch (err) {
+    console.error('[CSL] Error initializing Reddit interception:', err);
+  }
+}
+
+// Check if the current page is an NSFW user profile or subreddit and block it
+function checkRedditNsfwPages() {
+  const pathname = window.location.pathname;
+  
+  // Check if we're on a user profile or subreddit page
+  const isUserProfile = pathname.match(/^\/user\/[^\/]+\/?$/);
+  const isSubreddit = pathname.match(/^\/r\/[^\/]+\/?$/);
+  
+  if (!isUserProfile && !isSubreddit) {
+    return;
+  }
+  
+  // Function to check the reddit-page-data element
+  function checkPageData() {
+    const pageDataElement = document.querySelector('reddit-page-data');
+    if (!pageDataElement) {
+      return false;
+    }
+    
+    const dataAttr = pageDataElement.getAttribute('data');
+    if (!dataAttr) {
+      return false;
+    }
+    
+    try {
+      const data = JSON.parse(dataAttr);
+      
+      // Check for NSFW user profile
+      if (data.profile && data.profile.isNsfw === true) {
+        console.info('[CSL] NSFW user profile detected, blocking page');
+        const blockData = {
+          blockType: 'content',
+          reasons: ['User profile is marked as NSFW (18+)'],
+          signals: ['reddit_nsfw_profile']
+        };
+        injectBlockOverlay(blockData);
+        return true;
+      }
+      
+      // Check for NSFW subreddit
+      if (data.subreddit && data.subreddit.isNsfw === true) {
+        console.info('[CSL] NSFW subreddit detected, blocking page');
+        const blockData = {
+          blockType: 'content',
+          reasons: [`Subreddit ${data.subreddit.prefixedName || 'r/' + data.subreddit.name} is marked as NSFW (18+)`],
+          signals: ['reddit_nsfw_subreddit']
+        };
+        injectBlockOverlay(blockData);
+        return true;
+      }
+    } catch (err) {
+      console.error('[CSL] Error checking reddit-page-data:', err);
+    }
+    
+    return false;
+  }
+  
+  // Check immediately
+  if (checkPageData()) {
+    return;
+  }
+  
+  // Also check after a short delay in case the element loads later
+  setTimeout(checkPageData, 100);
+  setTimeout(checkPageData, 500);
+}
+
 // Run initialization
 initTumblrInterception();
+initRedditInterception();

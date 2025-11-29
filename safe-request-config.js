@@ -95,6 +95,12 @@ const PROVIDER_RULES = {
     name: 'Tumblr',
     match: (hostname) => /(^|\.)tumblr\.com$/.test(hostname),
     isJsonFilter: true
+  },
+  
+  reddit: {
+    name: 'Reddit',
+    match: (hostname) => /(^|\.)reddit\.com$/.test(hostname),
+    isJsonFilter: true
   }
 };
 
@@ -138,6 +144,10 @@ const DEFAULT_SAFE_REQUEST_CONFIG = {
     tumblr: {
       enabled: true,
       filterMature: true
+    },
+    reddit: {
+      enabled: true,
+      filterNsfw: true
     }
   }
 };

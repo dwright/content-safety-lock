@@ -192,6 +192,7 @@ async function displayLockedSettings() {
   if (safeRequest.providers.ddg.enabled) enabledProviders.push('DuckDuckGo');
   if (safeRequest.providers.youtube.enabled) enabledProviders.push('YouTube');
   if (safeRequest.providers.tumblr?.enabled) enabledProviders.push('Tumblr');
+  if (safeRequest.providers.reddit?.enabled) enabledProviders.push('Reddit');
   
   const allowListCount = parental.allowList.length;
   const blockListCount = parental.blockList.length;
@@ -313,6 +314,9 @@ async function loadGeneralSettings() {
   if (config.providers.tumblr) {
     document.getElementById('provider-tumblr-enabled').checked = config.providers.tumblr.enabled;
   }
+  if (config.providers.reddit) {
+    document.getElementById('provider-reddit-enabled').checked = config.providers.reddit.enabled;
+  }
   
   // Update collapsible sections based on checkbox states
   updateCollapsibleSections();
@@ -394,6 +398,10 @@ async function saveGeneralSettings(showSuccessMessage = false) {
         tumblr: {
           ...(currentState.safeRequestMode.providers.tumblr || {}),
           enabled: document.getElementById('provider-tumblr-enabled').checked
+        },
+        reddit: {
+          ...(currentState.safeRequestMode.providers.reddit || {}),
+          enabled: document.getElementById('provider-reddit-enabled').checked
         }
       }
     }
