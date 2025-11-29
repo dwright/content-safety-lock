@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2025-11-28
+
+### Added
+
+#### Safe Request Mode - Reddit Enhancements
+
+- **Reddit Safe Mode Integration**:
+  - Intercepts network requests to Reddit API/JSON endpoints
+  - Filters JSON responses to remove posts flagged as "over_18" (NSFW)
+  - DOM-level backup to hide/remove `shreddit-post[nsfw]` and `.thing.over18` elements
+  - **Search Results Filtering**: Filters NSFW content across all search tabs:
+    - Posts tab
+    - Communities tab
+    - Comments tab
+    - Media tab
+    - People tab
+  - **Page-Level Blocking**:
+    - Blocks entire NSFW user profile pages
+    - Blocks entire NSFW subreddit pages
+    - Uses `reddit-page-data` element to detect NSFW status
+  - Configurable via "Safe Request Mode" settings
+
+#### Documentation
+
+- **Reorganized documentation structure**:
+  - Created `documentation/` directory for technical docs
+  - Moved 11 technical documents to `documentation/` folder
+  - Kept README, QUICKSTART, CHANGELOG, and INDEX in root
+- **New Provider Integration Guide**:
+  - Created `documentation/ADDING_NEW_PROVIDER.md`
+  - Complete step-by-step guide for adding new content providers
+  - Includes Reddit implementation as detailed example
+  - Covers interceptor scripts, Safe Request configuration, content script integration, and page-level blocking
+- **Updated INDEX.md**:
+  - Updated all documentation links to reflect new structure
+  - Added reference to new provider guide
+  - Updated version and last modified date
+
+### Changed
+
+- **Improved logging levels**:
+  - `console.info()` for important events (activation, blocking)
+  - `console.debug()` for verbose diagnostics (element counts, checks)
+  - `console.warn()` for potential issues
+  - `console.error()` for actual errors
+
 ## [1.2.0] - 2025-11-27
 
 ### Added

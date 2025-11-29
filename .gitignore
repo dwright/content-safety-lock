@@ -1,0 +1,21 @@
+# Local debugging files
+Debugging/
+
+# Backup files
+*.broken
+
+# OS files
+.DS_Store
+
+# Build artifacts
+web-ext-artifacts/*.zip
+
+# Node modules (if any)
+node_modules/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

@@ -141,6 +141,28 @@ safeRequestMode: {
 
 ---
 
+### 3.8 Reddit (Hybrid Interception)
+
+**Hosts**: `*.reddit.com`
+
+**Triggers**:
+
+- **Network**: Intercepts `window.fetch` for JSON requests (`*.json`, `gateway.reddit.com`)
+- **Hydration**: Intercepts `JSON.parse` to catch initial state hydration
+- **DOM**: MutationObserver scans for `shreddit-post` (modern) and `.thing` (old) elements
+
+**Logic**:
+
+1. **Network/JSON**: Filters JSON responses to remove items/posts where:
+   - `data.over_18` is true
+2. **DOM**: Removes elements:
+   - `shreddit-post[nsfw="true"]`
+   - `.thing.over18`
+
+**Implementation**: Main World script injection via `browser.scripting` (bypasses CSP).
+
+---
+
 ## 4. Request Modification Flow
 
 ### 4.1 onBeforeSendHeaders Hook
@@ -376,7 +398,7 @@ IF safeRequestMode.enabled OR (selfLock.active AND forceUnderSelfLock):
 ## 10. Future Extensions (Backlog)
 
 - [ ] Per-region host maps via remote JSON
-- [ ] Additional providers (Reddit, Pinterest, Tumblr)
+- [x] Additional providers (Reddit, Pinterest, Tumblr)
 - [ ] DOM-level content filtering (separate module)
 - [ ] Request logging dashboard
 - [ ] Chromium/Chrome support (MV3 declarativeNetRequest)

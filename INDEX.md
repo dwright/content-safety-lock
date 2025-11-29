@@ -13,13 +13,16 @@ Welcome! This is your guide to all documentation and resources for the Content S
 → Read [README.md](README.md) (15 minutes)
 
 **See the full project overview**
-→ Read [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) (10 minutes)
+→ Read [documentation/PROJECT_SUMMARY.md](documentation/PROJECT_SUMMARY.md) (10 minutes)
+
+**Add a new content provider (Reddit, Tumblr, etc.)**
+→ Follow [documentation/ADDING_NEW_PROVIDER.md](documentation/ADDING_NEW_PROVIDER.md) (30 minutes)
 
 **Test the extension**
-→ Follow [TESTING.md](TESTING.md) (30 minutes)
+→ Follow [documentation/TESTING.md](documentation/TESTING.md) (30 minutes)
 
 **Deploy to production**
-→ Follow [DEPLOYMENT.md](DEPLOYMENT.md) (20 minutes)
+→ Follow [documentation/DEPLOYMENT.md](documentation/DEPLOYMENT.md) (20 minutes)
 
 **Check version history**
 → Read [CHANGELOG.md](CHANGELOG.md)
@@ -31,15 +34,16 @@ Welcome! This is your guide to all documentation and resources for the Content S
 | File | Purpose | Read Time | Audience |
 |------|---------|-----------|----------|
 | [README.md](README.md) | Complete feature documentation | 15 min | Everyone |
-| [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) | Project overview & architecture | 10 min | Developers |
+| [documentation/PROJECT_SUMMARY.md](documentation/PROJECT_SUMMARY.md) | Project overview & architecture | 10 min | Developers |
 | [QUICKSTART.md](QUICKSTART.md) | Getting started guide | 5 min | New users |
 
 ### Technical Documentation
 
 | File | Purpose | Read Time | Audience |
 |------|---------|-----------|----------|
-| [TESTING.md](TESTING.md) | Comprehensive test cases | 30 min | QA/Developers |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | Installation & deployment | 20 min | Developers |
+| [documentation/TESTING.md](documentation/TESTING.md) | Comprehensive test cases | 30 min | QA/Developers |
+| [documentation/DEPLOYMENT.md](documentation/DEPLOYMENT.md) | Installation & deployment | 20 min | Developers |
+| [documentation/ADDING_NEW_PROVIDER.md](documentation/ADDING_NEW_PROVIDER.md) | Guide to adding new providers | 30 min | Developers |
 | [CHANGELOG.md](CHANGELOG.md) | Version history & roadmap | 10 min | Everyone |
 
 ## 📁 Project Structure
@@ -50,11 +54,14 @@ windsurf-project/
 ├── 📄 Documentation
 │   ├── INDEX.md                    ← You are here
 │   ├── README.md                   ← Start here
-│   ├── PROJECT_SUMMARY.md          ← Overview
 │   ├── QUICKSTART.md               ← Getting started
-│   ├── TESTING.md                  ← Test guide
-│   ├── DEPLOYMENT.md               ← Deployment guide
-│   └── CHANGELOG.md                ← Version history
+│   ├── CHANGELOG.md                ← Version history
+│   └── documentation/
+│       ├── PROJECT_SUMMARY.md      ← Overview
+│       ├── TESTING.md              ← Test guide
+│       ├── DEPLOYMENT.md           ← Deployment guide
+│       ├── ADDING_NEW_PROVIDER.md  ← Provider integration
+│       └── [other technical docs]
 │
 ├── 🔧 Extension Files
 │   ├── manifest.json               ← Extension config
@@ -82,27 +89,28 @@ windsurf-project/
 
 ### Path 2: Developer (30-60 minutes)
 
-1. [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) - Architecture overview
+1. [documentation/PROJECT_SUMMARY.md](documentation/PROJECT_SUMMARY.md) - Architecture overview
 2. [README.md](README.md) - Full feature documentation
 3. Review source code:
    - `manifest.json` - Configuration
    - `background.js` - Policy engine
    - `content.js` - Label detection
    - `utils.js` - Utilities
-4. [TESTING.md](TESTING.md) - Test cases
+4. [documentation/TESTING.md](documentation/TESTING.md) - Test cases
+5. [documentation/ADDING_NEW_PROVIDER.md](documentation/ADDING_NEW_PROVIDER.md) - Adding providers
 
 ### Path 3: QA/Tester (45-90 minutes)
 
 1. [QUICKSTART.md](QUICKSTART.md) - Installation
-2. [TESTING.md](TESTING.md) - All 20 test cases
+2. [documentation/TESTING.md](documentation/TESTING.md) - All 20 test cases
 3. Use test pages in `test-pages/`
 4. Document results
 
 ### Path 4: DevOps/Deployment (30-45 minutes)
 
-1. [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) - Overview
-2. [DEPLOYMENT.md](DEPLOYMENT.md) - Deployment options
-3. [TESTING.md](TESTING.md) - Verification tests
+1. [documentation/PROJECT_SUMMARY.md](documentation/PROJECT_SUMMARY.md) - Overview
+2. [documentation/DEPLOYMENT.md](documentation/DEPLOYMENT.md) - Deployment options
+3. [documentation/TESTING.md](documentation/TESTING.md) - Verification tests
 4. Deploy to target environment
 
 ## 🔑 Key Concepts
@@ -164,29 +172,30 @@ See [CHANGELOG.md](CHANGELOG.md) for full roadmap.
 → See [QUICKSTART.md](QUICKSTART.md) - Installation section
 
 ### Pages not blocking?
-→ See [TESTING.md](TESTING.md) - Test 1 & 3
+→ See [documentation/TESTING.md](documentation/TESTING.md) - Test 1 & 3
 
 ### Can't set passphrase?
-→ See [TESTING.md](TESTING.md) - Test 13
+→ See [documentation/TESTING.md](documentation/TESTING.md) - Test 13
 
 ### Deployment issues?
-→ See [DEPLOYMENT.md](DEPLOYMENT.md) - Troubleshooting section
+→ See [documentation/DEPLOYMENT.md](documentation/DEPLOYMENT.md) - Troubleshooting section
 
 ## 📞 Support
 
 ### For Users
 - Read [README.md](README.md) for features
 - Read [QUICKSTART.md](QUICKSTART.md) for setup
-- Check [TESTING.md](TESTING.md) for common issues
+- Check [documentation/TESTING.md](documentation/TESTING.md) for common issues
 
 ### For Developers
-- Review [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) for architecture
-- Check [DEPLOYMENT.md](DEPLOYMENT.md) for deployment
+- Review [documentation/PROJECT_SUMMARY.md](documentation/PROJECT_SUMMARY.md) for architecture
+- Check [documentation/DEPLOYMENT.md](documentation/DEPLOYMENT.md) for deployment
+- See [documentation/ADDING_NEW_PROVIDER.md](documentation/ADDING_NEW_PROVIDER.md) for adding providers
 - See code comments in source files
 
 ### For Issues
 1. Check relevant documentation
-2. Review [TESTING.md](TESTING.md) for similar issues
+2. Review [documentation/TESTING.md](documentation/TESTING.md) for similar issues
 3. Check browser console (F12) for errors
 4. Review source code comments
 
@@ -221,9 +230,9 @@ See [CHANGELOG.md](CHANGELOG.md) for full roadmap.
 
 Before deploying, verify:
 
-- [ ] Read [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)
-- [ ] Run all tests in [TESTING.md](TESTING.md)
-- [ ] Review [DEPLOYMENT.md](DEPLOYMENT.md)
+- [ ] Read [documentation/PROJECT_SUMMARY.md](documentation/PROJECT_SUMMARY.md)
+- [ ] Run all tests in [documentation/TESTING.md](documentation/TESTING.md)
+- [ ] Review [documentation/DEPLOYMENT.md](documentation/DEPLOYMENT.md)
 - [ ] Test on clean Firefox profile
 - [ ] Test on Windows, macOS, Linux
 - [ ] Review all code changes
@@ -250,14 +259,15 @@ Before deploying, verify:
 **Choose your path:**
 
 - 👤 **I'm a user** → [QUICKSTART.md](QUICKSTART.md)
-- 👨‍💻 **I'm a developer** → [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)
-- 🧪 **I'm a tester** → [TESTING.md](TESTING.md)
-- 🚀 **I'm deploying** → [DEPLOYMENT.md](DEPLOYMENT.md)
+- 👨‍💻 **I'm a developer** → [documentation/PROJECT_SUMMARY.md](documentation/PROJECT_SUMMARY.md)
+- 🧪 **I'm a tester** → [documentation/TESTING.md](documentation/TESTING.md)
+- 🚀 **I'm deploying** → [documentation/DEPLOYMENT.md](documentation/DEPLOYMENT.md)
+- 🔧 **I'm adding a provider** → [documentation/ADDING_NEW_PROVIDER.md](documentation/ADDING_NEW_PROVIDER.md)
 
 ---
 
-**Last Updated**: 2025-10-21
-**Version**: 1.0.0
+**Last Updated**: 2025-11-28
+**Version**: 1.2.1
 **Status**: ✅ Complete & Ready
 
 *Happy exploring! 🔒*
