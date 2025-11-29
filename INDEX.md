@@ -49,7 +49,7 @@ Welcome! This is your guide to all documentation and resources for the Content S
 ## 📁 Project Structure
 
 ```
-windsurf-project/
+content-safety-lock/
 │
 ├── 📄 Documentation
 │   ├── INDEX.md                    ← You are here
@@ -65,12 +65,27 @@ windsurf-project/
 │
 ├── 🔧 Extension Files
 │   ├── manifest.json               ← Extension config
-│   ├── background.js               ← Service worker
-│   ├── content.js                  ← Content script
-│   ├── utils.js                    ← Utilities
-│   ├── options.html/js             ← Settings UI
-│   ├── popup.html/js               ← Quick popup
-│   └── icons/                      ← Icons (3 sizes)
+│   ├── options.html                ← Settings UI
+│   ├── popup.html                  ← Quick popup
+│   ├── icons/                      ← Icons (3 sizes)
+│   └── js/                         ← JavaScript files
+│       ├── background.js           ← Service worker
+│       ├── content.js              ← Content script
+│       ├── popup.js                ← Popup logic
+│       ├── options.js              ← Settings logic
+│       ├── utils.js                ← Shared utilities
+│       ├── components/             ← UI components
+│       │   ├── time-interval-picker.js
+│       │   └── time-interval-picker.css
+│       ├── detectors/              ← Content detection
+│       │   └── mature-content-detectors.js
+│       ├── interceptors/           ← Provider interceptors
+│       │   ├── reddit-interceptor.js
+│       │   └── tumblr-interceptor.js
+│       └── safe-request/           ← Safe request mode
+│           ├── safe-request-config.js
+│           ├── safe-request-handler.js
+│           └── safe-request-utils.js
 │
 └── 🧪 Test Resources
     └── test-pages/
@@ -93,9 +108,11 @@ windsurf-project/
 2. [README.md](README.md) - Full feature documentation
 3. Review source code:
    - `manifest.json` - Configuration
-   - `background.js` - Policy engine
-   - `content.js` - Label detection
-   - `utils.js` - Utilities
+   - `js/background.js` - Policy engine
+   - `js/content.js` - Label detection
+   - `js/utils.js` - Shared utilities
+   - `js/interceptors/` - Provider interceptors
+   - `js/safe-request/` - Safe request mode
 4. [documentation/TESTING.md](documentation/TESTING.md) - Test cases
 5. [documentation/ADDING_NEW_PROVIDER.md](documentation/ADDING_NEW_PROVIDER.md) - Adding providers
 
@@ -203,11 +220,12 @@ See [CHANGELOG.md](CHANGELOG.md) for full roadmap.
 
 | Metric | Value |
 |--------|-------|
-| Total Files | 16 |
+| Total Files | 28 |
 | Documentation Files | 6 |
-| Source Files | 8 |
+| JavaScript Files | 13 |
+| HTML Files | 2 |
 | Test Files | 3 |
-| Total Lines of Code | 1,500+ |
+| Total Lines of Code | 2,000+ |
 | Total Documentation | 10,000+ words |
 | Test Cases | 20+ |
 | Features | 15+ |
@@ -266,7 +284,7 @@ Before deploying, verify:
 
 ---
 
-**Last Updated**: 2025-11-28
+**Last Updated**: 2025-11-29
 **Version**: 1.2.1
 **Status**: ✅ Complete & Ready
 
