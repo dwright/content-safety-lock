@@ -9,6 +9,7 @@ Debugging/
 
 # Build artifacts
 web-ext-artifacts/*.zip
+*.xpi
 
 # Node modules (if any)
 node_modules/
