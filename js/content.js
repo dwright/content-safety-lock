@@ -774,7 +774,7 @@ async function initTumblrInterception() {
     }
     
     console.error('[CSL] Injecting Tumblr Safe Mode interceptor');
-    injectScript('tumblr-interceptor.js');
+    injectScript('js/interceptors/tumblr-interceptor.js');
     
   } catch (err) {
     console.error('[CSL] Error initializing Tumblr interception:', err);
@@ -811,7 +811,7 @@ async function initRedditInterception() {
     }
     
     console.error('[CSL] Injecting Reddit Safe Mode interceptor');
-    injectScript('reddit-interceptor.js');
+    injectScript('js/interceptors/reddit-interceptor.js');
     
     // Check if this is an NSFW user profile or subreddit page
     checkRedditNsfwPages();
