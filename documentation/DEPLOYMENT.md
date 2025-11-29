@@ -181,6 +181,80 @@ Format: `MAJOR.MINOR.PATCH`
 - **MINOR**: New features (e.g., new blocking scope)
 - **PATCH**: Bug fixes (e.g., UI improvements)
 
+### Release Process
+
+When releasing a new version (e.g., v1.2.2):
+
+1. **Update version in `manifest.json`**:
+   ```json
+   {
+     "version": "1.2.2",
+     ...
+   }
+   ```
+
+2. **Update CHANGELOG.md**:
+   - Add new version section at the top
+   - Document all changes (Added, Changed, Fixed, etc.)
+   - Follow Keep a Changelog format
+
+3. **Run full test suite**:
+   - See TESTING.md for comprehensive test cases
+   - Test on clean Firefox profile
+   - Test on multiple platforms if possible
+
+4. **Build the extension**:
+   ```bash
+   web-ext build
+   # Output: web-ext-artifacts/content_safety_lock-1.2.2.zip
+   ```
+
+5. **Create release notes**:
+   - Create `web-ext-artifacts/RELEASE_NOTES_v1.2.2.md`
+   - Extract relevant sections from CHANGELOG.md
+   - Add installation instructions and upgrade notes
+
+6. **Create GitHub Release**:
+   ```bash
+   ./create-github-releases.sh 1.2.2 "Bug Fixes" --latest
+   ```
+   
+   This script will:
+   - Create a git tag (v1.2.2)
+   - Create GitHub release with release notes
+   - Upload the ZIP file as an asset
+   - Mark as latest release (if `--latest` flag used)
+
+7. **Commit and push changes**:
+   ```bash
+   git add manifest.json CHANGELOG.md
+   git commit -m "chore: Release v1.2.2"
+   git push
+   ```
+
+### GitHub Releases
+
+All release artifacts are managed via GitHub Releases (not stored in git):
+
+- **View releases**: https://github.com/dwright/content-safety-lock/releases
+- **Download latest**: Users can download ZIP files from GitHub
+- **Automated script**: `create-github-releases.sh` handles release creation
+
+**Script usage**:
+```bash
+# Basic release
+./create-github-releases.sh 1.2.2 "Bug Fixes"
+
+# Mark as latest release
+./create-github-releases.sh 1.3.0 "New Features" --latest
+```
+
+**Prerequisites**:
+- GitHub CLI installed: `sudo port install gh`
+- Authenticated: `gh auth login`
+- Build artifact exists: `web-ext-artifacts/content_safety_lock-<version>.zip`
+- Release notes exist: `web-ext-artifacts/RELEASE_NOTES_v<version>.md`
+
 ### Update Checklist
 
 Before releasing a new version:
@@ -189,10 +263,13 @@ Before releasing a new version:
 2. ✓ Update CHANGELOG.md with changes
 3. ✓ Run full test suite (TESTING.md)
 4. ✓ Test on clean Firefox profile
-5. ✓ Test on Windows, macOS, Linux
+5. ✓ Test on Windows, macOS, Linux (if possible)
 6. ✓ Review all code changes
 7. ✓ Update documentation if needed
-8. ✓ Create git tag: `git tag v1.0.0`
+8. ✓ Build extension with `web-ext build`
+9. ✓ Create release notes file
+10. ✓ Create GitHub release with script
+11. ✓ Commit and push changes
 
 ## Privacy & Security Checklist
 
