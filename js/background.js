@@ -68,7 +68,7 @@ const DEFAULT_STATE = {
     unlockedUntilEpochMs: 0
   },
   safeRequestMode: {
-    enabled: false,
+    enabled: true,
     addPreferSafeHeader: true,
     applyInPrivateWindows: true,
     forceUnderSelfLock: true,

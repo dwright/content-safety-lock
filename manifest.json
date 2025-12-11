@@ -1,5 +1,5 @@
 {
-  "manifest_version": 3,
+  "manifest_version": 2,
   "name": "Content Safety Lock",
   "version": "1.2.1",
   "description": "Voluntary adult content blocker with self-lock mode for adults seeking structured guardrails",
@@ -18,9 +18,7 @@
     "alarms",
     "webRequest",
     "webRequestBlocking",
-    "scripting"
-  ],
-  "host_permissions": [
+    "scripting",
     "<all_urls>"
   ],
   "background": {
@@ -41,12 +39,10 @@
     }
   ],
   "web_accessible_resources": [
-    {
-      "resources": ["js/interceptors/reddit-interceptor.js", "js/interceptors/tumblr-interceptor.js"],
-      "matches": ["*://*.reddit.com/*", "*://*.tumblr.com/*"]
-    }
+    "js/interceptors/reddit-interceptor.js",
+    "js/interceptors/tumblr-interceptor.js"
   ],
-  "action": {
+  "browser_action": {
     "default_popup": "popup.html",
     "default_title": "Content Safety Lock"
   },

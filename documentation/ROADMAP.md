@@ -847,6 +847,24 @@ documentation/
 - Help users understand their browsing patterns
 - Priority: Low
 
+**Microrewards / Encouragement System**:
+- Provide positive reinforcement for using the extension
+- Examples:
+  - Milestone celebrations (e.g., "7 days of active self-lock!")
+  - Progress tracking (streak counters, time protected)
+  - Encouraging messages when self-lock is activated
+  - Visual badges or achievements for consistent use
+  - Gentle reminders of goals when unlocking settings
+- **Privacy-preserving**: All data stored locally, no external tracking
+- **Non-manipulative**: Supportive tone, not guilt-inducing
+- **Optional**: Users can disable encouragement features if preferred
+- **Design considerations**:
+  - Avoid gamification that could become addictive itself
+  - Focus on intrinsic motivation, not extrinsic rewards
+  - Keep messaging supportive and non-judgmental
+  - Consider user's emotional state (recovery context)
+- Priority: Low-Medium (could improve user engagement and retention)
+
 **Import/Export Settings**:
 - Backup and restore configuration
 - Share configurations between users

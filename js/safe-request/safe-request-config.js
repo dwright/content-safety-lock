@@ -107,7 +107,7 @@ const PROVIDER_RULES = {
 // ============ Default Configuration ============
 
 const DEFAULT_SAFE_REQUEST_CONFIG = {
-  enabled: false,
+  enabled: true,
   addPreferSafeHeader: true,
   applyInPrivateWindows: true,
   forceUnderSelfLock: true,
