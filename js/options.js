@@ -830,6 +830,12 @@ document.getElementById('cancel-pin-btn').addEventListener('click', cancelPINMan
 async function disableSelfLock() {
   await loadState();
   
+  // If early unlock is disabled for this session, do not allow manual disable
+  if (!currentState.selfLock.allowEarlyUnlock) {
+    showAlert('self-lock-alerts', 'Early unlock is disabled for this self-lock session.', 'error');
+    return;
+  }
+  
   // Check if password is required
   if (currentState.selfLock.requiresPassword && currentState.selfLock.passphraseHash) {
     // Show passphrase dialog
@@ -985,10 +991,19 @@ async function refreshSelfLockStatus() {
     disableBtn.style.marginTop = '12px';
     disableBtn.style.width = '100%';
     disableBtn.textContent = 'Disable Self-Lock';
-    disableBtn.addEventListener('click', async () => {
-      await disableSelfLock();
-    });
-    statusDiv.appendChild(disableBtn);
+    
+    if (currentState.selfLock.allowEarlyUnlock) {
+      disableBtn.addEventListener('click', async () => {
+        await disableSelfLock();
+      });
+      statusDiv.appendChild(disableBtn);
+    } else {
+      const disabledMsg = document.createElement('div');
+      disabledMsg.style.marginTop = '12px';
+      disabledMsg.className = 'lock-status-detail';
+      disabledMsg.textContent = 'Early unlock is disabled for this session.';
+      statusDiv.appendChild(disabledMsg);
+    }
     
     panel.appendChild(statusDiv);
     
@@ -1021,7 +1036,8 @@ async function refreshSelfLockStatus() {
   }
   
   // Load lock settings into checkboxes
-  document.getElementById('lock-require-password').checked = currentState.selfLock.requiresPassword;
+  document.getElementById('allow-early-unlock').checked = currentState.selfLock.allowEarlyUnlock;
+  document.getElementById('lock-require-password').checked = currentState.selfLock.allowEarlyUnlock && currentState.selfLock.requiresPassword;
   document.getElementById('lock-increment-on-block').checked = currentState.selfLock.incrementOnBlock;
   
   // Load settings into time interval pickers if they exist
@@ -1036,7 +1052,7 @@ async function refreshSelfLockStatus() {
   }
   
   // Toggle conditional sections visibility
-  togglePassphraseSection();
+  toggleEarlyUnlockSection();
   toggleIncrementSection();
 }
 
@@ -1044,12 +1060,32 @@ async function refreshSelfLockStatus() {
  * Toggle passphrase section visibility based on require password checkbox
  */
 function togglePassphraseSection() {
+  const allowEarlyUnlock = document.getElementById('allow-early-unlock')?.checked;
   const requirePassword = document.getElementById('lock-require-password').checked;
   const passphraseSection = document.getElementById('passphrase-section');
   
   if (passphraseSection) {
-    passphraseSection.style.display = requirePassword ? 'block' : 'none';
+    passphraseSection.style.display = allowEarlyUnlock && requirePassword ? 'block' : 'none';
   }
+}
+
+/**
+ * Toggle early unlock settings visibility based on allow early unlock checkbox
+ */
+function toggleEarlyUnlockSection() {
+  const allowEarlyUnlock = document.getElementById('allow-early-unlock')?.checked;
+  const earlyUnlockSettings = document.getElementById('early-unlock-settings');
+  const requirePasswordCheckbox = document.getElementById('lock-require-password');
+  
+  if (earlyUnlockSettings) {
+    earlyUnlockSettings.style.display = allowEarlyUnlock ? 'block' : 'none';
+  }
+  
+  if (!allowEarlyUnlock && requirePasswordCheckbox) {
+    requirePasswordCheckbox.checked = false;
+  }
+  
+  togglePassphraseSection();
 }
 
 /**
@@ -1111,7 +1147,7 @@ function setupTimeIntervalPickers() {
   );
   
   // Initialize visibility of conditional sections
-  togglePassphraseSection();
+  toggleEarlyUnlockSection();
   toggleIncrementSection();
 }
 
@@ -1124,7 +1160,8 @@ async function activateSelfLock() {
     return;
   }
   
-  const requirePassword = document.getElementById('lock-require-password').checked;
+  const allowEarlyUnlock = document.getElementById('allow-early-unlock').checked;
+  const requirePassword = allowEarlyUnlock && document.getElementById('lock-require-password').checked;
   const passphrase = document.getElementById('self-lock-pass').value;
   
   // If password is required, validate passphrase
@@ -1149,7 +1186,9 @@ async function activateSelfLock() {
       
       // Get values from time interval pickers
       const cooldownValue = cooldownDurationPicker.getValue();
-      const cooldownMinutes = toTotalMinutes(cooldownValue, cooldownDurationPicker.config);
+      const cooldownMinutes = allowEarlyUnlock
+        ? toTotalMinutes(cooldownValue, cooldownDurationPicker.config)
+        : 0;
       
       const incrementValue = incrementDurationPicker.getValue();
       const incrementMinutes = toTotalMinutes(incrementValue, incrementDurationPicker.config);
@@ -1157,6 +1196,7 @@ async function activateSelfLock() {
       await browser.runtime.sendMessage({
         type: 'ACTIVATE_SELF_LOCK',
         durationMs: selectedDuration,
+        allowEarlyUnlock: allowEarlyUnlock,
         requiresPassword: requirePassword,
         passphraseHash: passphraseHash,
         cooldownMinutes: cooldownMinutes,
@@ -1183,6 +1223,9 @@ document.getElementById('activate-lock-btn').addEventListener('click', activateS
 
 // Add listener for require password checkbox to toggle passphrase section
 document.getElementById('lock-require-password').addEventListener('change', togglePassphraseSection);
+
+// Add listener for allow early unlock checkbox to toggle settings
+document.getElementById('allow-early-unlock').addEventListener('change', toggleEarlyUnlockSection);
 
 // Add listener for increment checkbox to toggle increment duration section
 document.getElementById('lock-increment-on-block').addEventListener('change', toggleIncrementSection);
