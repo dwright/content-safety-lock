@@ -53,16 +53,17 @@ Create another test file without the meta tag. This should load normally.
 1. Go to Options → Self-Lock tab
 2. Choose a blocking scope (e.g., "Sexual/Nudity only")
 3. Select a duration (e.g., "4 hours")
-4. Click "Activate Self-Lock"
+4. (Optional) Enable **Allow early unlock** if you want early unlock to be available
+5. Click "Activate Self-Lock"
 
 ### Step 3: Test It
 1. Visit a page with an adult label
 2. You should see the block overlay
-3. Try to request early unlock (if cool-down is off)
+3. Try to request early unlock (only if **Allow early unlock** was enabled)
 
 ### Step 4: Request Early Unlock
-1. On the blocked page, click "Request Early Unlock"
-2. Enter your passphrase
+1. On the blocked page, click "Request Early Unlock" (only visible if **Allow early unlock** was enabled)
+2. Enter your passphrase (when required)
 3. Type the verification phrase shown
 4. Wait for cool-down to complete
 5. Click "Confirm Unlock"

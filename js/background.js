@@ -50,7 +50,8 @@ const DEFAULT_STATE = {
     active: false,
     scope: 'sexual', // 'sexual', 'sexual-violence', 'all'
     ignoreAllowlist: true,
-    requiresPassword: true,
+    allowEarlyUnlock: false,
+    requiresPassword: false,
     cooldownMinutes: 60,
     startedAtEpochMs: 0,
     endsAtEpochMs: 0,
@@ -227,7 +228,9 @@ async function getBlockPageData(signals, url) {
       remainingMs: remaining,
       remainingFormatted: formatDuration(remaining),
       scope: state.selfLock.scope,
-      canRequestUnlock: state.selfLock.requiresPassword && cooldownRemaining === 0,
+      allowEarlyUnlock: state.selfLock.allowEarlyUnlock,
+      canRequestUnlock: state.selfLock.allowEarlyUnlock && cooldownRemaining === 0,
+      requiresPassword: state.selfLock.requiresPassword,
       cooldownRemaining: cooldownRemaining,
       cooldownRemainingFormatted: formatDuration(cooldownRemaining)
     };
@@ -290,7 +293,7 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
   }
   
   if (message.type === 'ACTIVATE_SELF_LOCK') {
-    const { durationMs, requiresPassword, passphraseHash, cooldownMinutes, incrementOnBlock, incrementMinutes } = message;
+    const { durationMs, allowEarlyUnlock, requiresPassword, passphraseHash, cooldownMinutes, incrementOnBlock, incrementMinutes } = message;
     const now = Date.now();
     const mono = performance.now();
     
@@ -298,6 +301,7 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
     state.selfLock = {
       ...state.selfLock,
       active: true,
+      allowEarlyUnlock: !!allowEarlyUnlock,
       requiresPassword,
       passphraseHash: passphraseHash || null,
       cooldownMinutes,
@@ -324,6 +328,10 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
     
     if (!state.selfLock.active) {
       return { success: false, error: 'Self-lock not active' };
+    }
+    
+    if (!state.selfLock.allowEarlyUnlock) {
+      return { success: false, error: 'Early unlock is disabled' };
     }
     
     if (state.selfLock.requiresPassword) {

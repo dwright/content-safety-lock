@@ -82,10 +82,9 @@ Complete feature documentation with implementation status and usage details.
 - Go to Self-Lock tab for detailed info
 
 ### Early Unlock
-
 | Feature | Status | Details |
 |---------|--------|---------|
-| Unlock Request | ✅ Complete | Button to request early unlock |
+| Unlock Request | ✅ Complete | Button to request early unlock (only shown when **Allow early unlock** was enabled at activation) |
 | Passphrase Verification | ✅ Complete | Requires self-lock passphrase |
 | Phrase Verification | ✅ Complete | Must type random 3-word phrase |
 | Cool-Down Delay | ✅ Complete | Configurable: 30m, 1h, 4h, custom |

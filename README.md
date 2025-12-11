@@ -81,8 +81,9 @@ Then submit to [addons.mozilla.org](https://addons.mozilla.org/)
 ### During Self-Lock
 
 - Blocked pages show a clear overlay explaining the block
+- Early unlock is only available if **Allow early unlock** was checked when the lock was activated
 - If early unlock is available, you can request it by:
-  1. Entering your self-lock passphrase
+  1. Entering your self-lock passphrase (when required)
   2. Typing the verification phrase
   3. Waiting for the cool-down period
   4. Confirming the unlock
@@ -145,8 +146,9 @@ All state is stored in `browser.storage.local`:
 ### Self-Lock Defaults
 - Scope: Sexual/Nudity only
 - Ignore allow-list: Yes
-- Require password: Yes
-- Cool-down: 1 hour
+- Allow early unlock: No (must be explicitly enabled)
+- Require password: Off by default (only relevant if early unlock is enabled)
+- Cool-down: 1 hour (ignored unless early unlock is enabled)
 
 ### Parental Mode Defaults
 - Enabled: Yes

@@ -291,8 +291,10 @@ function injectBlockOverlay(blockData) {
     
     box.appendChild(lockInfo);
     
-    // Unlock button (if available)
-    if (blockData.lockInfo.canRequestUnlock) {
+    const allowEarlyUnlock = blockData.lockInfo.allowEarlyUnlock;
+    
+    // Unlock button (if available and allowed)
+    if (allowEarlyUnlock && blockData.lockInfo.canRequestUnlock) {
       const unlockBtn = document.createElement('button');
       unlockBtn.textContent = 'Request Early Unlock';
       unlockBtn.style.cssText = `
@@ -311,6 +313,16 @@ function injectBlockOverlay(blockData) {
       unlockBtn.onmouseout = () => unlockBtn.style.background = '#667eea';
       unlockBtn.onclick = () => showUnlockFlow(blockData);
       box.appendChild(unlockBtn);
+    } else if (!allowEarlyUnlock) {
+      const disabledMsg = document.createElement('p');
+      disabledMsg.textContent = 'Early unlock is disabled for this self-lock session.';
+      disabledMsg.style.cssText = `
+        margin: 0;
+        font-size: 14px;
+        color: #666;
+        font-weight: 600;
+      `;
+      box.appendChild(disabledMsg);
     } else if (blockData.lockInfo.cooldownRemaining > 0) {
       const cooldownMsg = document.createElement('p');
       cooldownMsg.textContent = `Cool-down active. Try again in ${blockData.lockInfo.cooldownRemainingFormatted}`;
@@ -405,6 +417,7 @@ function showUnlockFlow(blockData) {
   
   const box = overlay.querySelector('div');
   box.innerHTML = '';
+  const requiresPassword = blockData.lockInfo?.requiresPassword;
   
   // Title
   const title = document.createElement('h2');
@@ -415,6 +428,56 @@ function showUnlockFlow(blockData) {
     color: #333;
   `;
   box.appendChild(title);
+  
+  // If no password required, request directly
+  if (!requiresPassword) {
+    const info = document.createElement('p');
+    info.textContent = 'No passphrase required. Confirm to proceed.';
+    info.style.cssText = `
+      margin: 0 0 16px 0;
+      font-size: 14px;
+      color: #666;
+      text-align: left;
+    `;
+    box.appendChild(info);
+    
+    const submitBtn = document.createElement('button');
+    submitBtn.textContent = 'Request Unlock';
+    submitBtn.style.cssText = `
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+    `;
+    box.appendChild(submitBtn);
+    
+    submitBtn.onclick = async () => {
+      try {
+        const response = await browser.runtime.sendMessage({
+          type: 'REQUEST_EARLY_UNLOCK',
+          passphrase: ''
+        });
+        
+        if (response.success) {
+          showPhraseVerification(box, response.unlockPhrase, response.cooldownMs, blockData);
+        } else {
+          const error = document.createElement('p');
+          error.textContent = response.error || 'Unlock request failed';
+          error.style.cssText = 'color: #e74c3c; font-size: 14px; margin-top: 8px;';
+          box.appendChild(error);
+        }
+      } catch (err) {
+        console.error('Unlock request failed:', err);
+      }
+    };
+    
+    return;
+  }
   
   // Step 1: Passphrase
   const step1 = document.createElement('div');

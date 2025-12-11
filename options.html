@@ -803,21 +803,30 @@
           <h3 class="subsection-title">Early Unlock Protection</h3>
           <div class="form-group">
             <div class="checkbox-group">
-              <input type="checkbox" id="lock-require-password" checked>
-              <label class="checkbox-label" for="lock-require-password">Require password for early unlock</label>
+              <input type="checkbox" id="allow-early-unlock">
+              <label class="checkbox-label" for="allow-early-unlock">Allow early unlock</label>
             </div>
           </div>
           
-          <div class="form-group" id="passphrase-section" style="display: none;">
-            <label for="self-lock-pass">Self-Lock Passphrase:</label>
-            <input type="password" id="self-lock-pass" placeholder="Enter passphrase">
-            <p class="help-text" style="margin-top: 8px;">This passphrase will be required to unlock self-lock early</p>
-          </div>
-          
-          <div class="form-group">
-            <label>Early Unlock Cool-down:</label>
-            <p class="help-text" style="margin-bottom: 12px;">Time to wait before allowing another early unlock attempt</p>
-            <div id="cooldown-duration-picker"></div>
+          <div id="early-unlock-settings" style="display: none;">
+            <div class="form-group">
+              <div class="checkbox-group">
+                <input type="checkbox" id="lock-require-password">
+                <label class="checkbox-label" for="lock-require-password">Require password for early unlock</label>
+              </div>
+            </div>
+            
+            <div class="form-group" id="passphrase-section" style="display: none;">
+              <label for="self-lock-pass">Self-Lock Passphrase:</label>
+              <input type="password" id="self-lock-pass" placeholder="Enter passphrase">
+              <p class="help-text" style="margin-top: 8px;">This passphrase will be required to unlock self-lock early</p>
+            </div>
+            
+            <div class="form-group">
+              <label>Early Unlock Cool-down:</label>
+              <p class="help-text" style="margin-bottom: 12px;">Time to wait before allowing another early unlock attempt</p>
+              <div id="cooldown-duration-picker"></div>
+            </div>
           </div>
         </div>
         
