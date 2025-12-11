@@ -183,8 +183,8 @@ function enforceSafeHeaders(headers, url, config) {
   
   // YouTube-Restrict header
   if (config.providers.youtube.enabled) {
-    const youtubeProvider = getProviderForUrl(url);
-    if (youtubeProvider?.name === 'YouTube') {
+    const providerName = getProviderForUrl(url);
+    if (providerName === 'youtube') {
       headers = ensureYouTubeRestrictHeader(headers, config.providers.youtube.headerMode);
     }
   }
