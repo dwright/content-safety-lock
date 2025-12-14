@@ -8,7 +8,7 @@ Debugging/
 .DS_Store
 
 # Build artifacts
-web-ext-artifacts/*.zip
+web-ext-artifacts
 *.xpi
 
 # Node modules (if any)
