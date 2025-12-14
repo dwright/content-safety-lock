@@ -842,6 +842,15 @@ documentation/
 - Useful for different contexts (personal vs. shared computer)
 - Priority: Low
 
+ **Media-Only Blocking Mode** (Interesting, medium priority):
+
+- Alternative to full-page blocking: allow the page to render normally, but block/hide all media
+- Media includes: images, videos, audio, and embedded players
+- Use cases:
+-- Reduce accidental exposure while still allowing reading/news/research
+-- Improve usability on mixed-content sites (safe text + unsafe media)
+- Priority: Medium
+
 **Usage Statistics**:
 - Track blocked attempts (local only, privacy-preserving)
 - Help users understand their browsing patterns
