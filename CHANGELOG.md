@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2026-02-27
+
+### Added
+
+#### 2257 Compliance Detection
+
+- **New detector module**: `js/detectors/2257-compliance-detector.js`
+  - Detects 18 U.S.C. § 2257 compliance statements in anchor tags to identify adult content sites
+  - Rule-based matching with 6 detection patterns:
+    - `compliance_statement`: 2257 + compliance + statement
+    - `custodian_records`: 2257 + custodian + records
+    - `exempt_exemption`: 2257 + exempt/exemption (union)
+    - `usc_reference`: 18 + USC/U.S.C. (union) + 2257
+    - `record_keeping`: 2257 + record-keeping/record keeping (union)
+    - `cfr_reference`: 28 + CFR/C.F.R. (union) + 75
+  - Only evaluates same-domain links (link href hostname must match current page hostname) to eliminate cross-domain false positives
+  - Page-level whitelist skips scanning entirely on known safe domains: `.gov`, `.edu`, `.law`, `wikipedia.org`, `justia.com`, `aclu.org`, `oyez.org`, `eff.org`, `duckduckgo.com`, `google.com`, `bing.com`, `yahoo.com`, `chanrobles.com`, `laws-info.com`, `law.com`
+  - Regex-based skip for US state government domains matching `*.XX.us` pattern (e.g. `courts.state.ny.us`)
+  - Skips `file:` protocol pages
+  - MutationObserver with 250ms debounce for dynamic content detection (SPAs, infinite scroll)
+  - Runs indefinitely — never disconnects the observer
+  - Safety gate using `data-2257-checked` attribute to prevent re-checking links
+  - Logging via `console.debug()` for verbose browser output
+- **Signal integration**: New `ICRA:2257` signal maps to the Sexual/Nudity category
+- **Block reason**: "Sexual/Nudity (2257 Compliance)" displayed in block overlay
+- **Block overlay "Why:" section**: When a block is triggered by the 2257 detector, the overlay now shows the matching link text and URL below the Reason line to aid in diagnosis
+
+### Changed
+
+- `manifest.json`: Added `js/detectors/2257-compliance-detector.js` to `content_scripts`
+- `js/content.js`: `detectLabels()` now returns `{ signals, details }`; 2257 detector result extracted into signal + details; `checkAndBlock()` passes `details` in `CHECK_BLOCK` message
+- `js/background.js`: `getBlockPageData()` accepts and passes `details` through into `blockData`
+- `js/utils.js`: `matchesCategoryPolicy()` checks `ICRA:2257` under sexual category; `getBlockReason()` returns "Sexual/Nudity (2257 Compliance)" for `ICRA:2257`
+
+---
+
 ## [1.2.2] - 2025-12-11
 
 ### Fixed
