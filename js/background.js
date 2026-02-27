@@ -210,7 +210,7 @@ async function shouldBlock(signals, url) {
 /**
  * Get block page data
  */
-async function getBlockPageData(signals, url) {
+async function getBlockPageData(signals, url, details) {
   const state = await loadState();
   const reasons = getBlockReason(signals);
   
@@ -240,6 +240,7 @@ async function getBlockPageData(signals, url) {
     blockType,
     url,
     reasons,
+    details: details || [],
     lockInfo
   };
 }
@@ -257,7 +258,7 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
     console.log('[BG] shouldBlock result:', shouldBlockPage);
     
     if (shouldBlockPage) {
-      const blockData = await getBlockPageData(message.signals, sender.url);
+      const blockData = await getBlockPageData(message.signals, sender.url, message.details);
       console.log('[BG] Blocking page with data:', blockData);
       return { shouldBlock: true, blockData };
     }

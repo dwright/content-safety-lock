@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Content Safety Lock",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Voluntary adult content blocker with self-lock mode for adults seeking structured guardrails",
   "browser_specific_settings": {
     "gecko": {
@@ -33,7 +33,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["js/utils.js", "js/detectors/mature-content-detectors.js", "js/content.js"],
+      "js": ["js/utils.js", "js/detectors/mature-content-detectors.js", "js/detectors/2257-compliance-detector.js", "js/content.js"],
       "run_at": "document_start",
       "all_frames": true
     }

@@ -74,10 +74,11 @@ function detectLabels() {
   const head = document.head;
   if (!head) {
     console.log('[CSL] No head element found');
-    return [];
+    return { signals: [], details: [] };
   }
   
   const signals = [];
+  const details = [];
   const raw = {};
   
   // Check rating meta tag (case-insensitive)
@@ -154,6 +155,16 @@ function detectLabels() {
     signals.push('ICRA:ageVerification');
   }
   
+  // Check for 2257 compliance statements
+  if (typeof detect2257Compliance === 'function') {
+    const compliance2257Result = detect2257Compliance();
+    if (compliance2257Result) {
+      signals.push(compliance2257Result.signal);
+      details.push(...compliance2257Result.details);
+      console.log('[CSL] 2257 compliance signal detected');
+    }
+  }
+  
   // Check for mature content on e-commerce platforms
   // Note: generateMatureContentSignals() is defined in mature-content-detectors.js
   if (typeof generateMatureContentSignals === 'function') {
@@ -177,7 +188,7 @@ function detectLabels() {
   }
   
   console.log('[CSL] Detected signals (final):', signals, 'Total signals:', signals.length);
-  return signals;
+  return { signals, details };
 }
 
 /**
@@ -242,11 +253,37 @@ function injectBlockOverlay(blockData) {
   const reason = document.createElement('p');
   reason.textContent = `Reason: ${blockData.reasons.join(', ')}`;
   reason.style.cssText = `
-    margin: 0 0 24px 0;
+    margin: 0 0 8px 0;
     font-size: 16px;
     color: #666;
   `;
   box.appendChild(reason);
+  
+  // Why (context details from detector, if available)
+  if (blockData.details && blockData.details.length > 0) {
+    const whyContainer = document.createElement('div');
+    whyContainer.style.cssText = `
+      margin: 0 0 24px 0;
+      font-size: 13px;
+      color: #888;
+      text-align: left;
+      background: #f9f9f9;
+      border-radius: 6px;
+      padding: 10px 14px;
+      word-break: break-all;
+    `;
+    const whyLabel = document.createElement('span');
+    whyLabel.textContent = 'Why:';
+    whyLabel.style.cssText = 'font-weight: bold; display: block; margin-bottom: 4px;';
+    whyContainer.appendChild(whyLabel);
+    for (const detail of blockData.details) {
+      const line = document.createElement('span');
+      line.textContent = detail;
+      line.style.cssText = 'display: block;';
+      whyContainer.appendChild(line);
+    }
+    box.appendChild(whyContainer);
+  }
   
   // Lock info (if self-lock)
   if (blockData.lockInfo) {
@@ -674,7 +711,7 @@ async function checkAndBlock() {
   }
   
   console.log('[CSL] *** About to call detectLabels() ***');
-  const signals = detectLabels();
+  const { signals, details } = detectLabels();
   console.log('[CSL] checkAndBlock - signals:', signals);
   
   if (signals.length > 0) {
@@ -683,7 +720,8 @@ async function checkAndBlock() {
       console.log('[CSL] *** ABOUT TO SEND MESSAGE TO BACKGROUND ***');
       const response = await browser.runtime.sendMessage({
         type: 'CHECK_BLOCK',
-        signals
+        signals,
+        details
       });
       
       console.log('[CSL] *** RESPONSE RECEIVED FROM BACKGROUND ***', response);
