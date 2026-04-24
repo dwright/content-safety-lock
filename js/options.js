@@ -317,7 +317,7 @@ async function loadGeneralSettings() {
   if (config.providers.reddit) {
     document.getElementById('provider-reddit-enabled').checked = config.providers.reddit.enabled;
   }
-  
+
   // Update collapsible sections based on checkbox states
   updateCollapsibleSections();
 }
