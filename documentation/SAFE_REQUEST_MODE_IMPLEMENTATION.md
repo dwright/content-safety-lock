@@ -127,7 +127,8 @@ safeRequestMode: {
 **Triggers**:
 - **Network**: Intercepts `window.fetch` for API requests (`/v2/blog/*/posts`, `/api/v2/timeline`, `/api/v2/search`)
 - **Hydration**: Intercepts `JSON.parse` to catch initial state hydration
-- **DOM**: MutationObserver scans for pre-rendered mature content
+- **DOM (per-article)**: MutationObserver scans for pre-rendered mature content inside `<article>` elements
+- **DOM (page-level)**: Content script checks for a blog-level mature-content cover on Tumblr page loads (since v1.3.0)
 
 **Logic**:
 1. **Network/JSON**: Filters JSON responses/objects to remove posts with:
@@ -135,9 +136,12 @@ safeRequestMode: {
    - `isNsfw` is true
    - `classification` IN ["adult", "nsfw"]
    - `communityLabel.isNsfw` is true
-2. **DOM**: Scans for elements containing specific warning text and replaces their parent container with a block message.
+2. **DOM (per-article)**: Replaces the enclosing `<article>` with a hidden-post placeholder when either of these match:
+   - Any element matching `article [data-testid="community-label-cover"]` (structural, since v1.3.0)
+   - A text node equal to `Potentially mature content`, `Adult content`, or `Explicit`
+3. **DOM (page-level)**: `checkTumblrMaturePage()` in `js/content.js` triggers the standard CSL block overlay ("Mature content (Tumblr)") when `.community-label-cover__wrapper` or `.content-warning-cover[role="alert"]` is present outside any `<article>`. Detection is idempotent and uses a short-lived `MutationObserver` (≤5 s) to handle late hydration.
 
-**Implementation**: Main World script injection via `browser.scripting` (bypasses CSP).
+**Implementation**: Main World script injection via `browser.scripting` (bypasses CSP) for the API/DOM interceptor; page-level detection runs in the content script.
 
 ---
 

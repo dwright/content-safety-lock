@@ -5,6 +5,88 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-04-24
+
+### Added
+
+#### Amazon blocked-category tile interceptor
+
+- **New MAIN-world interceptor**: `js/interceptors/amazon-interceptor.js` removes
+  product tiles whose server-emitted labels place them in blocked browse nodes
+  (Sexual Wellness `3777371`, Exotic Apparel `7586174011`). Two server-authoritative
+  rules drive the decision:
+  - Rule 1: `href` or `data-*` attributes containing `node=<id>` or `ai_<id>`.
+  - Rule 3: `data-acp-tracking` JSON with `ref_=ai_<id>`.
+- **Two-pass removal**: carousels containing multiple triggers are removed
+  wholesale; otherwise the closest individual product tile is removed. A
+  `MutationObserver` plus delayed rescans handle SPA navigation and lazy-loaded
+  carousels.
+- **Known scope limitation**: keyword search result pages (e.g. `/s?k=vibrator`)
+  are not filtered at the tile level because Amazon does not emit browse-node
+  or tracking labels on those pages. Documented in the interceptor source.
+
+#### Amazon UI reorganisation
+
+- Amazon moved out of Safe Request Mode and into Parental Controls → Adult
+  Product Sales → Amazon vendor checkbox. `js/content.js` now gates interceptor
+  injection on both the Adult Product Sales category and the Amazon vendor
+  toggle being enabled (`js/options.js`, `options.html`).
+
+#### Expanded Amazon Erotic/Erotica category matching
+
+- `js/detectors/mature-content-detectors.js`: the Amazon breadcrumb and
+  JSON-LD matcher now blocks any category whose name matches `/\berotic/i` in
+  addition to Sexual Wellness and Exotic Apparel. This catches Erotica
+  (Books / Kindle Store), Erotic Gift Sets & Sex Kits, and similar
+  subcategories. The leading word boundary protects against `xerotic`
+  (medical term for dry skin).
+
+#### 2257 signal routed through Sexual category
+
+- `js/utils.js`: the `ICRA:2257` signal (emitted by the pre-existing 2257
+  compliance detector, shipped in 1.2.3) now routes through the sexual
+  category in `matchesCategoryPolicy` and `getBlockReason`, so 2257-tagged
+  links respect the Adult Product Sales toggle.
+
+#### Tumblr mature-content gate blocking
+
+- **Whole-page block**: When Tumblr serves a logged-out blog-level mature-content cover
+  (selector `.community-label-cover__wrapper` or `.content-warning-cover[role="alert"]`
+  with no `<article>` ancestor), the page is replaced with the standard CSL block
+  overlay ("🛡️ Blocked by Content Filter", reason "Mature content (Tumblr)").
+  Implemented in `js/content.js` via new `checkTumblrMaturePage()`, invoked from
+  `initTumblrInterception()`.
+- **Per-article structural block**: The Tumblr DOM scanner in
+  `js/interceptors/tumblr-interceptor.js` now also matches
+  `article [data-testid="community-label-cover"]` and replaces the enclosing
+  `<article>` with the existing hidden-post placeholder. This catches posts that
+  render the community-label cover without any of the previously matched text
+  labels (e.g. image-only posts).
+- **Reference fixture**: `sample-test-files/Tumblr page block.txt` captures the
+  HTML of both the page-level and per-article gates for regression testing.
+
+### Changed
+
+- **Build tooling**: `web-ext-config.js` renamed to `web-ext-config.cjs` so
+  Node treats it as CommonJS. `package.json` / `package-lock.json` added so
+  `web-ext` is managed as a project-local dev dependency (`npx web-ext build`).
+- `documentation/ROADMAP.md`: status updates reflecting the new Amazon and
+  Tumblr detectors.
+- `documentation/SAFE_REQUEST_MODE_IMPLEMENTATION.md`: Tumblr section (3.7)
+  rewritten to cover the structural per-article selector and the page-level
+  `checkTumblrMaturePage()` path.
+
+### Notes
+
+- Tumblr detection uses only structural selectors (BEM class names, `role`,
+  `data-testid`) so the existing text-based matches (`Potentially mature content`,
+  `Adult content`, `Explicit`) and JSON sanitisation remain unchanged.
+- Tumblr page-level detection is idempotent via
+  `document.documentElement.dataset.cslTumblrPageBlocked` and uses a short-lived
+  `MutationObserver` (≤5 s) to handle late hydration.
+
+---
+
 ## [1.2.3] - 2026-02-27
 
 ### Added
