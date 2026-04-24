@@ -989,6 +989,48 @@ function checkRedditNsfwPages() {
   setTimeout(checkPageData, 500);
 }
 
+// ============ Amazon Blocked-Category Interceptor ============
+
+/**
+ * Initialize Amazon interception if enabled
+ *
+ * Tied to the unified Parental Controls -> Adult Product Sales -> Amazon
+ * vendor checkbox. When enabled, filters individual listings from blocked
+ * Amazon browse-node categories (e.g. Sexual Wellness, Exotic Apparel);
+ * complements the page-level breadcrumb blocker in
+ * mature-content-detectors.js.
+ */
+async function initAmazonInterception() {
+    if (!window.location.hostname.includes('amazon.')) {
+        return;
+    }
+
+    console.log('[CSL] Amazon detected, checking parental controls settings...');
+
+    try {
+        const response = await browser.runtime.sendMessage({ type: 'GET_STATE' });
+        const state = response.state;
+
+        // Check if the Adult Product Sales category AND Amazon vendor are enabled
+        const parental = state.parental || {};
+        const categoryEnabled = parental.categories && parental.categories.adultProductSales;
+        const amazonEnabled = parental.adultProductSalesVendors && parental.adultProductSalesVendors.amazon;
+
+        if (!categoryEnabled || !amazonEnabled) {
+            console.log('[CSL] Amazon blocked-category filtering not enabled (category:', categoryEnabled, 'amazon:', amazonEnabled, ')');
+            return;
+        }
+
+        console.log('[CSL] Injecting Amazon blocked-category interceptor');
+        injectScript('js/interceptors/amazon-interceptor.js');
+
+    }
+    catch (err) {
+        console.error('[CSL] Error initializing Amazon interception:', err);
+    }
+}
+
 // Run initialization
 initTumblrInterception();
 initRedditInterception();
+initAmazonInterception();
