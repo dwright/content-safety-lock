@@ -961,6 +961,40 @@ documentation/
 - Consider implementing similar blocking
 - Trade-off: May frustrate legitimate use cases
 
+**Platform-Native Policy Enforcement**:
+- Each OS provides a native mechanism to lock browser extension policy:
+  - **macOS**: managed preferences plist deployed to `/Library/Managed Preferences/` (Firefox reads `org.mozilla.firefox.plist`)
+  - **Windows**: Group Policy / registry keys under `HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Mozilla\Firefox\Extensions\`
+  - **Linux**: `policies.json` placed in the Firefox installation's `distribution/` directory
+- These mechanisms prevent users from disabling or removing the extension through the browser UI
+- The extension itself cannot write these files—OS-level authorization is required
+- Implementation approach: keep the specifics a "black box" to casual users; surface them only via the helper installer (see below)
+
+**Policy Enforcement Helper Installers**:
+- Because platform policy files require elevated OS permissions, provide a separate downloadable installer for each platform:
+  - **macOS**: signed `.pkg` that deploys the managed-preferences plist and, optionally, installs the extension into a system Firefox profile
+  - **Windows**: signed `.msi` that writes the appropriate registry keys and optional system-level extension install
+  - **Linux**: shell script (`.sh`) that writes `policies.json` to the Firefox `distribution/` directory
+- Installers should be signed with a valid code-signing certificate to avoid OS security warnings
+- The extension options page links to the appropriate installer for the detected platform (see Policy Status section below)
+- Rationale: users who are serious about self-commitment can run the installer once; they do not need to understand the underlying mechanism
+
+**Policy Status Detection (`browser.management.getSelf()`)**:
+- Use `browser.management.getSelf()` to read the extension's `installType`:
+  - `"admin"` — installed via enterprise/platform policy; tamper-resistant
+  - `"normal"` — installed by the user; can be disabled or removed at any time
+- Display a prominent status indicator in the extension options (e.g., in the Self-Lock or Security tab):
+  - **Protected** (green): `installType === "admin"` — policy enforcement is active
+  - **Unprotected** (amber/red): `installType === "normal"` — extension is vulnerable to removal
+- When status is "Unprotected", show a call-to-action with a link to the appropriate platform installer
+- Re-check status on each options page load so the display updates after the installer has been run
+
+**Cross-Browser Expansion**:
+- The same helper installers can be extended over time to support Chrome and Edge:
+  - Chrome/Edge use `HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist` (Windows) and equivalent plist/`managed_policies.json` paths on macOS/Linux
+  - A single installer can write policies for multiple browsers if desired
+- Safari uses Apple's MDM/configuration profile mechanism; scope for a future release
+
 **Reality Check**:
 - A determined user with root/admin access can always bypass browser extensions
 - Goal: Make it difficult enough that casual bypass attempts fail
@@ -973,8 +1007,11 @@ documentation/
 2. Research Chrome/Safari equivalents
 3. Implement blocking of extension management pages (optional, configurable)
 4. Create comprehensive documentation for manual setup
-5. Investigate automation possibilities (installer script?)
-6. Test on non-admin user accounts
+5. Build platform helper installers (macOS `.pkg`, Windows `.msi`, Linux `.sh`)
+6. Implement `browser.management.getSelf()` policy status indicator in options UI
+7. Add platform detection to link users to the correct installer download
+8. Extend helper installers to support Chrome/Edge policy keys
+9. Test on non-admin user accounts
 
 ---
 
