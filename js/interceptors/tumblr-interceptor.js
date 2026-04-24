@@ -108,10 +108,18 @@
   }
 
   function scanForMatureContent(root) {
-    // Look for specific text signatures in the DOM
-    // "Potentially mature content" is in a div with class UF4Vo based on user snippet
-    // But we search by text to be robust
-    
+    // Structural sweep: any article containing a community-label cover
+    // (data-testid is a stable hook Tumblr uses for their own tests).
+    const coveredArticles = root.querySelectorAll('article [data-testid="community-label-cover"]');
+    const nodesToRemove = [];
+    for (const hit of coveredArticles) {
+      const article = hit.closest('article');
+      if (article && !article.getAttribute('data-csl-processed')) {
+        nodesToRemove.push(article);
+      }
+    }
+
+    // Text-based sweep (kept for scenarios without a data-testid cover).
     const walker = document.createTreeWalker(
       root,
       NodeFilter.SHOW_TEXT,
@@ -127,8 +135,6 @@
         }
       }
     );
-
-    const nodesToRemove = [];
 
     while (walker.nextNode()) {
       const node = walker.currentNode;
