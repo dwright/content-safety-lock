@@ -152,27 +152,43 @@ const detectors = {
   },
 
   /**
-   * Amazon - Detects Sexual Wellness category
-   * Adult items restricted to Sexual Wellness; not searchable outside that category
+   * Amazon - Detects blocked browse categories via breadcrumb / JSON-LD
+   * Currently blocks:
+   *   - Sexual Wellness
+   *   - Clothing, Shoes & Jewelry > Novelty & More > Exotic Apparel
+   *   - Any category containing the word "Erotic" / "Erotica"
+   *     (e.g. Books > Literature & Fiction > Genre Fiction > Erotica,
+   *      Kindle Store > ... > Erotica, Erotic Gift Sets & Sex Kits, etc.).
+   *     The \berotic prefix pattern intentionally matches "erotic" and
+   *     "erotica" while the leading \b word boundary protects against
+   *     the medical term "xerotic" (dry skin).
    */
   amazon(url) {
     if (!/\/\/(www\.)?amazon\./i.test(url)) return null;
-    
+
+    const BLOCKED_CATEGORY_PATTERNS = [
+      /\bsexual\s+wellness\b/i,
+      /\bexotic\s+apparel\b/i,
+      /\berotic/i
+    ];
+
     const bc = findBreadcrumbText();
-    const inSW = /\bsexual\s+wellness\b/.test(bc);
-    
+    const inBlockedBreadcrumb = BLOCKED_CATEGORY_PATTERNS.some(p => p.test(bc));
+
     // Also scan JSON-LD for category
-    let inSWJson = false;
+    let inBlockedJson = false;
     document.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
-      try { 
-        if (JSON.parse(s.textContent || '{}')?.category?.toLowerCase?.().includes('sexual wellness')) {
-          inSWJson = true;
+      try {
+        const category = JSON.parse(s.textContent || '{}')?.category;
+        if (typeof category === 'string' &&
+            BLOCKED_CATEGORY_PATTERNS.some(p => p.test(category))) {
+          inBlockedJson = true;
         }
       } catch {}
     });
-    
-    return (inSW || inSWJson) 
-      ? { platform: 'amazon', score: 0.75, signals: { inSW, inSWJson } } 
+
+    return (inBlockedBreadcrumb || inBlockedJson)
+      ? { platform: 'amazon', score: 0.75, signals: { inBlockedBreadcrumb, inBlockedJson } }
       : { platform: 'amazon', score: 0.1, signals: {} };
   },
 

@@ -238,6 +238,9 @@ function matchesCategoryPolicy(signals, parentalConfig) {
   if (parentalConfig.categories.sexual && signalSet.has('ICRA:sexual')) {
     return true;
   }
+  if (parentalConfig.categories.sexual && signalSet.has('ICRA:2257')) {
+    return true;
+  }
   if (parentalConfig.categories.violence && signalSet.has('ICRA:violence')) {
     return true;
   }
@@ -300,6 +303,7 @@ function getBlockReason(signals) {
   // Category-specific signals
   if (signalSet.has('RTA')) reasons.push('Sexual/Nudity (RTA Label)');
   if (signalSet.has('ICRA:sexual')) reasons.push('Sexual/Nudity');
+  if (signalSet.has('ICRA:2257')) reasons.push('Sexual/Nudity (2257 Compliance)');
   if (signalSet.has('ICRA:violence')) reasons.push('Violence');
   if (signalSet.has('ICRA:profanity')) reasons.push('Profanity');
   if (signalSet.has('ICRA:drugs')) reasons.push('Drugs/Alcohol');
