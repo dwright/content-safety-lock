@@ -876,10 +876,53 @@ async function initTumblrInterception() {
     
     console.error('[CSL] Injecting Tumblr Safe Mode interceptor');
     injectScript('js/interceptors/tumblr-interceptor.js');
-    
+
+    // Also check for a page-level mature-content gate (logged-out blog cover)
+    checkTumblrMaturePage();
+
   } catch (err) {
     console.error('[CSL] Error initializing Tumblr interception:', err);
   }
+}
+
+/**
+ * Detect Tumblr's logged-out / blog-level mature-content cover and block the
+ * whole page via the standard CSL overlay. Uses only structural selectors
+ * (BEM class + role attribute) to avoid breaking when copy changes.
+ */
+function checkTumblrMaturePage() {
+  const SELECTOR = '.community-label-cover__wrapper, .content-warning-cover[role="alert"]';
+
+  function tryBlock() {
+    if (document.documentElement.dataset.cslTumblrPageBlocked) {
+      return true;
+    }
+    const cover = document.querySelector(SELECTOR);
+    if (!cover) return false;
+    // Disambiguate from per-post community-label covers, which live inside <article>
+    if (cover.closest('article')) return false;
+
+    document.documentElement.dataset.cslTumblrPageBlocked = 'true';
+    console.info('[CSL] Tumblr page-level mature gate detected, blocking page');
+    injectBlockOverlay({
+      blockType: 'content',
+      reasons: ['Mature content (Tumblr)'],
+      signals: ['tumblr_mature_blog_cover'],
+      details: ['Tumblr served a logged-out mature-content gate for this blog.'],
+      url: window.location.href
+    });
+    return true;
+  }
+
+  // Most cases are server-rendered, so an immediate check will succeed.
+  if (tryBlock()) return;
+
+  // Fallback: observe briefly in case the cover is hydrated after DOMContentLoaded.
+  const observer = new MutationObserver(() => {
+    if (tryBlock()) observer.disconnect();
+  });
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+  setTimeout(() => observer.disconnect(), 5000);
 }
 
 // ============ Reddit Safe Mode Interceptor ============

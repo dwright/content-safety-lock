@@ -1,0 +1,218 @@
+Tumblr page block:
+<div infotext="This content has been hidden due to its potentially mature nature." skiptext="View post"
+    dashlink="https://www.tumblr.com/dashboard" class="community-label-cover__wrapper logged-out">
+    <div role="alert" class="content-warning-cover">
+        <h2>Mature Content</h2>
+        <p class="content-warning-cover__info info">This blog may contain potentially mature content.</p><button
+            class="content-warning-cover__skip skip">View blog</button>
+        <p><a href="https://www.tumblr.com/dashboard" class="content-warning-cover__dashboard"
+                data-2257-checked="true">Go to my dashboard</a></p>
+    </div>
+</div>
+
+---
+Tumblr article block:
+<div style="margin-top: 0px;" tabindex="31">
+    <div class="So6RQ i4aRn YSitt" data-id="800783176434876416" tabindex="-1">
+        <div class="ge_yK" tabindex="-1">
+            <div class="c79Av">
+                <div class="Z0Knh">
+                    <div></div>
+                </div>
+                <div class="XJ0js">
+                    <div></div>
+                </div>
+                <div class="qj1WD"></div>
+                <div class="qj1WD"></div>
+                <div>
+                    <article class="FtjPK r0etU ouMsp">
+                        <div class="undefined">
+                            <header class="DEkbl rtjhW"><a aria-label="Permalink" class="mYcfU YgsXo" rel="bookmark"
+                                    href="/vixen-polly/800783176434876416/accept-your-fate"
+                                    data-2257-checked="true"></a>
+                                <div class="cPL5a Afu4V QCWsQ">
+                                    <div class="Pl0ah"><svg height="16" role="presentation"
+                                            style="--icon-color-primary: var(--content-fg-tertiary);" width="16"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <use href="#managed-icon__ds-circle-alert-filled-16"></use>
+                                        </svg>
+                                        <p class="F2bKK"><span>Mature content</span></p>
+                                    </div>
+                                    <div class="m2Bdx pLL0g cJ1ik">
+                                        <div aria-label="Posted by vixen-polly – November 20th, 2025, 7:52 PM"
+                                            class="l4Qpd">
+                                            <div class="y8wKa">
+                                                <figure aria-label="Avatar" class="NmEJh wCmYf WHBEq pPM64"
+                                                    style="height: 40px; width: 40px;">
+                                                    <div class="DPB5d"><span class="BPf9u"
+                                                            data-testid="controlled-popover-wrapper"><span
+                                                                class="BPf9u"><a rel="noopener" target="_blank"
+                                                                    href="/vixen-polly" class="BSUG4" role="link"
+                                                                    tabindex="0" data-2257-checked="true">
+                                                                    <div class="_0MuRn" style="padding-bottom: 100%;">
+                                                                        <div class="S8Dii nLowv MbgAw"
+                                                                            style="height: 40px; width: 40px; overflow: hidden;">
+                                                                            <canvas class="lRcb3" role="img"></canvas>
+                                                                        </div>
+                                                                    </div>
+                                                                </a></span></span></div>
+                                                    <div class="iIlsP"></div>
+                                                </figure>
+                                            </div>
+                                            <div class="cPL5a tmC7Y QCWsQ zmkgk">
+                                                <div class="W0XIT">
+                                                    <div class="d7ZC6"><span class="BPf9u"
+                                                            data-testid="controlled-popover-wrapper"><span
+                                                                class="BPf9u"><a rel="author" target="_blank"
+                                                                    href="/vixen-polly" class="BSUG4" role="link"
+                                                                    tabindex="0"
+                                                                    data-2257-checked="true">vixen-polly</a></span></span>
+                                                    </div>
+                                                    <div class="beV_K"></div>
+                                                </div>
+                                                <div class="x66yu">
+                                                    <div class="NB_7e">
+                                                        <div class="Fuxs_"></div><span aria-hidden="true"
+                                                            class="CtNGM"></span>
+                                                    </div>
+                                                    <div class="QOpFt"><time datetime="2025-11-21T00:52:28.000Z"
+                                                            title="November 20, 2025 at 7:52 PM">Nov 20, 2025</time>
+                                                    </div>
+                                                </div>
+                                                <div class="pLL0g"></div>
+                                            </div>
+                                        </div>
+                                        <div class="RIcm_"><span class="BPf9u"
+                                                data-testid="controlled-popover-wrapper"><span class="BPf9u"><button
+                                                        class="VmbqY r21y5 Li_00 giozV EF4A5" aria-label="More options"
+                                                        tabindex="0" type="button"><span class="D4GNf"><svg height="24"
+                                                                role="presentation" width="24"
+                                                                xmlns="http://www.w3.org/2000/svg">
+                                                                <use href="#managed-icon__ds-ui-more-horizontal-24">
+                                                                </use>
+                                                            </svg></span></button></span></span></div>
+                                    </div>
+                                </div>
+                            </header>
+                            <div class="LaNUG" style="">
+                                <div>
+                                    <div class="Qb2zX vS0xc"><span>
+                                            <div class="GzjsW lN9Zs">
+                                                <div class="CQmeg lN9Zs T94I2"><button class="TRX6J k4_Vq"
+                                                        aria-label="Image"><span class="EvhBA" tabindex="-1">
+                                                            <figure class="DdFPj">
+                                                                <div class="_0MuRn" style="padding-bottom: 125%;"><img
+                                                                        class="nLowv MbgAw" decoding="sync"
+                                                                        sizes="(max-width: 540px) 50vw, 150px"
+                                                                        srcset="https://64.media.tumblr.com/4a3b49ea55d21196b110b64fc4ac49ea/7de4bf142da5bd5c-f6/s100x200/04d8c9ea6dd4faae4e9e25a2ec79687ad0fc1034.jpg 100w, https://64.media.tumblr.com/4a3b49ea55d21196b110b64fc4ac49ea/7de4bf142da5bd5c-f6/s250x400/d85c7f5bc439dcd5fcdda935a29527a7761d7e8a.jpg 250w, https://64.media.tumblr.com/4a3b49ea55d21196b110b64fc4ac49ea/7de4bf142da5bd5c-f6/s400x600/68ad72aafbae03a0ffaeccbcbf637ad5c4f626a8.jpg 400w, https://64.media.tumblr.com/4a3b49ea55d21196b110b64fc4ac49ea/7de4bf142da5bd5c-f6/s500x750/3f775d0acf57a34a0011cb148a5d5c4fe80dbecf.jpg 500w, https://64.media.tumblr.com/4a3b49ea55d21196b110b64fc4ac49ea/7de4bf142da5bd5c-f6/s540x810/fb35aeff4a04fa29b26047dedf4f1562e7fcebac.jpg 540w, https://64.media.tumblr.com/4a3b49ea55d21196b110b64fc4ac49ea/7de4bf142da5bd5c-f6/s640x960/969ba2932137c7661c8fa80cf7fc84b51e055210.jpg 640w, https://64.media.tumblr.com/4a3b49ea55d21196b110b64fc4ac49ea/7de4bf142da5bd5c-f6/s1280x1920/ae021104a4588ae90448f549728bc96e34eefe9e.jpg 1280w, https://64.media.tumblr.com/4a3b49ea55d21196b110b64fc4ac49ea/7de4bf142da5bd5c-f6/s2048x3072/16e889e0936c64ac911ad774e1e66b893b87c2e9.jpg 1440w"
+                                                                        loading="lazy"
+                                                                        data-puryfi-revealed-media="true"></div>
+                                                            </figure>
+                                                        </span></button><button class="TRX6J k4_Vq"
+                                                        aria-label="Image"><span class="EvhBA" tabindex="-1">
+                                                            <figure class="DdFPj">
+                                                                <div class="_0MuRn" style="padding-bottom: 125%;"><img
+                                                                        class="nLowv MbgAw" decoding="sync"
+                                                                        sizes="(max-width: 540px) 50vw, 150px"
+                                                                        srcset="https://64.media.tumblr.com/b285de8af1ff8a62b2bc54436c225a73/7de4bf142da5bd5c-77/s100x200/5b34663f2f1421d1c33819fbb8fac87a449afb00.jpg 100w, https://64.media.tumblr.com/b285de8af1ff8a62b2bc54436c225a73/7de4bf142da5bd5c-77/s250x400/9b0539f0bdcb9ed0594013b93e7fd4f321477eaf.jpg 250w, https://64.media.tumblr.com/b285de8af1ff8a62b2bc54436c225a73/7de4bf142da5bd5c-77/s400x600/09eb9224c2ee40457440378540985ecbaa3c2f99.jpg 400w, https://64.media.tumblr.com/b285de8af1ff8a62b2bc54436c225a73/7de4bf142da5bd5c-77/s500x750/ce4137dddbf364983bd1b02a4a7aed54bcf3213f.jpg 500w, https://64.media.tumblr.com/b285de8af1ff8a62b2bc54436c225a73/7de4bf142da5bd5c-77/s540x810/e16d6a5044bbb5db924ab3f66605693de5b508e4.jpg 540w, https://64.media.tumblr.com/b285de8af1ff8a62b2bc54436c225a73/7de4bf142da5bd5c-77/s640x960/19c447146e903365fbeda6d9a716dccc0237b0eb.jpg 640w, https://64.media.tumblr.com/b285de8af1ff8a62b2bc54436c225a73/7de4bf142da5bd5c-77/s1280x1920/7c188ea3357f4e3591f226d87f9db2f9be08daef.jpg 1280w, https://64.media.tumblr.com/b285de8af1ff8a62b2bc54436c225a73/7de4bf142da5bd5c-77/s2048x3072/5f3c456a7b25f0c407df92447a302861d694e590.jpg 1440w"
+                                                                        loading="lazy"
+                                                                        data-puryfi-revealed-media="true"></div>
+                                                            </figure>
+                                                        </span></button></div>
+                                                <div class="CQmeg lN9Zs T94I2"><button class="TRX6J k4_Vq"
+                                                        aria-label="Image"><span class="EvhBA" tabindex="-1">
+                                                            <figure class="DdFPj">
+                                                                <div class="_0MuRn" style="padding-bottom: 125%;"><img
+                                                                        class="nLowv MbgAw" decoding="sync"
+                                                                        sizes="(max-width: 540px) 50vw, 150px"
+                                                                        srcset="https://64.media.tumblr.com/acd91a6d97125c8eaed4275232bff9b6/7de4bf142da5bd5c-44/s100x200/d25512fdd68c3ac3d8c3bb5d87c77c33b65387b7.jpg 100w, https://64.media.tumblr.com/acd91a6d97125c8eaed4275232bff9b6/7de4bf142da5bd5c-44/s250x400/cb5117e82da26e5031a0a17a4d057d0bb7848417.jpg 250w, https://64.media.tumblr.com/acd91a6d97125c8eaed4275232bff9b6/7de4bf142da5bd5c-44/s400x600/092df4c64d1bfde5eb44f5f3ca4f4a886b8c2f22.jpg 400w, https://64.media.tumblr.com/acd91a6d97125c8eaed4275232bff9b6/7de4bf142da5bd5c-44/s500x750/8474488580ab124ed7524ffc2105502457d873e4.jpg 500w, https://64.media.tumblr.com/acd91a6d97125c8eaed4275232bff9b6/7de4bf142da5bd5c-44/s540x810/fbedc173bb9fdad4fd3054ac33a7d1f4d1ec92b7.jpg 540w, https://64.media.tumblr.com/acd91a6d97125c8eaed4275232bff9b6/7de4bf142da5bd5c-44/s640x960/7f74003d9149c2058340bab2e788c5309a96497c.jpg 640w, https://64.media.tumblr.com/acd91a6d97125c8eaed4275232bff9b6/7de4bf142da5bd5c-44/s1280x1920/0c2c59e42c35a3f6d553b337b53686d4e9bf9bec.jpg 1280w, https://64.media.tumblr.com/acd91a6d97125c8eaed4275232bff9b6/7de4bf142da5bd5c-44/s2048x3072/3dc9907bc718a1d490202c2019b723e47613f01f.jpg 1440w"
+                                                                        loading="lazy"
+                                                                        data-puryfi-revealed-media="true"></div>
+                                                            </figure>
+                                                        </span></button><button class="TRX6J k4_Vq"
+                                                        aria-label="Image"><span class="EvhBA" tabindex="-1">
+                                                            <figure class="DdFPj">
+                                                                <div class="_0MuRn" style="padding-bottom: 125%;"><img
+                                                                        class="nLowv MbgAw" decoding="sync"
+                                                                        sizes="(max-width: 540px) 50vw, 150px"
+                                                                        srcset="https://64.media.tumblr.com/81ae8aadf8a4d8f71452b56660b698cd/7de4bf142da5bd5c-9b/s100x200/7e56b624555bf4e1824e61acb9fda8cf62532aef.jpg 100w, https://64.media.tumblr.com/81ae8aadf8a4d8f71452b56660b698cd/7de4bf142da5bd5c-9b/s250x400/c48c45a1fa02a10c25582169cbe30c3d4f4576be.jpg 250w, https://64.media.tumblr.com/81ae8aadf8a4d8f71452b56660b698cd/7de4bf142da5bd5c-9b/s400x600/5c2bcb1f94dc34a90d478e03be959859d117878e.jpg 400w, https://64.media.tumblr.com/81ae8aadf8a4d8f71452b56660b698cd/7de4bf142da5bd5c-9b/s500x750/eb5de5705edb68e84a5f3c5e267f1745c636608e.jpg 500w, https://64.media.tumblr.com/81ae8aadf8a4d8f71452b56660b698cd/7de4bf142da5bd5c-9b/s540x810/11268a60f8c5b0b0c7432f1f1264aa7b54d6adee.jpg 540w, https://64.media.tumblr.com/81ae8aadf8a4d8f71452b56660b698cd/7de4bf142da5bd5c-9b/s640x960/deab2183d0757aba88db3b44727144541540ba8f.jpg 640w, https://64.media.tumblr.com/81ae8aadf8a4d8f71452b56660b698cd/7de4bf142da5bd5c-9b/s1280x1920/e0a3186cbb10855ee707e49bdfe379804e53eb13.jpg 1280w, https://64.media.tumblr.com/81ae8aadf8a4d8f71452b56660b698cd/7de4bf142da5bd5c-9b/s2048x3072/f18d8a0eea41af7d8ff851aac5b1c8220bd49533.jpg 1440w"
+                                                                        loading="lazy"
+                                                                        data-puryfi-revealed-media="true"></div>
+                                                            </figure>
+                                                        </span></button></div>
+                                                <div class="k31gt Me1c9">
+                                                    <h2>Accept your fate</h2>
+                                                </div>
+                                                <div class="k31gt Me1c9">
+                                                    <p></p>
+                                                </div>
+                                                <div class="k31gt Me1c9">
+                                                    <p>For more: <a href="https://linktr.ee/vixenpolly" rel="noopener"
+                                                            target="_blank"
+                                                            data-2257-checked="true">linktr.ee/vixenpolly</a></p>
+                                                </div>
+                                            </div>
+                                        </span></div>
+                                    <div class="vwIjp">
+                                        <div class="EAugG" data-testid="community-label-cover">
+                                            <div class="UF4Vo">Mature content: Sexual themes</div>
+                                            <p class="MIDUS">The author has indicated this post may contain content not
+                                                suitable for all audiences.</p><button
+                                                class="VmbqY r21y5 Li_00 zn53i EF4A5" type="button"><span
+                                                    class="D4GNf">View post</span></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="qYXF9 ouMsp">
+                                <footer aria-label="Post footer" class="gm9gb">
+                                    <div class="ndAE7 aNJi_">
+                                        <div class="rtfvT rzBFb"><button class="VmbqY r21y5 Li_00 jpQn0 zaMBd t8Z2i"
+                                                aria-label="Comment" type="button"><span class="IXkOE"><svg height="20"
+                                                        role="presentation" width="20"
+                                                        xmlns="http://www.w3.org/2000/svg">
+                                                        <use href="#managed-icon__ds-reply-outline-20"></use>
+                                                    </svg></span><span
+                                                    class="Kv19n"><span>16</span></span></button><span class="Vcrhu"
+                                                data-testid="controlled-popover-wrapper"><span class="Vcrhu"><button
+                                                        aria-disabled="false"
+                                                        class="VmbqY r21y5 Li_00 jpQn0 zaMBd b067h" aria-label="Reblog"
+                                                        aria-expanded="false" aria-haspopup="menu" id=":r7j:"
+                                                        type="button"><span class="IXkOE"><svg height="20"
+                                                                role="presentation" width="20"
+                                                                xmlns="http://www.w3.org/2000/svg">
+                                                                <use href="#managed-icon__ds-reblog-20"></use>
+                                                            </svg></span><span class="Kv19n"><span
+                                                                class="">84</span></span></button></span></span>
+                                            <div class="UgCAM"><span class="Vcrhu"
+                                                    data-testid="controlled-popover-wrapper"><span class="Vcrhu">
+                                                        <div class="pG5KN" tabindex="-1"><button aria-disabled="false"
+                                                                class="VmbqY r21y5 Li_00 jpQn0 zaMBd R42pS"
+                                                                aria-label="Like" type="button"><span class="IXkOE"><svg
+                                                                        height="20" role="presentation" width="20"
+                                                                        xmlns="http://www.w3.org/2000/svg">
+                                                                        <use href="#managed-icon__ds-like-outline-20">
+                                                                        </use>
+                                                                    </svg></span><span class="Kv19n"><span
+                                                                        class="">537</span></span></button></div>
+                                                    </span></span></div>
+                                        </div>
+                                        <div><span class="BPf9u" data-testid="controlled-popover-wrapper"
+                                                style="vertical-align: middle;"><span class="BPf9u"><button
+                                                        aria-disabled="false"
+                                                        class="VmbqY r21y5 Li_00 ndGZ1 zaMBd ECYfO" aria-label="Share"
+                                                        type="button"><span class="D4GNf"><svg height="20"
+                                                                role="presentation" width="20"
+                                                                xmlns="http://www.w3.org/2000/svg">
+                                                                <use href="#managed-icon__ds-ui-upload-20"></use>
+                                                            </svg></span></button></span></span></div>
+                                    </div>
+                                </footer>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
