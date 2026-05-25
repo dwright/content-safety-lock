@@ -5,6 +5,8 @@
 // ============ State Management ============
 
 let currentState = null;
+let managedKeys = [];
+let managedLocked = false;
 let selectedDuration = null;
 let pinLockTimeout = null;
 let pinUnlockCheckInterval = null;
@@ -14,7 +16,13 @@ let isGeneralTabLocked = false;
 let selfLockDurationPicker = null;
 let cooldownDurationPicker = null;
 let incrementDurationPicker = null;
+let gameGuessDelayPicker = null;
+let gamePerGuessPicker = null;
+let gameOnLossPicker = null;
 let autoSaveTimeout = null;
+
+// Active Mastermind board instance (when self-lock is active in game mode)
+let activeMastermindBoard = null;
 
 /**
  * Load state from background
@@ -22,7 +30,19 @@ let autoSaveTimeout = null;
 async function loadState() {
   const response = await browser.runtime.sendMessage({ type: 'GET_STATE' });
   currentState = response.state;
+  managedKeys = response.managedKeys || [];
+  managedLocked = Boolean(response.managedLocked);
+  applyManagedTabVisibility();
   return currentState;
+}
+
+/**
+ * Show or hide tabs that should be hidden when managed lock is active.
+ */
+function applyManagedTabVisibility() {
+  document.querySelectorAll('.tab-button[data-managed-hide]').forEach(btn => {
+    btn.style.display = managedLocked ? 'none' : '';
+  });
 }
 
 /**
@@ -46,8 +66,11 @@ document.querySelectorAll('.tab-button').forEach(button => {
     if (tabName === 'general') {
       await loadState();
       
-      // If self-lock is active, general tab is always locked
-      if (currentState.selfLock.active) {
+      // Admin-managed lock takes priority — no unlock possible
+      if (managedLocked) {
+        isGeneralTabLocked = true;
+      } else if (currentState.selfLock.active) {
+        // Self-lock is active
         isGeneralTabLocked = true;
       } else {
         // Otherwise check PIN status
@@ -78,6 +101,9 @@ document.querySelectorAll('.tab-button').forEach(button => {
     // Refresh tab content
     if (tabName === 'self-lock') {
       refreshSelfLockStatus();
+    }
+    if (tabName === 'about') {
+      loadAboutTab();
     }
   });
 });
@@ -142,7 +168,14 @@ async function displayLockedSettings() {
   if (!display || !currentState) return;
   
   // Update message based on why it's locked
-  if (currentState.selfLock.active) {
+  if (managedLocked) {
+    if (lockedViewText) {
+      lockedViewText.textContent = 'Settings are managed by an administrator and cannot be changed.';
+    }
+    if (unlockBtn) {
+      unlockBtn.style.display = 'none';
+    }
+  } else if (currentState.selfLock.active) {
     if (lockedViewText) {
       lockedViewText.textContent = 'Settings are locked because Self-Lock is active. View your current configuration below. Self-Lock must expire before you can make changes.';
     }
@@ -320,6 +353,96 @@ async function loadGeneralSettings() {
 
   // Update collapsible sections based on checkbox states
   updateCollapsibleSections();
+
+  // Apply managed-policy UI state (disables inputs that are admin-controlled)
+  applyManagedUIState();
+}
+
+/**
+ * Map from dotted managed-policy key paths to the DOM element IDs they
+ * control on the General tab.  Where a policy key governs a whole sub-object
+ * (e.g. 'parental.categories') every child checkbox is covered by its own
+ * leaf entry, so the parent entry in this map is intentionally absent.
+ */
+const MANAGED_KEY_TO_ELEMENT_IDS = {
+  'parental.enabled':                          ['enable-filter'],
+  'parental.treatMatureAsAdult':               ['treat-mature'],
+  'parental.allowList':                        ['allow-list'],
+  'parental.blockList':                        ['block-list'],
+  'parental.categories.sexual':                ['cat-sexual'],
+  'parental.categories.violence':              ['cat-violence'],
+  'parental.categories.profanity':             ['cat-profanity'],
+  'parental.categories.drugs':                 ['cat-drugs'],
+  'parental.categories.gambling':              ['cat-gambling'],
+  'parental.categories.ageVerification':       ['cat-age-verification'],
+  'parental.categories.adultProductSales':     ['cat-adult-product-sales'],
+  'parental.adultProductSalesVendors.etsy':     ['vendor-etsy'],
+  'parental.adultProductSalesVendors.redbubble':['vendor-redbubble'],
+  'parental.adultProductSalesVendors.teepublic':['vendor-teepublic'],
+  'parental.adultProductSalesVendors.zazzle':   ['vendor-zazzle'],
+  'parental.adultProductSalesVendors.itchIo':   ['vendor-itch-io'],
+  'parental.adultProductSalesVendors.ebay':     ['vendor-ebay'],
+  'parental.adultProductSalesVendors.amazon':   ['vendor-amazon'],
+  'parental.adultProductSalesVendors.patreon':  ['vendor-patreon'],
+  'parental.adultProductSalesVendors.shopify':  ['vendor-shopify'],
+  'safeRequestMode.enabled':                   ['safe-request-enabled'],
+  'safeRequestMode.addPreferSafeHeader':        ['safe-request-prefer-header'],
+  'safeRequestMode.blockUserParamDowngrade':    ['safe-request-block-downgrade'],
+  'safeRequestMode.perFrameEnforcement':        ['safe-request-frame-enforcement'],
+  'safeRequestMode.applyInPrivateWindows':      ['safe-request-private-windows'],
+  'safeRequestMode.providers.google':           ['provider-google-enabled'],
+  'safeRequestMode.providers.bing':             ['provider-bing-enabled'],
+  'safeRequestMode.providers.bing.useRedirect': ['provider-bing-redirect'],
+  'safeRequestMode.providers.yahoo':            ['provider-yahoo-enabled'],
+  'safeRequestMode.providers.ddg':              ['provider-ddg-enabled'],
+  'safeRequestMode.providers.youtube':          ['provider-youtube-enabled'],
+  'safeRequestMode.providers.youtube.headerMode': ['provider-youtube-mode'],
+  'safeRequestMode.providers.tumblr':           ['provider-tumblr-enabled'],
+  'safeRequestMode.providers.reddit':           ['provider-reddit-enabled']
+};
+
+/**
+ * Disable all General-tab controls that are governed by managed policy and
+ * attach a "Managed" badge next to their label.  Controls not covered by
+ * managed policy are left untouched (re-enabled if they were previously
+ * disabled by a stale managed state).
+ */
+function applyManagedUIState() {
+  const managedSet = new Set(managedKeys);
+
+  for (const [policyKey, elementIds] of Object.entries(MANAGED_KEY_TO_ELEMENT_IDS)) {
+    const isManaged = managedSet.has(policyKey);
+
+    for (const elementId of elementIds) {
+      const el = document.getElementById(elementId);
+      if (!el) continue;
+
+      if (isManaged) {
+        el.disabled = true;
+        el.setAttribute('data-managed', 'true');
+
+        // Add badge to the associated label, if not already present.
+        const label = el.closest('.checkbox-group, .form-group')
+          ?.querySelector(`label[for="${elementId}"], label.checkbox-label`);
+        if (label && !label.querySelector('.managed-badge')) {
+          const badge = document.createElement('span');
+          badge.className = 'managed-badge';
+          badge.textContent = 'Managed';
+          label.appendChild(badge);
+        }
+      } else {
+        el.disabled = false;
+        el.removeAttribute('data-managed');
+
+        // Remove any badge that was previously added.
+        const label = el.closest('.checkbox-group, .form-group')
+          ?.querySelector(`label[for="${elementId}"], label.checkbox-label`);
+        if (label) {
+          label.querySelector('.managed-badge')?.remove();
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -830,8 +953,13 @@ document.getElementById('cancel-pin-btn').addEventListener('click', cancelPINMan
 async function disableSelfLock() {
   await loadState();
   
-  // If early unlock is disabled for this session, do not allow manual disable
-  if (!currentState.selfLock.allowEarlyUnlock) {
+  // Only the phrase-based mode supports manual disable here; game-mode unlocks
+  // happen via the Mastermind board, and 'none' has no early unlock at all.
+  if (currentState.selfLock.earlyUnlockMode === 'game') {
+    showAlert('self-lock-alerts', 'Early unlock requires winning the guessing game.', 'error');
+    return;
+  }
+  if (currentState.selfLock.earlyUnlockMode !== 'phrase') {
     showAlert('self-lock-alerts', 'Early unlock is disabled for this self-lock session.', 'error');
     return;
   }
@@ -992,11 +1120,17 @@ async function refreshSelfLockStatus() {
     disableBtn.style.width = '100%';
     disableBtn.textContent = 'Disable Self-Lock';
     
-    if (currentState.selfLock.allowEarlyUnlock) {
+    if (currentState.selfLock.earlyUnlockMode === 'phrase') {
       disableBtn.addEventListener('click', async () => {
         await disableSelfLock();
       });
       statusDiv.appendChild(disableBtn);
+    } else if (currentState.selfLock.earlyUnlockMode === 'game') {
+      const gameMsg = document.createElement('div');
+      gameMsg.style.marginTop = '12px';
+      gameMsg.className = 'lock-status-detail';
+      gameMsg.textContent = 'Early unlock requires winning the guessing game below.';
+      statusDiv.appendChild(gameMsg);
     } else {
       const disabledMsg = document.createElement('div');
       disabledMsg.style.marginTop = '12px';
@@ -1035,9 +1169,13 @@ async function refreshSelfLockStatus() {
     activateLockSection.style.display = 'block';
   }
   
-  // Load lock settings into checkboxes
-  document.getElementById('allow-early-unlock').checked = currentState.selfLock.allowEarlyUnlock;
-  document.getElementById('lock-require-password').checked = currentState.selfLock.allowEarlyUnlock && currentState.selfLock.requiresPassword;
+  // Load lock settings into checkboxes / mode selector
+  const modeSelect = document.getElementById('early-unlock-mode');
+  if (modeSelect) {
+    modeSelect.value = currentState.selfLock.earlyUnlockMode || 'none';
+  }
+  document.getElementById('lock-require-password').checked =
+    currentState.selfLock.earlyUnlockMode === 'phrase' && currentState.selfLock.requiresPassword;
   document.getElementById('lock-increment-on-block').checked = currentState.selfLock.incrementOnBlock;
   
   // Load settings into time interval pickers if they exist
@@ -1054,34 +1192,158 @@ async function refreshSelfLockStatus() {
   // Toggle conditional sections visibility
   toggleEarlyUnlockSection();
   toggleIncrementSection();
+  
+  // Render Mastermind board if game mode is active.
+  renderActiveGameBoard();
 }
 
 /**
- * Toggle passphrase section visibility based on require password checkbox
+ * Render the Mastermind board into the lock-status-panel when self-lock is
+ * active in game mode. Tears down any prior instance first.
+ */
+function renderActiveGameBoard() {
+  if (activeMastermindBoard) {
+    activeMastermindBoard.destroy();
+    activeMastermindBoard = null;
+  }
+  
+  if (!currentState || !currentState.selfLock.active || currentState.selfLock.earlyUnlockMode !== 'game') {
+    return;
+  }
+  
+  const panel = document.getElementById('lock-status-panel');
+  if (!panel) return;
+  
+  // Wrapper card for the board
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:16px;margin-top:12px;';
+  
+  const heading = document.createElement('div');
+  heading.style.cssText = 'font-weight:700;color:#667eea;margin-bottom:8px;';
+  heading.textContent = '🎯 Early Unlock — Guessing Game';
+  wrap.appendChild(heading);
+  
+  const help = document.createElement('p');
+  help.className = 'help-text';
+  help.style.marginBottom = '12px';
+  help.textContent = 'Crack the secret color sequence to release the lock early.';
+  wrap.appendChild(help);
+  
+  const boardContainer = document.createElement('div');
+  wrap.appendChild(boardContainer);
+  
+  panel.appendChild(wrap);
+  
+  activeMastermindBoard = new MastermindBoard(boardContainer, {
+    getState: async () => browser.runtime.sendMessage({ type: 'GET_GAME_STATE' }),
+    submitGuess: async (guess) => browser.runtime.sendMessage({ type: 'SUBMIT_GAME_GUESS', guess }),
+    onWin: async () => {
+      showAlert('self-lock-alerts', 'Correct sequence! Self-Lock released.', 'success');
+      setTimeout(() => refreshSelfLockStatus(), 800);
+    }
+  });
+}
+
+/**
+ * Tier color palette for the difficulty feedback box.
+ */
+const GAME_DIFFICULTY_STYLES = {
+  impossible:  { bg: '#fdecea', border: '#e74c3c', color: '#a93226' },
+  grandmaster: { bg: '#fdebd0', border: '#e67e22', color: '#9c640c' },
+  expert:      { bg: '#fef9e7', border: '#f1c40f', color: '#7d6608' },
+  challenging: { bg: '#eaf6fb', border: '#3498db', color: '#1f618d' },
+  casual:      { bg: '#eafaf1', border: '#27ae60', color: '#196f3d' }
+};
+
+/**
+ * Recompute and display Mastermind difficulty feedback, and update the
+ * `max` attribute on the max-guesses input to cap at T + 10.
+ */
+function updateGameDifficultyFeedback() {
+  const slotsEl = document.getElementById('game-slots');
+  const colorsEl = document.getElementById('game-colors');
+  const maxGuessesEl = document.getElementById('game-max-guesses');
+  const feedbackEl = document.getElementById('game-difficulty-feedback');
+  if (!slotsEl || !colorsEl || !maxGuessesEl || !feedbackEl) return;
+  
+  const slots = parseInt(slotsEl.value, 10);
+  const colors = parseInt(colorsEl.value, 10);
+  const guesses = parseInt(maxGuessesEl.value, 10);
+  
+  const baseline = calcMastermindDifficulty(slots, colors, null);
+  if (baseline.T == null) {
+    feedbackEl.style.display = 'none';
+    maxGuessesEl.removeAttribute('max');
+    return;
+  }
+  
+  // Enforce the T + 10 cap via the input's `max` attribute so the number
+  // spinner and native validation honour it as well.
+  maxGuessesEl.max = String(baseline.maxRecommended);
+  if (Number.isFinite(guesses) && guesses > baseline.maxRecommended) {
+    maxGuessesEl.value = String(baseline.maxRecommended);
+  }
+  
+  // Re-read in case we just clamped.
+  const effectiveGuesses = parseInt(maxGuessesEl.value, 10);
+  const result = calcMastermindDifficulty(slots, colors, effectiveGuesses);
+  if (!result.tier) {
+    feedbackEl.style.display = 'none';
+    return;
+  }
+  
+  const style = GAME_DIFFICULTY_STYLES[result.tier] || GAME_DIFFICULTY_STYLES.challenging;
+  feedbackEl.style.display = 'block';
+  feedbackEl.style.background = style.bg;
+  feedbackEl.style.border = `1px solid ${style.border}`;
+  feedbackEl.style.color = style.color;
+  feedbackEl.textContent = '';
+  
+  const title = document.createElement('strong');
+  title.textContent = `Difficulty: ${result.label}`;
+  feedbackEl.appendChild(title);
+  
+  const detail = document.createElement('div');
+  detail.style.marginTop = '4px';
+  detail.textContent =
+    `Theoretical minimum guesses for ${slots} slots / ${colors} colors: ${result.T}. ` +
+    `Maximum allowed: ${result.maxRecommended} (T + 10). ${result.description}`;
+  feedbackEl.appendChild(detail);
+}
+
+/**
+ * Toggle passphrase section visibility based on mode + require-password checkbox
  */
 function togglePassphraseSection() {
-  const allowEarlyUnlock = document.getElementById('allow-early-unlock')?.checked;
+  const mode = document.getElementById('early-unlock-mode')?.value || 'none';
   const requirePassword = document.getElementById('lock-require-password').checked;
   const passphraseSection = document.getElementById('passphrase-section');
   
   if (passphraseSection) {
-    passphraseSection.style.display = allowEarlyUnlock && requirePassword ? 'block' : 'none';
+    passphraseSection.style.display = mode === 'phrase' && requirePassword ? 'block' : 'none';
   }
 }
 
 /**
- * Toggle early unlock settings visibility based on allow early unlock checkbox
+ * Toggle early unlock settings visibility based on the chosen mode
  */
 function toggleEarlyUnlockSection() {
-  const allowEarlyUnlock = document.getElementById('allow-early-unlock')?.checked;
-  const earlyUnlockSettings = document.getElementById('early-unlock-settings');
+  const mode = document.getElementById('early-unlock-mode')?.value || 'none';
+  const phraseSettings = document.getElementById('phrase-mode-settings');
+  const gameSettings = document.getElementById('game-mode-settings');
   const requirePasswordCheckbox = document.getElementById('lock-require-password');
   
-  if (earlyUnlockSettings) {
-    earlyUnlockSettings.style.display = allowEarlyUnlock ? 'block' : 'none';
+  if (phraseSettings) {
+    phraseSettings.style.display = mode === 'phrase' ? 'block' : 'none';
+  }
+  if (gameSettings) {
+    gameSettings.style.display = mode === 'game' ? 'block' : 'none';
+    if (mode === 'game') {
+      updateGameDifficultyFeedback();
+    }
   }
   
-  if (!allowEarlyUnlock && requirePasswordCheckbox) {
+  if (mode !== 'phrase' && requirePasswordCheckbox) {
     requirePasswordCheckbox.checked = false;
   }
   
@@ -1146,25 +1408,73 @@ function setupTimeIntervalPickers() {
     }
   );
   
-  // Initialize visibility of conditional sections
+  // Game-mode pickers (only present when game mode is selected, but always
+  // initialized so we can read values without null guards).
+  const guessDelayContainer = document.getElementById('game-guess-delay-picker');
+  if (guessDelayContainer) {
+    gameGuessDelayPicker = new TimeIntervalPicker(guessDelayContainer, {
+      defaultValue: { months: 0, weeks: 0, days: 0, hours: 0, minutes: 5 },
+      config: {
+        minTotalMinutes: 0,
+        maxTotalMinutes: 1440, // 24 hours
+        stepBehavior: 'rollover'
+      }
+    });
+  }
+  
+  const perGuessContainer = document.getElementById('game-per-guess-picker');
+  if (perGuessContainer) {
+    gamePerGuessPicker = new TimeIntervalPicker(perGuessContainer, {
+      defaultValue: { months: 0, weeks: 0, days: 0, hours: 0, minutes: 0 },
+      config: {
+        minTotalMinutes: 0,
+        maxTotalMinutes: 1440, // 24 hours
+        stepBehavior: 'rollover'
+      }
+    });
+  }
+  
+  const onLossContainer = document.getElementById('game-on-loss-picker');
+  if (onLossContainer) {
+    gameOnLossPicker = new TimeIntervalPicker(onLossContainer, {
+      defaultValue: { months: 0, weeks: 0, days: 0, hours: 1, minutes: 0 },
+      config: {
+        minTotalMinutes: 0,
+        maxTotalMinutes: 60 * 24 * 7, // 1 week
+        stepBehavior: 'rollover'
+      }
+    });
+  }
+  
+  // Initialize visibility of conditional sections and difficulty readout.
   toggleEarlyUnlockSection();
   toggleIncrementSection();
+  updateGameDifficultyFeedback();
 }
 
 /**
  * Activate self-lock
  */
 async function activateSelfLock() {
+  // Resolve the duration from the picker directly, falling back to the
+  // value last reported via onValidChange. Reading the picker here ensures
+  // the default value works even when the user never edits it.
+  if (selfLockDurationPicker) {
+    const totalMinutes = toTotalMinutes(selfLockDurationPicker.getValue(), selfLockDurationPicker.config);
+    if (Number.isFinite(totalMinutes) && totalMinutes > 0) {
+      selectedDuration = totalMinutes * 60 * 1000;
+    }
+  }
   if (!selectedDuration) {
     showAlert('self-lock-alerts', 'Please select a duration', 'error');
     return;
   }
   
-  const allowEarlyUnlock = document.getElementById('allow-early-unlock').checked;
-  const requirePassword = allowEarlyUnlock && document.getElementById('lock-require-password').checked;
+  const mode = document.getElementById('early-unlock-mode').value || 'none';
+  const requirePassword = mode === 'phrase' && document.getElementById('lock-require-password').checked;
   const passphrase = document.getElementById('self-lock-pass').value;
   
-  // If password is required, validate passphrase
+  // If password is required, validate passphrase.
   if (requirePassword) {
     if (!passphrase || passphrase.trim().length === 0) {
       showAlert('self-lock-alerts', 'Please enter a passphrase for early unlock', 'error');
@@ -1176,17 +1486,64 @@ async function activateSelfLock() {
     }
   }
   
+  // Validate game-mode config.
+  let gameConfig = null;
+  if (mode === 'game') {
+    const slots = parseInt(document.getElementById('game-slots').value, 10);
+    const colors = parseInt(document.getElementById('game-colors').value, 10);
+    const maxGuesses = parseInt(document.getElementById('game-max-guesses').value, 10);
+    
+    if (!Number.isInteger(slots) || slots < 2 || slots > 8) {
+      showAlert('self-lock-alerts', 'Number of slots must be between 2 and 8', 'error');
+      return;
+    }
+    if (!Number.isInteger(colors) || colors < 3 || colors > 10) {
+      showAlert('self-lock-alerts', 'Number of colors must be between 3 and 10', 'error');
+      return;
+    }
+    if (!Number.isInteger(maxGuesses) || maxGuesses < 1) {
+      showAlert('self-lock-alerts', 'Maximum guesses must be at least 1', 'error');
+      return;
+    }
+    const difficulty = calcMastermindDifficulty(slots, colors, maxGuesses);
+    if (difficulty.maxRecommended != null && maxGuesses > difficulty.maxRecommended) {
+      showAlert('self-lock-alerts',
+        `Maximum guesses cannot exceed T + 10 (${difficulty.maxRecommended}) for this configuration.`,
+        'error');
+      return;
+    }
+    
+    const guessDelayMins = gameGuessDelayPicker
+      ? toTotalMinutes(gameGuessDelayPicker.getValue(), gameGuessDelayPicker.config)
+      : 5;
+    const perGuessMins = gamePerGuessPicker
+      ? toTotalMinutes(gamePerGuessPicker.getValue(), gamePerGuessPicker.config)
+      : 0;
+    const onLossMins = gameOnLossPicker
+      ? toTotalMinutes(gameOnLossPicker.getValue(), gameOnLossPicker.config)
+      : 0;
+    
+    gameConfig = {
+      slots,
+      colors,
+      maxGuesses,
+      guessDelayMs: guessDelayMins * 60 * 1000,
+      incrementPerGuessMs: perGuessMins * 60 * 1000,
+      incrementOnLossMs: onLossMins * 60 * 1000
+    };
+  }
+  
   if (confirm(`Activate Self-Lock for ${formatDuration(selectedDuration)}?\n\nThe General settings tab will be locked until the self-lock expires.`)) {
     try {
-      // Hash the passphrase if password is required
+      // Hash the passphrase if password is required.
       let passphraseHash = null;
       if (requirePassword && passphrase) {
         passphraseHash = await hashPassphrase(passphrase);
       }
       
-      // Get values from time interval pickers
+      // Get values from time interval pickers.
       const cooldownValue = cooldownDurationPicker.getValue();
-      const cooldownMinutes = allowEarlyUnlock
+      const cooldownMinutes = mode === 'phrase'
         ? toTotalMinutes(cooldownValue, cooldownDurationPicker.config)
         : 0;
       
@@ -1196,18 +1553,19 @@ async function activateSelfLock() {
       await browser.runtime.sendMessage({
         type: 'ACTIVATE_SELF_LOCK',
         durationMs: selectedDuration,
-        allowEarlyUnlock: allowEarlyUnlock,
+        earlyUnlockMode: mode,
         requiresPassword: requirePassword,
         passphraseHash: passphraseHash,
         cooldownMinutes: cooldownMinutes,
         incrementOnBlock: document.getElementById('lock-increment-on-block').checked,
-        incrementMinutes: incrementMinutes
+        incrementMinutes: incrementMinutes,
+        gameConfig: gameConfig
       });
       
       showAlert('self-lock-alerts', 'Self-Lock activated! General settings tab is now locked.', 'success');
       selectedDuration = null;
       
-      // Reset pickers to defaults
+      // Reset pickers to defaults.
       selfLockDurationPicker.setValue({ months: 0, weeks: 0, days: 0, hours: 1, minutes: 0 });
       document.getElementById('self-lock-pass').value = '';
       
@@ -1224,11 +1582,108 @@ document.getElementById('activate-lock-btn').addEventListener('click', activateS
 // Add listener for require password checkbox to toggle passphrase section
 document.getElementById('lock-require-password').addEventListener('change', togglePassphraseSection);
 
-// Add listener for allow early unlock checkbox to toggle settings
-document.getElementById('allow-early-unlock').addEventListener('change', toggleEarlyUnlockSection);
+// Add listener for early unlock mode selector to toggle visible config sections
+document.getElementById('early-unlock-mode').addEventListener('change', toggleEarlyUnlockSection);
 
 // Add listener for increment checkbox to toggle increment duration section
 document.getElementById('lock-increment-on-block').addEventListener('change', toggleIncrementSection);
+
+// Recompute Mastermind difficulty feedback whenever game config changes.
+['game-slots', 'game-colors', 'game-max-guesses'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', updateGameDifficultyFeedback);
+});
+
+// ============ About Tab ============
+
+/**
+ * Load and display debug information on the About tab.
+ */
+async function loadAboutTab() {
+  const info = await browser.runtime.sendMessage({ type: 'GET_DEBUG_INFO' });
+
+  document.getElementById('about-version-value').textContent = info.version;
+  document.getElementById('about-location-value').textContent = info.extensionUrl;
+
+  const managedDump = document.getElementById('about-managed-dump');
+  const managedError = document.getElementById('about-managed-error');
+  let managedText;
+
+  if (info.managedError) {
+    managedError.textContent = 'Error reading managed storage: ' + info.managedError;
+    managedError.style.display = 'block';
+    managedText = '(error: ' + info.managedError + ')';
+    managedDump.textContent = managedText;
+  } else if (info.managedStorage === null || Object.keys(info.managedStorage).length === 0) {
+    managedError.style.display = 'none';
+    managedText = '(no managed policy installed)';
+    managedDump.textContent = managedText;
+  } else {
+    managedError.style.display = 'none';
+    managedText = JSON.stringify(info.managedStorage, null, 2);
+    managedDump.textContent = managedText;
+  }
+
+  const localDump = document.getElementById('about-local-dump');
+  const localText = info.localStorageState
+    ? JSON.stringify(info.localStorageState, null, 2)
+    : '(no local state saved yet)';
+  localDump.textContent = localText;
+
+  const effectiveDump = document.getElementById('about-effective-dump');
+  const effectiveText = info.effectiveState
+    ? JSON.stringify(info.effectiveState, null, 2)
+    : '(unavailable)';
+  effectiveDump.textContent = effectiveText;
+
+  // Wire toggle (only attach listener once)
+  const toggle = document.getElementById('debug-toggle');
+  const debugSection = document.getElementById('debug-section');
+  if (toggle && !toggle.dataset.wired) {
+    toggle.dataset.wired = '1';
+    toggle.addEventListener('click', (evt) => {
+      evt.preventDefault();
+      const visible = debugSection.style.display !== 'none';
+      debugSection.style.display = visible ? 'none' : 'block';
+      toggle.textContent = (visible ? '\u25b6' : '\u25bc') + (visible ? ' Show debugging information' : ' Hide debugging information');
+    });
+  }
+
+  // Wire copy button (only attach listener once)
+  const copyBtn = document.getElementById('debug-copy-btn');
+  if (copyBtn && !copyBtn.dataset.wired) {
+    copyBtn.dataset.wired = '1';
+    copyBtn.addEventListener('click', async () => {
+      const text = [
+        'Content Safety Lock — Debug Report',
+        '===================================',
+        '',
+        'Version:        ' + info.version,
+        'Install URL:    ' + info.extensionUrl,
+        'Extension ID:   content-safety-lock@dwright.org',
+        '',
+        '--- Managed Storage ---',
+        managedText,
+        '',
+        '--- Local Storage State ---',
+        localText,
+        '',
+        '--- Effective State ---',
+        effectiveText,
+      ].join('\n');
+
+      try {
+        await navigator.clipboard.writeText(text);
+        const orig = copyBtn.textContent;
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => { copyBtn.textContent = orig; }, 2000);
+      } catch (err) {
+        copyBtn.textContent = 'Copy failed';
+        setTimeout(() => { copyBtn.textContent = 'Copy to clipboard'; }, 2000);
+      }
+    });
+  }
+}
 
 // ============ Security Tab ============
 
@@ -1306,8 +1761,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load state first
   await loadState();
   
-  // Check if self-lock is active or PIN is locked
-  if (currentState.selfLock.active) {
+  // Check if admin-managed lock, self-lock, or PIN lock applies
+  if (managedLocked) {
+    // Administrator policy lock — no unlock possible
+    isGeneralTabLocked = true;
+  } else if (currentState.selfLock.active) {
     // Self-lock is active - general tab is locked
     isGeneralTabLocked = true;
   } else {

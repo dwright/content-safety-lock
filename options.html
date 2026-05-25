@@ -487,6 +487,82 @@
     .settings-subsection .form-group:last-child {
       margin-bottom: 0;
     }
+
+    .debug-toggle-link {
+      color: #667eea;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .debug-toggle-link:hover {
+      text-decoration: underline;
+    }
+
+    /* About tab */
+    .about-info-row {
+      display: flex;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 14px;
+    }
+
+    .about-info-label {
+      font-weight: 600;
+      color: #333;
+      min-width: 140px;
+      flex-shrink: 0;
+    }
+
+    .about-info-value {
+      color: #555;
+      word-break: break-all;
+      font-family: monospace;
+      font-size: 13px;
+    }
+
+    .debug-dump {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      font-family: monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      padding: 16px;
+      border-radius: 6px;
+      overflow-x: auto;
+      white-space: pre;
+      max-height: 400px;
+      overflow-y: auto;
+      margin: 0;
+    }
+
+    /* Managed policy controls */
+    .managed-badge {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 2px 7px;
+      background: #e8eaf6;
+      color: #3949ab;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 10px;
+      letter-spacing: 0.03em;
+      vertical-align: middle;
+      border: 1px solid #c5cae9;
+    }
+
+    input[data-managed="true"],
+    select[data-managed="true"],
+    textarea[data-managed="true"] {
+      opacity: 0.65;
+      cursor: not-allowed;
+      background: #f0f0f0;
+    }
+
+    .checkbox-group:has(input[data-managed="true"]) {
+      background: #f0f3ff;
+      border: 1px solid #c5cae9;
+    }
   </style>
 </head>
 <body>
@@ -498,8 +574,9 @@
     
     <div class="tabs">
       <button class="tab-button active" data-tab="general">General</button>
-      <button class="tab-button" data-tab="self-lock">Self-Lock</button>
-      <button class="tab-button" data-tab="security">Security</button>
+      <button class="tab-button" data-tab="self-lock" data-managed-hide>Self-Lock</button>
+      <button class="tab-button" data-tab="security" data-managed-hide>Security</button>
+      <button class="tab-button" data-tab="about">About</button>
     </div>
     
     <!-- General Tab -->
@@ -682,14 +759,6 @@
               </div>
               
               <div style="background: #f9f9f9; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
-                <h5 style="margin: 0 0 12px 0; font-size: 13px; color: #333; font-weight: 600;">Reddit</h5>
-                <div class="checkbox-group" style="margin-bottom: 0;">
-                  <input type="checkbox" id="provider-reddit-enabled" checked>
-                  <label class="checkbox-label" for="provider-reddit-enabled">Filter NSFW content (network & DOM)</label>
-                </div>
-              </div>
-
-              <div style="background: #f9f9f9; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
                 <h5 style="margin: 0 0 12px 0; font-size: 13px; color: #333; font-weight: 600;">YouTube</h5>
                 <div class="checkbox-group" style="margin-bottom: 12px;">
                   <input type="checkbox" id="provider-youtube-enabled" checked>
@@ -809,14 +878,19 @@
         <!-- Early Unlock Settings -->
         <div class="settings-subsection">
           <h3 class="subsection-title">Early Unlock Protection</h3>
+          <p class="help-text" style="margin-bottom: 12px;">Choose how (if at all) you can release the lock before its scheduled end:</p>
+          
           <div class="form-group">
-            <div class="checkbox-group">
-              <input type="checkbox" id="allow-early-unlock">
-              <label class="checkbox-label" for="allow-early-unlock">Allow early unlock</label>
-            </div>
+            <label for="early-unlock-mode">Early Unlock Mode:</label>
+            <select id="early-unlock-mode">
+              <option value="none">None — must wait for the timer to expire</option>
+              <option value="phrase">Passphrase &amp; cool-down</option>
+              <option value="game">Guessing game (Mastermind)</option>
+            </select>
           </div>
           
-          <div id="early-unlock-settings" style="display: none;">
+          <!-- Phrase mode settings -->
+          <div id="phrase-mode-settings" style="display: none;">
             <div class="form-group">
               <div class="checkbox-group">
                 <input type="checkbox" id="lock-require-password">
@@ -834,6 +908,46 @@
               <label>Early Unlock Cool-down:</label>
               <p class="help-text" style="margin-bottom: 12px;">Time to wait before allowing another early unlock attempt</p>
               <div id="cooldown-duration-picker"></div>
+            </div>
+          </div>
+          
+          <!-- Game mode settings -->
+          <div id="game-mode-settings" style="display: none;">
+            <p class="help-text" style="margin-bottom: 12px;">Configure a Mastermind-style guessing game. Crack the secret color sequence to release the lock early.</p>
+            
+            <div class="form-group">
+              <label for="game-slots">Number of slots in sequence (2–8):</label>
+              <input type="number" id="game-slots" min="2" max="8" step="1" value="4">
+            </div>
+            
+            <div class="form-group">
+              <label for="game-colors">Number of colors to choose from (3–10):</label>
+              <input type="number" id="game-colors" min="3" max="10" step="1" value="6">
+            </div>
+            
+            <div class="form-group">
+              <label for="game-max-guesses">Maximum guesses per puzzle:</label>
+              <input type="number" id="game-max-guesses" min="1" step="1" value="8">
+              <p class="help-text" style="margin-top: 8px;">When you run out of guesses, a new sequence is generated and you start over.</p>
+              <div id="game-difficulty-feedback" style="margin-top: 10px; padding: 10px 12px; border-radius: 6px; font-size: 13px; line-height: 1.4; display: none;"></div>
+            </div>
+            
+            <div class="form-group">
+              <label>Delay between guesses:</label>
+              <p class="help-text" style="margin-bottom: 12px;">After each guess, you must wait this long before submitting another.</p>
+              <div id="game-guess-delay-picker"></div>
+            </div>
+            
+            <div class="form-group">
+              <label>Time added to lock per guess (0 = off):</label>
+              <p class="help-text" style="margin-bottom: 12px;">Each submitted guess extends the lock timer by this amount.</p>
+              <div id="game-per-guess-picker"></div>
+            </div>
+            
+            <div class="form-group">
+              <label>Time added when puzzle resets (0 = off):</label>
+              <p class="help-text" style="margin-bottom: 12px;">If you exhaust your guesses and the puzzle resets, this much time is added to the lock timer.</p>
+              <div id="game-on-loss-picker"></div>
             </div>
           </div>
         </div>
@@ -862,6 +976,70 @@
       </div>
     </div>
     
+    <!-- About Tab -->
+    <div id="about" class="tab-content">
+      <div class="section">
+        <div class="section-title">About Content Safety Lock</div>
+        <p class="help-text">
+          Content Safety Lock is a voluntary tool designed to help adults maintain structured guardrails against adult content.
+          It uses voluntary labels (RTA, ICRA, SafeSurf) to identify content and block rendering.
+        </p>
+        <p class="help-text" style="margin-top: 12px;">
+          <strong>Note:</strong> Self-Lock is scoped to the current Firefox profile. Removing or disabling the extension
+          will also remove any active self-lock. If you need enforcement that cannot be bypassed at the browser level,
+          consider pairing this extension with Firefox enterprise policies or a separate restricted OS user account.
+        </p>
+        <p class="help-text" style="margin-top: 12px;">
+          &copy; Dan Wright &mdash;
+          <a href="https://github.com/dwright/content-safety-lock" target="_blank" rel="noopener noreferrer">GitHub</a>
+          &mdash; Released under the MIT License
+        </p>
+        <p style="margin-top: 16px;">
+          <a href="#" id="debug-toggle" class="debug-toggle-link">&#9656; Show debugging information</a>
+        </p>
+      </div>
+
+      <div id="debug-section" style="display:none;">
+        <div class="section">
+          <div class="section-title" style="display:flex; align-items:center; justify-content:space-between;">
+            Debugging Information
+            <button class="btn-secondary" id="debug-copy-btn" style="font-size:12px; padding:4px 12px;">Copy to clipboard</button>
+          </div>
+          <div id="about-version" class="about-info-row">
+            <span class="about-info-label">Version:</span>
+            <span class="about-info-value" id="about-version-value">Loading&hellip;</span>
+          </div>
+          <div id="about-location" class="about-info-row">
+            <span class="about-info-label">Install location:</span>
+            <span class="about-info-value" id="about-location-value">Loading&hellip;</span>
+          </div>
+          <div class="about-info-row">
+            <span class="about-info-label">Extension ID:</span>
+            <span class="about-info-value">content-safety-lock@dwright.org</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Managed Storage</div>
+          <p class="help-text">Raw data delivered by <code>browser.storage.managed</code> (administrator policy):</p>
+          <div id="about-managed-error" class="alert alert-error" style="display:none;"></div>
+          <pre class="debug-dump" id="about-managed-dump">Loading&hellip;</pre>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Local Storage State</div>
+          <p class="help-text">Raw state saved in <code>browser.storage.local</code> (user values before managed policy is applied):</p>
+          <pre class="debug-dump" id="about-local-dump">Loading&hellip;</pre>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Effective State</div>
+          <p class="help-text">Merged state after managed policy is applied on top of local storage (what the extension actually uses):</p>
+          <pre class="debug-dump" id="about-effective-dump">Loading&hellip;</pre>
+        </div>
+      </div>
+    </div>
+
     <!-- Security Tab -->
     <div id="security" class="tab-content">
       <div id="security-alerts"></div>
@@ -882,23 +1060,13 @@
         </div>
       </div>
       
-      <div class="section">
-        <div class="section-title">About</div>
-        <p class="help-text">
-          Content Safety Lock is a voluntary tool designed to help adults maintain structured guardrails against adult content.
-          It uses voluntary labels (RTA, ICRA, SafeSurf) to identify content and block rendering.
-        </p>
-        <p class="help-text" style="margin-top: 12px;">
-          <strong>Important:</strong> Self-Lock is profile-scoped and cannot survive uninstall or disable by an admin user.
-          For stronger commitments, consider using a separate OS user account or Firefox policies.
-        </p>
-      </div>
     </div>
   </div>
   
   <link rel="stylesheet" href="js/components/time-interval-picker.css">
   <script src="js/components/time-interval-picker.js"></script>
   <script src="js/utils.js"></script>
+  <script src="js/components/mastermind-board.js"></script>
   <script src="js/safe-request/safe-request-config.js"></script>
   <script src="js/safe-request/safe-request-utils.js"></script>
   <script src="js/options.js"></script>

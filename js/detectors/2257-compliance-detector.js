@@ -111,19 +111,27 @@ function checkLink(link) {
   if (link.hasAttribute('data-2257-checked')) {
     return null;
   }
-  
+
   link.setAttribute('data-2257-checked', 'true');
-  
+
   const href = link.getAttribute('href');
   if (!href || href.startsWith('#') || href.startsWith('javascript:')) {
     return null;
   }
-  
+
   const linkText = link.innerText || link.textContent || '';
-  
+
   try {
     const resolvedHostname = new URL(href, window.location.href).hostname;
-    if (resolvedHostname !== window.location.hostname) {
+    const currentHostname = window.location.hostname;
+
+    // Allow same hostname OR myshopify.com subdomains (same merchant/store)
+    const isSameSite = (
+      resolvedHostname === currentHostname ||
+      resolvedHostname.endsWith('.myshopify.com')
+    );
+
+    if (!isSameSite) {
       return null;
     }
   } catch (e) {

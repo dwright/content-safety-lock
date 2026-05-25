@@ -329,9 +329,49 @@ function injectBlockOverlay(blockData) {
     box.appendChild(lockInfo);
     
     const allowEarlyUnlock = blockData.lockInfo.allowEarlyUnlock;
+    const earlyUnlockMode = blockData.lockInfo.earlyUnlockMode || (allowEarlyUnlock ? 'phrase' : 'none');
     
-    // Unlock button (if available and allowed)
-    if (allowEarlyUnlock && blockData.lockInfo.canRequestUnlock) {
+    // Game-mode early unlock: render Mastermind board inline.
+    if (earlyUnlockMode === 'game') {
+      // Slightly widen the box for the board.
+      box.style.maxWidth = '640px';
+      
+      const gameWrap = document.createElement('div');
+      gameWrap.style.cssText = `
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 0 0 16px 0;
+        text-align: left;
+      `;
+      const gameTitle = document.createElement('div');
+      gameTitle.textContent = '🎯 Early Unlock — Guessing Game';
+      gameTitle.style.cssText = 'font-weight: 700; color: #667eea; margin-bottom: 8px;';
+      gameWrap.appendChild(gameTitle);
+      
+      const gameHelp = document.createElement('p');
+      gameHelp.textContent = 'Crack the secret color sequence to release the lock early.';
+      gameHelp.style.cssText = 'margin: 0 0 12px 0; font-size: 13px; color: #666;';
+      gameWrap.appendChild(gameHelp);
+      
+      const boardContainer = document.createElement('div');
+      gameWrap.appendChild(boardContainer);
+      box.appendChild(gameWrap);
+      
+      try {
+        new MastermindBoard(boardContainer, {
+          getState: async () => browser.runtime.sendMessage({ type: 'GET_GAME_STATE' }),
+          submitGuess: async (guess) => browser.runtime.sendMessage({ type: 'SUBMIT_GAME_GUESS', guess }),
+          onWin: () => {
+            setTimeout(() => location.reload(), 800);
+          }
+        });
+      } catch (err) {
+        console.error('[CSL] Failed to init Mastermind board:', err);
+      }
+    } else if (allowEarlyUnlock && blockData.lockInfo.canRequestUnlock) {
+      // Unlock button (phrase mode, available and not on cool-down)
       const unlockBtn = document.createElement('button');
       unlockBtn.textContent = 'Request Early Unlock';
       unlockBtn.style.cssText = `

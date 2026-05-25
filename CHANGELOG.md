@@ -5,6 +5,73 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-05-25
+
+### Added
+
+#### Managed policy overhaul
+
+- **Top-level `locked` flag**: Setting `"locked": true` in the managed policy
+  puts the entire General tab into a read-only view. The user sees a synopsis
+  of current settings but has no editable controls and no unlock button. When
+  active, the Self-Lock and Security tabs are hidden entirely.
+- **New enabled-field object format**: Every boolean setting delivered via
+  managed policy now accepts `{ "value": boolean, "locked": boolean }` in
+  addition to a plain boolean (backward-compatible).
+  - `value` — the value to apply (defaults to `DEFAULT_STATE` when absent).
+  - `locked` — whether the UI control is disabled (inherits from parent when
+    absent; `false` explicitly opts out of inherited lock).
+- **Lock inheritance**: When a parent setting is locked (e.g.
+  `safeRequestMode.enabled`), all child settings inherit `locked: true`
+  automatically. Individual children can opt out with `"locked": false`.
+- **Provider sub-field management**: The following provider sub-settings can
+  now be independently locked via managed policy:
+  - `safeRequestMode.providers.bing.useRedirect`
+  - `safeRequestMode.providers.youtube.headerMode`
+- **Tumblr added to `DEFAULT_STATE` providers** so it participates correctly
+  in lock-inheritance and managed-key tracking.
+
+#### About tab improvements
+
+- **Project description** moved to the top of the About tab (previously only
+  in the Security tab).
+- **Debugging information** section (version, install URL, extension ID,
+  managed storage dump, local state dump, effective state dump) is now
+  collapsed behind a "Show debugging information" toggle link.
+- **Copy to clipboard** button in the debug section assembles a structured
+  plain-text report suitable for pasting into bug reports.
+- **Extension ID** added to the debug info rows.
+- **GitHub link** and MIT licence credit added to the About section.
+
+#### Mastermind-style guessing-game early-unlock mode
+
+- **New early-unlock mode**: in addition to the existing passphrase / cool-down
+  flow, Self-Lock can now be configured to require winning a Mastermind-style
+  color-sequence guessing game in order to release the lock early. Modes are
+  mutually exclusive: `None`, `Passphrase & cool-down`, or `Guessing game`.
+- **Configurable game parameters** (set when activating the lock):
+  - Number of slots in the secret (2–8).
+  - Number of colors to choose from (3–10).
+  - Maximum guesses per puzzle (any positive integer; resets the puzzle when
+    exhausted).
+  - Delay between guesses (cool-down enforced server-side in the background
+    script).
+  - Optional time added to the lock per submitted guess.
+  - Optional time added to the lock when the puzzle resets.
+- **Secret generation and scoring** live in the background: the secret never
+  leaves the background script. Scoring uses classic Mastermind feedback
+  (multiset overlap for "correct color", exact-position matches for "correct
+  position"). Duplicate colors in the secret are allowed.
+- **Reusable component**: `js/components/mastermind-board.js` renders the
+  interactive board (palette, current-guess slots, guess history with
+  feedback, cool-down countdown). Used both on the Self-Lock options tab and
+  in the in-page block overlay so users can play from either context.
+- **Win behaviour**: a fully correct guess immediately deactivates the
+  Self-Lock; the options page and any blocked tabs refresh accordingly.
+- **State migration**: existing self-locks are auto-migrated to the new
+  `earlyUnlockMode` field (`'phrase'` if early unlock was previously allowed,
+  otherwise `'none'`); no user action required.
+
 ## [1.3.0] - 2026-04-24
 
 ### Added
@@ -75,6 +142,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `documentation/SAFE_REQUEST_MODE_IMPLEMENTATION.md`: Tumblr section (3.7)
   rewritten to cover the structural per-article selector and the page-level
   `checkTumblrMaturePage()` path.
+- Self-Lock and Security tabs are hidden when the administrator managed-lock
+  (`locked: true`) is active.
+- Revised the "Note:" paragraph in the About tab to accurately describe the
+  scope of Self-Lock without implying administrator bypass.
+- Split `MANAGED_KEY_TO_ELEMENT_IDS` entries for Bing and YouTube so that
+  `useRedirect` and `headerMode` sub-controls are only locked when their own
+  dedicated managed key is present, not when the parent `enabled` key is locked.
+- `documentation/MANAGED_POLICY.md` updated to document the new enabled-field
+  format, lock inheritance, sub-field keys, and provider sub-field examples.
+
+### Fixed
+
+- Bing "Redirect to strict.bing.com" and YouTube "Restriction Level" controls
+  were incorrectly receiving the Managed badge and being disabled whenever the
+  parent provider `enabled` key was locked.
+- Duplicate `provider-reddit-enabled` checkbox element prevented the Managed
+  badge from applying to the visible Reddit provider control.
 
 ### Notes
 

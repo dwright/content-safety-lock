@@ -622,8 +622,28 @@ class TimeIntervalPicker {
       if (input) input.value = this.value[field];
     }
     
+    this.updateSteppers();
     this.updateDisplay();
     this.emitChange();
+  }
+  
+  /**
+   * Refresh the disabled state of every stepper button so that it reflects
+   * the current value vs. its effective bounds. Without this, a button
+   * disabled at initial render (e.g. the down arrow when the value is 0)
+   * stays disabled forever even after the value changes.
+   */
+  updateSteppers() {
+    this.container.querySelectorAll('.tip-stepper').forEach(button => {
+      const field = button.dataset.field;
+      const action = button.dataset.action;
+      if (!field || !action) return;
+      const bounds = this.getEffectiveBounds(field);
+      const value = this.value[field];
+      const shouldDisable = action === 'inc' ? value >= bounds.max : value <= bounds.min;
+      button.disabled = shouldDisable;
+      button.classList.toggle('tip-stepper-disabled', shouldDisable);
+    });
   }
   
   updateWithDebounce() {

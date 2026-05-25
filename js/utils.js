@@ -365,6 +365,170 @@ function isInBlockList(url, blockList) {
   });
 }
 
+/**
+ * Clamp a value to an integer in [min, max], falling back to fallback if NaN.
+ */
+function clampInt(value, min, max, fallback) {
+  const n = Math.floor(Number(value));
+  if (!Number.isFinite(n)) return fallback;
+  if (n < min) return min;
+  if (n > max) return max;
+  return n;
+}
+
+// ============ Mastermind Early-Unlock Game ============
+
+/**
+ * Color palette for the Mastermind early-unlock game.
+ * Each entry has a name, single-letter label, and hex color.
+ * The first N entries are used when the game is configured for N colors.
+ */
+const MASTERMIND_COLORS = [
+  { name: 'Red',    label: 'R', hex: '#e74c3c' },
+  { name: 'Orange', label: 'O', hex: '#e67e22' },
+  { name: 'Yellow', label: 'Y', hex: '#f1c40f' },
+  { name: 'Green',  label: 'G', hex: '#27ae60' },
+  { name: 'Cyan',   label: 'C', hex: '#1abc9c' },
+  { name: 'Blue',   label: 'B', hex: '#2980b9' },
+  { name: 'Purple', label: 'P', hex: '#8e44ad' },
+  { name: 'Pink',   label: 'K', hex: '#ff69b4' },
+  { name: 'Brown',  label: 'N', hex: '#795548' },
+  { name: 'Gray',   label: 'W', hex: '#7f8c8d' }
+];
+
+const MASTERMIND_LIMITS = {
+  minSlots: 2,
+  maxSlots: 8,
+  minColors: 3,
+  maxColors: MASTERMIND_COLORS.length,
+  minMaxGuesses: 1
+};
+
+/**
+ * Generate a random secret sequence using crypto.getRandomValues.
+ * Allows duplicate colors (classic Mastermind). Returns an array of
+ * integers in [0, colors).
+ */
+function generateMastermindSecret(slots, colors) {
+  const out = new Array(slots);
+  // Use rejection sampling to avoid modulo bias.
+  const limit = Math.floor(0xFFFFFFFF / colors) * colors;
+  const buf = new Uint32Array(1);
+  for (let i = 0; i < slots; i++) {
+    let v;
+    do {
+      crypto.getRandomValues(buf);
+      v = buf[0];
+    } while (v >= limit);
+    out[i] = v % colors;
+  }
+  return out;
+}
+
+/**
+ * Score a Mastermind guess.
+ *
+ * - correctPosition: number of slots where guess[i] === secret[i]
+ * - correctColor:    multiset intersection size (total colors in common,
+ *                    including those in correct position)
+ *
+ * Example: secret=[R,B,G], guess=[B,G,G] -> {correctPosition:1, correctColor:2}
+ */
+function scoreMastermindGuess(secret, guess) {
+  if (!Array.isArray(secret) || !Array.isArray(guess) || secret.length !== guess.length) {
+    return { correctColor: 0, correctPosition: 0 };
+  }
+  const slots = secret.length;
+  let correctPosition = 0;
+  const secretCounts = {};
+  const guessCounts = {};
+  for (let i = 0; i < slots; i++) {
+    if (secret[i] === guess[i]) correctPosition++;
+    secretCounts[secret[i]] = (secretCounts[secret[i]] || 0) + 1;
+    guessCounts[guess[i]] = (guessCounts[guess[i]] || 0) + 1;
+  }
+  let correctColor = 0;
+  for (const c in secretCounts) {
+    if (Object.prototype.hasOwnProperty.call(guessCounts, c)) {
+      correctColor += Math.min(secretCounts[c], guessCounts[c]);
+    }
+  }
+  return { correctColor, correctPosition };
+}
+
+/**
+ * Compute Mastermind difficulty feedback for a given configuration.
+ *
+ * Derivation:
+ *   - Total entropy of the secret: E = k * log2(c)
+ *   - Feedback states (black/white peg combinations with b+w<=k, minus the
+ *     impossible (k-1 black, 1 white) state): F = (k+1)(k+2)/2 - 1
+ *   - Max information per guess: I = log2(F)
+ *   - Practical minimum guesses. The raw information-theoretic bound is
+ *     ceil(E/I) + 1, but that assumes every guess extracts the maximum
+ *     log2(F) bits of information. Real guesses partition the remaining
+ *     candidates unevenly, so the worst-case algorithmic minimum
+ *     (Knuth-style minimax) runs one guess higher. We adopt +2 as an O(1)
+ *     heuristic that agrees with Knuth's proof for classic 4/6 Mastermind:
+ *       T = ceil(E / I) + 2
+ *
+ * The `guesses` argument is optional; when provided, a tier label is
+ * returned describing how the configured guess budget compares to T.
+ *
+ * Returns:
+ *   {
+ *     T:             theoretical minimum guesses,
+ *     maxRecommended: T + 10 (suggested hard cap),
+ *     tier:          'impossible' | 'grandmaster' | 'expert' | 'challenging' | 'casual' | null,
+ *     label:         short human label for the tier (or null if guesses omitted),
+ *     description:   longer human description (or null if guesses omitted)
+ *   }
+ */
+function calcMastermindDifficulty(slots, colors, guesses) {
+  const k = Math.floor(Number(slots));
+  const c = Math.floor(Number(colors));
+  if (!Number.isFinite(k) || !Number.isFinite(c) || k < 2 || c < 2) {
+    return { T: null, maxRecommended: null, tier: null, label: null, description: null };
+  }
+  const E = k * Math.log2(c);
+  const F = ((k + 1) * (k + 2)) / 2 - 1;
+  const I = Math.log2(F);
+  const T = Math.ceil(E / I) + 2;
+  const maxRecommended = T + 10;
+  
+  if (guesses === undefined || guesses === null) {
+    return { T, maxRecommended, tier: null, label: null, description: null };
+  }
+  const g = Math.floor(Number(guesses));
+  if (!Number.isFinite(g) || g < 1) {
+    return { T, maxRecommended, tier: null, label: null, description: null };
+  }
+  
+  let tier, label, description;
+  if (g < T) {
+    tier = 'impossible';
+    label = 'Impossible / luck-based';
+    description = `Fewer than ${T} guesses cannot mathematically isolate the answer. Winning requires luck.`;
+  } else if (g === T) {
+    tier = 'grandmaster';
+    label = 'Grandmaster';
+    description = `Requires flawless algorithmic play — one sub-optimal guess and the puzzle resets.`;
+  } else if (g === T + 1) {
+    tier = 'expert';
+    label = 'Expert';
+    description = `Extremely tight margin of error for a human player.`;
+  } else if (g <= T + 4) {
+    tier = 'challenging';
+    label = 'Challenging';
+    description = `A standard game. Classic Mastermind gives T + 5 guesses.`;
+  } else {
+    tier = 'casual';
+    label = 'Casual / easy';
+    description = `Plenty of runway to make deductive mistakes and still win.`;
+  }
+  return { T, maxRecommended, tier, label, description };
+}
+
 // ============ Export for use in different contexts ============
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
@@ -383,6 +547,11 @@ if (typeof module !== 'undefined' && module.exports) {
     getBlockReason,
     getDomain,
     isInAllowList,
-    isInBlockList
+    isInBlockList,
+    MASTERMIND_COLORS,
+    MASTERMIND_LIMITS,
+    generateMastermindSecret,
+    scoreMastermindGuess,
+    calcMastermindDifficulty
   };
 }
