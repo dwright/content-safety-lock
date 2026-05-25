@@ -148,11 +148,10 @@ For organizations:
 # Install web-ext
 npm install --global web-ext
 
-# Build the extension
-cd /Users/dan/CascadeProjects/windsurf-project
+# Build the extension (run from the project root directory)
 web-ext build
 
-# Output: web-ext-artifacts/content_safety_lock-1.0.0.zip
+# Output: web-ext-artifacts/content_safety_lock-1.4.0.zip
 ```
 
 ### Manual Build
@@ -250,7 +249,7 @@ All release artifacts are managed via GitHub Releases (not stored in git):
 ```
 
 **Prerequisites**:
-- GitHub CLI installed: `sudo port install gh`
+- GitHub CLI installed: `brew install gh`
 - Authenticated: `gh auth login`
 - Build artifact exists: `web-ext-artifacts/content_safety_lock-<version>.zip`
 - Release notes exist: `web-ext-artifacts/RELEASE_NOTES_v<version>.md`
