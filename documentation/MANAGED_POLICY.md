@@ -137,6 +137,60 @@ settings but has no controls and no unlock button.
 
 ---
 
+## Wildcard shorthand (`*`)
+
+For sections with many similar settings, use the `*` wildcard to apply the same configuration to all items in that section without listing them individually.
+
+| Section | Wildcard applies to |
+| --------- | ------------------- |
+| `parental.categories` | All content categories |
+| `parental.adultProductSalesVendors` | All vendor monitors |
+| `safeRequestMode.providers` | All Safe Request Mode providers |
+
+### Example: Lock all content categories on
+
+```json
+{
+  "parental": {
+    "categories": {
+      "*": { "value": true, "locked": true }
+    }
+  }
+}
+```
+
+### Example: Lock all Safe Request Mode providers on
+
+```json
+{
+  "safeRequestMode": {
+    "enabled": { "value": true, "locked": true },
+    "providers": {
+      "*": { "enabled": { "value": true, "locked": true } }
+    }
+  }
+}
+```
+
+### Example: Wildcard with specific overrides
+
+Enable all adult product sales vendors, but leave eBay unlocked for the user:
+
+```json
+{
+  "parental": {
+    "adultProductSalesVendors": {
+      "*": { "value": true, "locked": true },
+      "ebay": { "value": true, "locked": false }
+    }
+  }
+}
+```
+
+The wildcard expansion preserves any explicitly-specified entries, so you can set a default for all items and then override specific ones.
+
+---
+
 ## Supported managed keys
 
 ### `parental` section

@@ -121,6 +121,45 @@ async function loadManagedPolicy() {
 }
 
 /**
+ * Expand wildcard '*' entries in a policy object to all default keys.
+ * If the policy contains a '*' key, its value is copied to all default
+ * keys that are not explicitly specified in the policy.
+ *
+ * @param {Object} policySection - The policy section (e.g., categories, vendors)
+ * @param {Array<string>} defaultKeys - Array of valid keys from DEFAULT_STATE
+ * @returns {Object} - The expanded policy section
+ */
+function expandWildcardEntries(policySection, defaultKeys) {
+  if (!policySection || typeof policySection !== 'object') {
+    return policySection;
+  }
+
+  const hasWildcard = Object.prototype.hasOwnProperty.call(policySection, '*');
+  if (!hasWildcard) {
+    return policySection;
+  }
+
+  const wildcardValue = policySection['*'];
+  const expanded = {};
+
+  // Copy all non-wildcard entries first
+  for (const [key, val] of Object.entries(policySection)) {
+    if (key !== '*') {
+      expanded[key] = val;
+    }
+  }
+
+  // Apply wildcard to all default keys not explicitly specified
+  for (const key of defaultKeys) {
+    if (!Object.prototype.hasOwnProperty.call(expanded, key)) {
+      expanded[key] = wildcardValue;
+    }
+  }
+
+  return expanded;
+}
+
+/**
  * Resolve a managed scalar field (non-boolean, e.g. a string) using the
  * object form { value?: any, locked?: boolean }.  Unlike resolveEnabledField,
  * the value is returned as-is without Boolean coercion.
@@ -213,8 +252,12 @@ function applyManagedPolicy(state, policy) {
       }
     }
 
-    // parental.categories
+    // parental.categories (with wildcard expansion)
     if (p.categories && typeof p.categories === 'object') {
+      p.categories = expandWildcardEntries(
+        p.categories,
+        Object.keys(DEFAULT_STATE.parental.categories)
+      );
       for (const [cat, val] of Object.entries(p.categories)) {
         const def = resolveEnabledField(val, DEFAULT_STATE.parental.categories[cat], parentalLocked);
         if (def.resolvedValue !== null) state.parental.categories[cat] = def.resolvedValue;
@@ -226,8 +269,12 @@ function applyManagedPolicy(state, policy) {
       }
     }
 
-    // parental.adultProductSalesVendors
+    // parental.adultProductSalesVendors (with wildcard expansion)
     if (p.adultProductSalesVendors && typeof p.adultProductSalesVendors === 'object') {
+      p.adultProductSalesVendors = expandWildcardEntries(
+        p.adultProductSalesVendors,
+        Object.keys(DEFAULT_STATE.parental.adultProductSalesVendors)
+      );
       for (const [vendor, val] of Object.entries(p.adultProductSalesVendors)) {
         const def = resolveEnabledField(val, DEFAULT_STATE.parental.adultProductSalesVendors[vendor], parentalLocked);
         if (def.resolvedValue !== null) state.parental.adultProductSalesVendors[vendor] = def.resolvedValue;
@@ -264,9 +311,15 @@ function applyManagedPolicy(state, policy) {
       }
     }
 
-    // safeRequestMode.providers
+    // safeRequestMode.providers (with wildcard expansion)
     // Process all known providers. For each, check if the policy mentions it;
     // if not, inherit the srmLocked flag.
+    if (s.providers && typeof s.providers === 'object') {
+      s.providers = expandWildcardEntries(
+        s.providers,
+        Object.keys(DEFAULT_STATE.safeRequestMode.providers)
+      );
+    }
     const allProviders = Object.keys(DEFAULT_STATE.safeRequestMode.providers);
     for (const providerName of allProviders) {
       const providerPolicy = s.providers?.[providerName];

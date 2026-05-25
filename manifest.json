@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Content Safety Lock",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Voluntary adult content blocker with self-lock mode for adults seeking structured guardrails",
   "browser_specific_settings": {
     "gecko": {
