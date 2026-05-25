@@ -831,6 +831,114 @@ documentation/
     - Examples: Covenant Eyes API, accountability platforms, wellness apps
     - Very low priority, but interesting for future consideration
 - Priority: Medium-High interest, requires careful design
+- **See also**: Tattle – Accountability Reporting (below), which provides the data feed that an accountability partner would consume
+
+**Tattle – Accountability Reporting** (Medium-High Priority):
+
+*Goal*: Record and surface behavioral data that discourages cheating by making the cost of unlocking visible and, optionally, shareable with an accountability partner or AI agent.
+
+- **What Gets Recorded** (all data stored locally; never transmitted without explicit consent):
+  - Unlock/re-lock timestamps — exact date and time of each unlock and subsequent re-lock
+  - Unlock duration — how long the plugin remained unlocked each session
+  - Blocked request count — running tally of requests blocked while locked vs. while unlocked
+  - Unlocked-session exposure — domains that *would have been blocked* had the plugin been locked during an unlock session
+  - Self-lock bypass events — cases where the user unlocked during an active self-lock period
+  - Streak tracking — consecutive days with zero unlock events, longest streak ever recorded
+
+- **Local Reporting UI** (Statistics / Tattle tab in options):
+  - Dashboard showing current streak, all-time unlock count, and blocked request totals
+  - Timeline of recent unlock/re-lock events with durations
+  - List of domains viewed during unlocked sessions that would have triggered a block
+  - Export report as JSON or plain-text summary (for sharing with an accountability partner)
+  - Optional "shame counter" — persistent badge on the extension icon showing unlock count since last reset
+
+- **Accountability Partner Relay** (future; requires explicit opt-in):
+  - *Email relay* — send a summary report to a designated email address on each unlock event or on a scheduled cadence (daily/weekly)
+  - *Sync-file relay* — write event data to the shared sync file so a partner with access to the same cloud folder can read it
+  - *Webhook / API relay* — POST event JSON to a user-configured URL (supports IFTTT, Make.com, custom servers, or platforms such as Covenant Eyes)
+  - *Revocation notification* — if the user disables reporting, the partner is notified (mirrors the consent model in the Accountability Partner entry above)
+
+- **AI Agent Integration** (very future; exploratory):
+  - Periodically POST a structured activity report to a user-configured AI API endpoint (local LLM or cloud AI)
+  - AI responds with a brief reflection or encouragement message displayed in the extension
+  - AI could flag unusual patterns (e.g., repeated unlocking at the same time of day) and surface gentle prompts
+  - Strict opt-in; user controls the endpoint; no data leaves the device without configuration
+
+- **Privacy Principles**:
+  - All event data stored exclusively in `browser.storage.local` — same trust boundary as existing settings
+  - No default outbound transmission of any kind
+  - Relay features require explicit per-feature opt-in with clear disclosure of what is sent and to whom
+  - User can purge all Tattle data at any time with a single button
+  - Data is never used for analytics, advertising, or any purpose beyond what the user explicitly configures
+
+- **Implementation Notes**:
+  - New `js/tattle/` module: `tattle-recorder.js` (event capture), `tattle-store.js` (storage schema), `tattle-report.js` (formatting/export)
+  - Hook into existing unlock/lock flows in `options.js` and `background.js`
+  - Exposure tracking during unlocked sessions reuses the existing detector pipeline — events are logged rather than blocked
+  - Icon badge counter managed by `background.js` via `browser.browserAction.setBadgeText()`
+
+- **Open Questions** (to be decided during design/implementation):
+  - Should the exposure log (domains seen while unlocked) be opt-in separately from the rest of Tattle, given its more sensitive nature?
+  - What is the right cadence for email/webhook relay — per-event (potentially noisy), daily digest, or fully user-configured?
+  - Should Tattle data be included in the sync file, or kept strictly device-local?
+
+- Priority: Medium-High (strong motivational value for the self-lock use case; natural data source for the Accountability Partner feature above)
+
+**Buy Now, Pay Later (BNPL) – Temporary Self-Lock Override** (Medium Priority):
+
+*Goal*: Allow a self-locked user to invoke a short, temporary pause to their lock — but at the cost of significantly extending the remaining lock duration. The user *can* escape, but escaping is expensive. Intended for adults who want genuine self-censorship with a genuine emergency hatch, not a convenient loophole.
+
+- **Opt-In Only**:
+  - BNPL is not available by default. The user must explicitly enable it at the time the self-lock is configured
+  - Once the self-lock is active, BNPL availability cannot be added retroactively — only removed (and removing it is itself a costly or restricted action)
+  - The intent: the user makes a deliberate, calm decision up front that they *may* need an emergency exit; the feature is not discoverable mid-lock as a temptation
+
+- **Core Mechanic**:
+  - The user pays a configurable time penalty (additional time added to the remaining lock) in exchange for a short temporary pause
+  - The cost must feel meaningfully painful — deterrence through consequence, not a convenient loophole
+  - BNPL availability must be *earned* through time served or other achievements, so it cannot simply be used repeatedly without regard for the lock's expiry
+
+- **Earned Availability**:
+  - BNPL uses are not granted freely; they must be accumulated through demonstrated lock adherence
+  - Examples of earning mechanisms (exact rules TBD):
+    - Earn one BNPL use after a configured minimum time has elapsed without any unlock events
+    - Earn uses at milestone intervals (e.g., every 24 hours of clean lock time)
+    - Total available uses are capped per lock period regardless of time served
+  - This prevents users from treating BNPL as a free pass that makes lock expiry irrelevant
+
+- **Diminishing Returns**:
+  - Each successive BNPL use within a lock period costs more than the last (e.g., second use doubles the time penalty, third use triples it)
+  - This strongly discourages serial use and preserves the lock's integrity over time
+
+- **Configurable Parameters** (set at self-lock configuration time; cannot be changed while locked):
+  - Earning rules — how BNPL uses are accumulated (time-based, milestone-based, etc.)
+  - Maximum uses per lock period — hard ceiling regardless of how much time is earned
+  - Pause allowance — maximum temporary relief per use (e.g., a percentage of the original lock duration, with a hard cap)
+  - Base time penalty — additional time added on first use
+  - Diminishing returns multiplier — cost scaling on subsequent uses
+  - Activation delay — deliberate wait period after BNPL is initiated before the pause begins (to deter impulsive use)
+  - *Note*: exact parameter names, defaults, and ranges to be determined during design
+
+- **UX Flow**:
+  1. BNPL button is hidden until the user has earned at least one use; a progress indicator shows how much time remains until the next use is earned
+  2. When available, user sees a "Request Temporary Override" button with a clear summary: remaining uses, pause duration, penalty to be applied, and new lock expiry after penalty
+  3. Optional activation delay countdown is displayed before the pause begins
+  4. Remaining lock time reflects the penalty immediately upon BNPL initiation — not after the pause ends
+  5. After the pause period, the lock automatically resumes with no action required from the user
+
+- **Tattle Integration**:
+  - BNPL invocations are recorded as a distinct event type in the Tattle log
+  - Report includes: timestamp, earned uses consumed, pause duration taken, penalty added, new expiry
+  - Accountability partner relay (when configured) fires on BNPL invocation
+
+- **Open Questions** (to be decided during design/implementation):
+  - What are the exact default values for all configurable parameters?
+  - Should BNPL require the self-lock passphrase to invoke, or is the time-cost penalty sufficient deterrent on its own?
+  - Should removing BNPL availability mid-lock be permitted, and if so, at what cost or restriction?
+  - Should earned-but-unused BNPL uses carry over if the user extends the self-lock, or are they forfeited?
+  - Should the accountability partner be able to veto or approve a BNPL invocation in real time?
+
+- Priority: Medium (powerful motivational tool for committed adult users; requires careful UX to avoid becoming an exploitable loophole; exact rules TBD during design)
 
 **Custom Block Page** (Good idea, low priority):
 - User-customizable block message
