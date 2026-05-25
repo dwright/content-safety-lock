@@ -4,7 +4,7 @@
 
 [![Firefox Add-on](https://img.shields.io/badge/Firefox-Add--on-orange?logo=firefox)](https://addons.mozilla.org/en-US/firefox/addon/content-safety-lock/)
 [![Version](https://img.shields.io/badge/version-1.4.0-blue)](CHANGELOG.md)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue)](LICENSE)
 [![Privacy: 100% Local](https://img.shields.io/badge/Privacy-100%25%20Local-brightgreen)](#privacy-first-by-design)
 
 ---
@@ -232,7 +232,7 @@ Bug reports and feature requests: please [open an issue](../../issues) in the re
 
 ## License
 
-Released under the [MIT License](LICENSE).
+Released under the [GNU General Public License v3.0](LICENSE) (GPLv3). You are free to use, modify, and distribute this software, but any distributed modifications must also be released under the GPLv3.
 
 ---
 
@@ -240,4 +240,4 @@ Released under the [MIT License](LICENSE).
 
 Content Safety Lock is a voluntary tool for adults. It is not a substitute for dedicated parental control software for children, professional mental health support, or responsible device management. Users are responsible for their own choices and should use this tool as part of a broader personal safety strategy.
 
-This software is provided **as-is, without warranty of any kind**. The author makes no warranties — express or implied — regarding fitness for any particular purpose, correctness, or freedom from defects. Use this software at your own risk. The author is not liable for any loss, damage, or harm arising from its use or failure to perform as expected. Additional disclaimers, limitations, and terms are set forth in the [MIT License](LICENSE), which governs this software. By using this software you agree to be bound by its terms.
+This software is provided **as-is, without warranty of any kind**. The author makes no warranties — express or implied — regarding fitness for any particular purpose, correctness, or freedom from defects. Use this software at your own risk. The author is not liable for any loss, damage, or harm arising from its use or failure to perform as expected. Additional disclaimers, limitations, and terms are set forth in the [GNU General Public License v3.0](LICENSE), which governs this software. By using this software you agree to be bound by its terms.

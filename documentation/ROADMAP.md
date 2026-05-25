@@ -16,7 +16,7 @@ Content Safety Lock aims to be a cross-platform, privacy-respecting tool that he
 1. **Privacy First**: No data collection, no tracking, no external requests for personal use
 2. **User Control**: Users own their data and choose their sync provider
 3. **Cross-Platform**: Single codebase supporting Firefox, Chrome, and Safari (desktop + mobile)
-4. **Open Source**: MIT licensed, available on GitHub
+4. **Open Source**: GPLv3 licensed, available on GitHub
 5. **Ethical Monetization**: Free for personal use, donations appreciated, enterprise licensing available
 
 ---
@@ -1171,7 +1171,7 @@ This is an open source project. Contributions are welcome!
 
 ## License
 
-MIT License - See LICENSE file for details
+GNU General Public License v3.0 - See LICENSE file for details
 
 ---
 

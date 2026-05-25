@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Copy to clipboard** button in the debug section assembles a structured
   plain-text report suitable for pasting into bug reports.
 - **Extension ID** added to the debug info rows.
-- **GitHub link** and MIT licence credit added to the About section.
+- **GitHub link** and GPLv3 licence credit added to the About section.
 
 #### Mastermind-style guessing-game early-unlock mode
 
