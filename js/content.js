@@ -49,6 +49,19 @@ function detectAgeVerificationElements() {
     
     for (const keyword of normalizedKeywords) {
       if (normalizedId.includes(keyword) || normalizedClassName.includes(keyword)) {
+        // Only count the element if it is actually visible to the user.
+        // Hidden/collapsed age gate panels (e.g. Amazon's checkout-age-verification-panel
+        // when no age-restricted item is in the cart) must not trigger a block.
+        const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
+        const isVisible = style.display !== 'none' &&
+                          style.visibility !== 'hidden' &&
+                          style.opacity !== '0' &&
+                          ( rect.width > 0 && rect.height > 0 );
+        if (!isVisible) {
+          console.log('[CSL] Skipping hidden age verification element:', element.tagName, 'id:', element.id, 'class:', element.className);
+          continue;
+        }
         console.log('[CSL] Found age verification element:', element.tagName, 'id:', element.id, 'class:', element.className);
         return true;
       }
