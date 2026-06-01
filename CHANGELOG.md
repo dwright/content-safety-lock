@@ -42,6 +42,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   policy-page text scanning are now defined in one place, shared across
   both callers.
 
+### Fixed
+
+- **Age gate detection for the `age_okay` WordPress plugin**: The `normalize()`
+  helper was stripping underscores, preventing element IDs like
+  `age_okay_container` from matching. Added `ageokay` to the keyword list and
+  new regex patterns to detect the plugin's confirmation text ("Please confirm
+  you are old enough to view this website", "Age Restricted Content").
+
+- **False positive on Amazon checkout**: The age verification element scan now
+  requires a matched element to have **both non-zero width and non-zero height**
+  before treating it as an active age gate. Amazon's
+  `checkout-age-verification-panel` is present in the DOM on all checkout pages
+  but is collapsed (`height: 0`) when no age-restricted item is in the cart.
+  Previously this hidden panel triggered a block; it is now correctly skipped.
+
 ## [1.4.0] - 2026-05-25
 
 ### Added
