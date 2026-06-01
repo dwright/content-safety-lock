@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Content Safety Lock",
-  "version": "1.4.1",
+  "version": "1.4.3",
   "description": "Voluntary adult content blocker with self-lock mode for adults seeking structured guardrails",
   "browser_specific_settings": {
     "gecko": {
@@ -40,7 +40,8 @@
   ],
   "web_accessible_resources": [
     "js/interceptors/reddit-interceptor.js",
-    "js/interceptors/tumblr-interceptor.js"
+    "js/interceptors/tumblr-interceptor.js",
+    "js/interceptors/bluesky-interceptor.js"
   ],
   "browser_action": {
     "default_popup": "popup.html",

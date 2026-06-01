@@ -14,7 +14,7 @@ console.error('[CSL] Content script STARTING EXECUTION');
  * Detect age verification elements in DOM
  */
 function detectAgeVerificationElements() {
-  const ageVerificationKeywords = ['ageverifier', 'ageverification', 'agegate', 'agecheck'];
+  const ageVerificationKeywords = ['ageverifier', 'ageverification', 'agegate', 'agecheck', 'ageokay'];
   
   // Helper function to normalize strings: lowercase and remove non-letter characters
   function normalize(str) {
@@ -36,7 +36,9 @@ function detectAgeVerificationElements() {
     /21\s+(?:and\s+)?(?:over|older|above)/i,
     /you\s+are\s+21\s+years?\s+of\s+age\s+or\s+older/i,
     /age\s+(?:gate|verification|check)\b/i,
-    /confirm\s+you\s+are\s+(?:at\s+least\s+)?1[68]/i
+    /confirm\s+you\s+are\s+(?:at\s+least\s+)?1[68]/i,
+    /old\s+enough\s+to\s+(?:view|access|use|enter)/i,
+    /age\s+restricted\s+content/i
   ];
   
   // Check all elements in the document for ID/class matches
@@ -148,6 +150,15 @@ function detectLabels() {
     }
   }
   
+  // Check meta/OG description vocabulary (proactive detection)
+  if (typeof detectMetaVocabulary === 'function') {
+    const vocabSignals = detectMetaVocabulary(head, null);
+    console.log('[CSL] Meta vocabulary signals:', vocabSignals);
+    for (const sig of vocabSignals) {
+      if (!signals.includes(sig)) signals.push(sig);
+    }
+  }
+
   // Check for age verification DOM elements
   const hasAgeVerification = detectAgeVerificationElements();
   console.log('[CSL] Age verification check result:', hasAgeVerification);
@@ -812,6 +823,76 @@ function watchForDynamicLabels() {
   }
 }
 
+/**
+ * Collect candidate policy-page URLs from links on the current page and
+ * ask the background script to fetch + scan them for age-verification
+ * language.  Only runs on the top-level frame, once per page load, and only
+ * when the page itself produced no signals (to avoid redundant work).
+ */
+async function checkPolicyPages() {
+  if (window !== window.top) return;
+  if (location.protocol === 'moz-extension:') return;
+
+  // Gather candidate URLs from anchor text matching POLICY_PAGE_LINK_PATTERNS.
+  const patterns = (typeof POLICY_PAGE_LINK_PATTERNS !== 'undefined')
+    ? POLICY_PAGE_LINK_PATTERNS
+    : ['terms of service', 'terms of use', 'terms and conditions', 'legal', 'about us', 'privacy policy'];
+
+  const seen = new Set();
+  const candidates = [];
+
+  const anchors = document.querySelectorAll('a[href]');
+  for (const anchor of anchors) {
+    const text = (anchor.textContent || anchor.innerText || '').trim().toLowerCase();
+    const href = anchor.href;
+    if (!href || !href.startsWith('http')) continue;
+
+    for (const pattern of patterns) {
+      if (text.includes(pattern)) {
+        if (!seen.has(href)) {
+          seen.add(href);
+          candidates.push(href);
+        }
+        break;
+      }
+    }
+
+    if (candidates.length >= 3) break;
+  }
+
+  if (candidates.length === 0) {
+    console.log('[CSL] checkPolicyPages: no candidate policy links found');
+    return;
+  }
+
+  console.log('[CSL] checkPolicyPages: candidates:', candidates);
+
+  try {
+    const response = await browser.runtime.sendMessage({
+      type: 'FETCH_POLICY_PAGES',
+      urls: candidates,
+      originUrl: window.location.href
+    });
+
+    if (response && response.signals && response.signals.length > 0) {
+      console.log('[CSL] checkPolicyPages: signals from policy pages:', response.signals);
+      const blockResponse = await browser.runtime.sendMessage({
+        type: 'CHECK_BLOCK',
+        signals: response.signals,
+        details: response.details || []
+      });
+      if (blockResponse && blockResponse.shouldBlock) {
+        console.log('[CSL] checkPolicyPages: blocking page based on policy-page signals');
+        injectBlockOverlay(blockResponse.blockData);
+      }
+    } else {
+      console.log('[CSL] checkPolicyPages: no signals from policy pages');
+    }
+  } catch (err) {
+    console.log('[CSL] checkPolicyPages: error contacting background:', err);
+  }
+}
+
 // ============ Initialization ============
 
 // Run check at document_start
@@ -841,6 +922,12 @@ if (document.readyState === 'loading') {
       console.log('[CSL] Delayed check (2000ms) - final catch');
       checkAndBlock();
     }, 2000);
+
+    // Policy-page fetch runs after DOM is fully loaded (needs anchor links)
+    setTimeout(() => {
+      console.log('[CSL] Policy-page check (3000ms)');
+      checkPolicyPages();
+    }, 3000);
   });
 } else {
   console.log('[CSL] Document already loaded - checking for labels');
@@ -857,6 +944,12 @@ if (document.readyState === 'loading') {
     console.log('[CSL] Delayed check (2000ms) - final catch');
     checkAndBlock();
   }, 2000);
+
+  // Policy-page fetch runs after DOM is fully loaded (needs anchor links)
+  setTimeout(() => {
+    console.log('[CSL] Policy-page check (3000ms)');
+    checkPolicyPages();
+  }, 3000);
 }
 
 // ============ Tumblr Safe Mode Interceptor ============
@@ -980,28 +1073,76 @@ async function initRedditInterception() {
   try {
     const response = await browser.runtime.sendMessage({ type: 'GET_STATE' });
     const state = response.state;
-    
+
     // Check if Safe Request Mode is active and Reddit provider is enabled
     const safeRequest = state.safeRequestMode;
     // Handle case where reddit config doesn't exist yet in old state
     const redditConfig = safeRequest.providers.reddit;
-    
-    const shouldEnable = (safeRequest.enabled || (state.selfLock.active && safeRequest.forceUnderSelfLock)) && 
+
+    const shouldEnable = (safeRequest.enabled || (state.selfLock.active && safeRequest.forceUnderSelfLock)) &&
                          redditConfig && redditConfig.enabled;
-                         
+
     if (!shouldEnable) {
       console.error('[CSL] Reddit Safe Mode not enabled');
       return;
     }
-    
+
     console.error('[CSL] Injecting Reddit Safe Mode interceptor');
     injectScript('js/interceptors/reddit-interceptor.js');
-    
+
     // Check if this is an NSFW user profile or subreddit page
     checkRedditNsfwPages();
-    
+
   } catch (err) {
     console.error('[CSL] Error initializing Reddit interception:', err);
+  }
+}
+
+// ============ Bluesky Safe Mode Interceptor ============
+
+/**
+ * Initialize Bluesky interception if enabled
+ */
+async function initBlueskyInterception() {
+  const hostname = window.location.hostname;
+  if (!hostname.includes('bsky.app') && !hostname.includes('bsky.network')) {
+    return;
+  }
+
+  console.error('[CSL] Bluesky detected, checking Safe Request Mode settings...');
+
+  try {
+    const response = await browser.runtime.sendMessage({ type: 'GET_STATE' });
+    const state = response.state;
+
+    // Check if Safe Request Mode is active and Bluesky provider is enabled
+    const safeRequest = state.safeRequestMode;
+    const blueskyConfig = safeRequest.providers.bluesky;
+
+    const shouldEnable = (safeRequest.enabled || (state.selfLock.active && safeRequest.forceUnderSelfLock)) &&
+                         blueskyConfig && blueskyConfig.enabled;
+
+    if (!shouldEnable) {
+      console.error('[CSL] Bluesky Safe Mode not enabled');
+      return;
+    }
+
+    console.error('[CSL] Injecting Bluesky Safe Mode interceptor');
+
+    // Inject config before the interceptor so it can read it
+    const configScript = document.createElement('script');
+    configScript.textContent = `
+      window.__cslBlueskyConfig = {
+        blockedLabels: ${JSON.stringify(blueskyConfig.blockedLabels || [])},
+        ageSetting: ${JSON.stringify(blueskyConfig.ageSetting || '18+')}
+      };
+    `;
+    (document.head || document.documentElement).appendChild(configScript);
+
+    injectScript('js/interceptors/bluesky-interceptor.js');
+
+  } catch (err) {
+    console.error('[CSL] Error initializing Bluesky interception:', err);
   }
 }
 
@@ -1116,4 +1257,5 @@ async function initAmazonInterception() {
 // Run initialization
 initTumblrInterception();
 initRedditInterception();
+initBlueskyInterception();
 initAmazonInterception();

@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.3] - 2026-05-30
+
+### Added
+
+#### Proactive adult-site detection
+
+- **Meta/OG tag vocabulary scanning**: The content script now inspects
+  `<meta name="description">`, `<meta property="og:description">`,
+  `<meta name="keywords">`, and `<title>` tags against a curated vocabulary
+  list (`META_BLOCK_VOCABULARY` in `js/utils.js`). When a publisher
+  self-declares content type through these tags (e.g. "adult product",
+  "sexual content", "adults only"), the appropriate blocking signal is
+  raised immediately on page load.
+  - Initial vocabulary covers three categories: **Sexual/Nudity**,
+    **Age Verification**, and **Adult Product Sales**.
+  - The vocabulary list is centralised and easy to tune without touching
+    detection logic.
+
+- **Policy-page fetch and scan**: After a page loads with no signals detected
+  by existing methods, the content script collects links whose visible text
+  matches common policy-page patterns ("Terms of Service", "Privacy Policy",
+  "About Us", etc.) and asks the background script to fetch and scan them.
+  - The background fetches up to 3 candidate URLs and scans each for
+    age-verification language (using the same regex patterns as DOM detection)
+    and vocabulary matches.
+  - Results trigger the standard block overlay if the parental policy would
+    block the signals found.
+  - Results are **cached by hostname** in `browser.storage.local` with a 7-day
+    TTL, so subsequent visits to the same domain incur no additional network
+    requests.
+  - Stale cache entries are pruned on browser startup and extension install/update.
+
+- **Centralised age-verification patterns** (`AGE_VERIFICATION_PATTERNS` in
+  `js/utils.js`): The regex patterns used for DOM age-gate detection and
+  policy-page text scanning are now defined in one place, shared across
+  both callers.
+
 ## [1.4.0] - 2026-05-25
 
 ### Added

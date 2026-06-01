@@ -529,6 +529,153 @@ function calcMastermindDifficulty(slots, colors, guesses) {
   return { T, maxRecommended, tier, label, description };
 }
 
+// ============ Proactive Detection: Vocabulary & Policy-Page Patterns ============
+
+/**
+ * Phrases to match against meta/OG description tags for proactive blocking.
+ * Each entry maps a list of phrases to the signal it should emit and the
+ * parental-control category that must be enabled for it to trigger a block.
+ *
+ * TUNING: Add, remove, or move phrases here. Detection logic is separate and
+ * does not need to change when this list is updated.
+ */
+const META_BLOCK_VOCABULARY = [
+  {
+    phrases: [
+      'adult content',
+      'adult entertainment',
+      'sexual content',
+      'explicit content',
+      'explicit sexual',
+      'sex toy',
+      'sexual product',
+      'adult product'
+    ],
+    signal: 'GENERIC:adult',
+    category: 'sexual'
+  },
+  {
+    phrases: [
+      'adults only',
+      '18 and over',
+      '18 or older',
+      '18+',
+      '21+',
+      'age restricted',
+      'age verification required',
+      'must be 18',
+      'must be 21'
+    ],
+    signal: 'ICRA:ageVerification',
+    category: 'ageVerification'
+  },
+  {
+    phrases: [
+      'adult novelty',
+      'adult toy',
+      'adult shop',
+      'erotic product',
+      'intimate product',
+      'sex shop'
+    ],
+    signal: 'GENERIC:adult',
+    category: 'adultProductSales'
+  }
+];
+
+/**
+ * Link-text patterns used to find candidate policy pages on a site.
+ * Each entry is a lowercase substring to match against anchor visible text.
+ *
+ * TUNING: Add or remove patterns here to control which links are followed.
+ */
+const POLICY_PAGE_LINK_PATTERNS = [
+  'terms of service',
+  'terms of use',
+  'terms and conditions',
+  'legal',
+  'about us',
+  'privacy policy'
+];
+
+/**
+ * Age-verification regex patterns used both in DOM detection (content.js) and
+ * in policy-page text scanning (background.js).
+ *
+ * Centralised here so both callers share the same patterns.
+ */
+const AGE_VERIFICATION_PATTERNS = [
+  /you\s+must\s+be\s+(?:at\s+least\s+)?(?:over\s+)?1[68]\s+(?:years?\s+)?(?:old)?/i,
+  /must\s+be\s+1[68]\s+or\s+older/i,
+  /only\s+(?:for\s+)?(?:users?\s+)?(?:ages?\s+)?1[68]\+/i,
+  /restricted\s+to\s+(?:ages?\s+)?1[68]\+/i,
+  /18\s+(?:and\s+)?(?:over|older|above)/i,
+  /21\s+(?:and\s+)?(?:over|older|above)/i,
+  /you\s+are\s+21\s+years?\s+of\s+age\s+or\s+older/i,
+  /age\s+(?:gate|verification|check)\b/i,
+  /confirm\s+you\s+are\s+(?:at\s+least\s+)?1[68]/i,
+  /by\s+(?:entering|accessing|using)\s+(?:this\s+)?(?:site|website|page).*?(?:you\s+)?(?:confirm|agree|certify).*?(?:18|adult)/i,
+  /(?:you\s+)?(?:confirm|certify|agree)\s+that\s+you\s+are\s+(?:at\s+least\s+)?(?:18|21)/i,
+  /old\s+enough\s+to\s+(?:view|access|use|enter)/i,
+  /age\s+restricted\s+content/i
+];
+
+/**
+ * Test whether a block of plain text contains age-verification language.
+ * Uses AGE_VERIFICATION_PATTERNS; returns true on first match.
+ */
+function matchesAgeVerificationText(text) {
+  if (!text) return false;
+  for (const pattern of AGE_VERIFICATION_PATTERNS) {
+    if (pattern.test(text)) return true;
+  }
+  return false;
+}
+
+/**
+ * Scan meta / OG description tags in a document head element (or a plain
+ * string of lowercased text) for phrases in META_BLOCK_VOCABULARY.
+ *
+ * @param {Element|null} headElement - The document <head> to inspect, OR
+ * @param {string|null}  rawText     - Pre-lowercased text to scan instead
+ *                                     (used when scanning fetched HTML in bg).
+ * @returns {string[]} Array of signal strings (may be empty).
+ */
+function detectMetaVocabulary(headElement, rawText) {
+  const signals = [];
+
+  let textToScan = rawText || '';
+
+  if (headElement && !rawText) {
+    const candidates = [];
+    const metas = headElement.querySelectorAll(
+      'meta[name="description"], meta[property="og:description"], meta[name="keywords"]'
+    );
+    for (const meta of metas) {
+      const content = meta.getAttribute('content') || '';
+      if (content) candidates.push(content);
+    }
+    const titleEl = headElement.querySelector('title');
+    if (titleEl && titleEl.textContent) candidates.push(titleEl.textContent);
+    textToScan = candidates.join(' ').toLowerCase();
+  }
+
+  if (!textToScan) return signals;
+
+  for (const entry of META_BLOCK_VOCABULARY) {
+    for (const phrase of entry.phrases) {
+      if (textToScan.includes(phrase)) {
+        if (!signals.includes(entry.signal)) {
+          signals.push(entry.signal);
+        }
+        break;
+      }
+    }
+  }
+
+  return signals;
+}
+
 // ============ Export for use in different contexts ============
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
@@ -552,6 +699,11 @@ if (typeof module !== 'undefined' && module.exports) {
     MASTERMIND_LIMITS,
     generateMastermindSecret,
     scoreMastermindGuess,
-    calcMastermindDifficulty
+    calcMastermindDifficulty,
+    META_BLOCK_VOCABULARY,
+    POLICY_PAGE_LINK_PATTERNS,
+    AGE_VERIFICATION_PATTERNS,
+    matchesAgeVerificationText,
+    detectMetaVocabulary
   };
 }

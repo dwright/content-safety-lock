@@ -226,7 +226,8 @@ async function displayLockedSettings() {
   if (safeRequest.providers.youtube.enabled) enabledProviders.push('YouTube');
   if (safeRequest.providers.tumblr?.enabled) enabledProviders.push('Tumblr');
   if (safeRequest.providers.reddit?.enabled) enabledProviders.push('Reddit');
-  
+  if (safeRequest.providers.bluesky?.enabled) enabledProviders.push('Bluesky');
+
   const allowListCount = parental.allowList.length;
   const blockListCount = parental.blockList.length;
   
@@ -350,12 +351,94 @@ async function loadGeneralSettings() {
   if (config.providers.reddit) {
     document.getElementById('provider-reddit-enabled').checked = config.providers.reddit.enabled;
   }
+  if (config.providers.bluesky) {
+    document.getElementById('provider-bluesky-enabled').checked = config.providers.bluesky.enabled;
+    document.getElementById('provider-bluesky-age').value = config.providers.bluesky.ageSetting || '18+';
+    populateBlueskyLabels(config.providers.bluesky.blockedLabels || []);
+  }
 
   // Update collapsible sections based on checkbox states
   updateCollapsibleSections();
 
   // Apply managed-policy UI state (disables inputs that are admin-controlled)
   applyManagedUIState();
+}
+
+// Bluesky official content labels
+const BLUESKY_OFFICIAL_LABELS = [
+  { id: 'porn', name: 'Porn', category: 'adult' },
+  { id: 'sexual', name: 'Sexual', category: 'adult' },
+  { id: 'nudity', name: 'Nudity', category: 'adult' },
+  { id: 'sexual-figurative', name: 'Sexual (Cartoon)', category: 'adult' },
+  { id: 'graphic-media', name: 'Graphic Media', category: 'adult' },
+  { id: 'self-harm', name: 'Self-Harm', category: 'sensitive' },
+  { id: 'sensitive', name: 'Sensitive', category: 'sensitive' },
+  { id: 'extremist', name: 'Extremist', category: 'safety' },
+  { id: 'intolerant', name: 'Intolerant', category: 'safety' },
+  { id: 'threat', name: 'Threats', category: 'safety' },
+  { id: 'rude', name: 'Rude', category: 'safety' },
+  { id: 'illicit', name: 'Illicit', category: 'safety' },
+  { id: 'security', name: 'Security', category: 'safety' },
+  { id: 'unsafe-link', name: 'Unsafe Link', category: 'safety' },
+  { id: 'impersonation', name: 'Impersonation', category: 'safety' },
+  { id: 'misinformation', name: 'Misinformation', category: 'info' },
+  { id: 'scam', name: 'Scam', category: 'info' },
+  { id: 'engagement-farming', name: 'Engagement Farming', category: 'info' },
+  { id: 'spam', name: 'Spam', category: 'info' },
+  { id: 'rumor', name: 'Rumor', category: 'info' },
+  { id: 'misleading', name: 'Misleading', category: 'info' },
+  { id: 'inauthentic', name: 'Inauthentic', category: 'info' }
+];
+
+/**
+ * Populate Bluesky label checkboxes
+ */
+function populateBlueskyLabels(blockedLabels) {
+  const container = document.getElementById('bluesky-labels-container');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  BLUESKY_OFFICIAL_LABELS.forEach(label => {
+    const isBlocked = blockedLabels.includes(label.id);
+
+    const checkboxDiv = document.createElement('div');
+    checkboxDiv.className = 'checkbox-group';
+    checkboxDiv.style.cssText = 'padding: 6px; margin-bottom: 0; font-size: 11px;';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = `bluesky-label-${label.id}`;
+    checkbox.checked = isBlocked;
+    checkbox.style.cssText = 'width: 14px; height: 14px;';
+
+    const labelEl = document.createElement('label');
+    labelEl.className = 'checkbox-label';
+    labelEl.htmlFor = `bluesky-label-${label.id}`;
+    labelEl.textContent = label.name;
+    labelEl.style.cssText = 'font-size: 11px;';
+
+    checkboxDiv.appendChild(checkbox);
+    checkboxDiv.appendChild(labelEl);
+    container.appendChild(checkboxDiv);
+
+    // Add auto-save listener
+    checkbox.addEventListener('change', autoSaveGeneralSettings);
+  });
+}
+
+/**
+ * Get currently selected Bluesky blocked labels
+ */
+function getBlueskyBlockedLabels() {
+  const blocked = [];
+  BLUESKY_OFFICIAL_LABELS.forEach(label => {
+    const checkbox = document.getElementById(`bluesky-label-${label.id}`);
+    if (checkbox && checkbox.checked) {
+      blocked.push(label.id);
+    }
+  });
+  return blocked;
 }
 
 /**
@@ -398,7 +481,9 @@ const MANAGED_KEY_TO_ELEMENT_IDS = {
   'safeRequestMode.providers.youtube':          ['provider-youtube-enabled'],
   'safeRequestMode.providers.youtube.headerMode': ['provider-youtube-mode'],
   'safeRequestMode.providers.tumblr':           ['provider-tumblr-enabled'],
-  'safeRequestMode.providers.reddit':           ['provider-reddit-enabled']
+  'safeRequestMode.providers.reddit':           ['provider-reddit-enabled'],
+  'safeRequestMode.providers.bluesky':          ['provider-bluesky-enabled'],
+  'safeRequestMode.providers.bluesky.ageSetting': ['provider-bluesky-age']
 };
 
 /**
@@ -525,11 +610,17 @@ async function saveGeneralSettings(showSuccessMessage = false) {
         reddit: {
           ...(currentState.safeRequestMode.providers.reddit || {}),
           enabled: document.getElementById('provider-reddit-enabled').checked
+        },
+        bluesky: {
+          ...(currentState.safeRequestMode.providers.bluesky || {}),
+          enabled: document.getElementById('provider-bluesky-enabled').checked,
+          ageSetting: document.getElementById('provider-bluesky-age').value,
+          blockedLabels: getBlueskyBlockedLabels()
         }
       }
     }
   };
-  
+
   await updateState(updates);
   if (showSuccessMessage) {
     showAlert('general-alerts', 'Settings saved successfully!', 'success');

@@ -3,7 +3,7 @@
 > **Smarter content filtering for Firefox — no subscription, no cloud, no compromises.**
 
 [![Firefox Add-on](https://img.shields.io/badge/Firefox-Add--on-orange?logo=firefox)](https://addons.mozilla.org/en-US/firefox/addon/content-safety-lock/)
-[![Version](https://img.shields.io/badge/version-1.4.1-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.4.2-blue)](CHANGELOG.md)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue)](LICENSE)
 [![Privacy: 100% Local](https://img.shields.io/badge/Privacy-100%25%20Local-brightgreen)](#privacy-first-by-design)
 
@@ -26,6 +26,7 @@ Because filtering happens at the page level, the extension can make surgical dec
 - Block NSFW posts on Reddit **without** blocking Reddit itself
 - Hide mature-rated products on Amazon **without** blocking the store
 - Filter explicit content on Tumblr **per post**, not per blog
+- Filter labeled content on Bluesky based on official moderation labels
 - Enforce SafeSearch on Google, Bing, YouTube, and more
 
 No more choosing between "block the whole site" or "see everything."
@@ -83,6 +84,7 @@ Before a page even loads, Content Safety Lock modifies outbound requests to majo
 | **YouTube** | Enforces Restricted mode (Strict or Moderate) |
 | **Reddit** | Filters NSFW posts from API responses |
 | **Tumblr** | Removes mature/explicit/adult posts from feeds |
+| **Bluesky** | Filters posts by official moderation labels; controls age & adult content settings |
 
 ---
 

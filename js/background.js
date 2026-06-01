@@ -16,6 +16,169 @@ setTimeout(() => {
   }
 }, 100);
 
+// ============ Policy Page Cache ============
+
+const POLICY_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+/**
+ * In-memory cache for same-session fast lookups.
+ * Keyed by hostname; value: { signals: string[], fetchedAtEpochMs: number }
+ */
+const policyPageMemoryCache = new Map();
+
+/**
+ * Persist the cache entry for a hostname to browser.storage.local.
+ */
+async function savePolicyCacheEntry(hostname, entry) {
+  try {
+    const stored = await browser.storage.local.get('policyPageCache');
+    const cache = stored.policyPageCache || {};
+    cache[hostname] = entry;
+    await browser.storage.local.set({ policyPageCache: cache });
+  } catch (err) {
+    console.log('[BG] Failed to save policy cache entry:', err);
+  }
+}
+
+/**
+ * Load the cache entry for a hostname from browser.storage.local.
+ * Returns null if absent or expired.
+ */
+async function loadPolicyCacheEntry(hostname) {
+  try {
+    const stored = await browser.storage.local.get('policyPageCache');
+    const cache = stored.policyPageCache || {};
+    const entry = cache[hostname];
+    if (!entry) return null;
+    if (Date.now() - entry.fetchedAtEpochMs > POLICY_CACHE_TTL_MS) return null;
+    return entry;
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * Prune all expired entries from the persisted policy page cache.
+ */
+async function pruneStaleCache() {
+  try {
+    const stored = await browser.storage.local.get('policyPageCache');
+    const cache = stored.policyPageCache || {};
+    const now = Date.now();
+    let pruned = false;
+    for (const hostname of Object.keys(cache)) {
+      if (now - cache[hostname].fetchedAtEpochMs > POLICY_CACHE_TTL_MS) {
+        delete cache[hostname];
+        policyPageMemoryCache.delete(hostname);
+        pruned = true;
+      }
+    }
+    if (pruned) {
+      await browser.storage.local.set({ policyPageCache: cache });
+      console.log('[BG] Pruned stale policy page cache entries');
+    }
+  } catch (err) {
+    console.log('[BG] Failed to prune policy cache:', err);
+  }
+}
+
+/**
+ * Fetch a single URL and extract plain text from the HTML response.
+ * Returns the lowercased text content, or null on failure.
+ */
+async function fetchPolicyPageText(url) {
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      credentials: 'omit',
+      cache: 'no-store',
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!response.ok) return null;
+    const html = await response.text();
+    // Strip tags and decode entities using a simple regex approach safe for
+    // background context (no DOM available in MV2 background pages).
+    const withoutTags = html.replace(/<[^>]+>/g, ' ');
+    return withoutTags.toLowerCase();
+  } catch (err) {
+    console.log('[BG] fetchPolicyPageText failed for', url, ':', err);
+    return null;
+  }
+}
+
+/**
+ * Given a list of candidate policy-page URLs from a single origin, check
+ * each one for age-verification language and vocabulary matches.
+ * Results are cached by hostname for POLICY_CACHE_TTL_MS.
+ *
+ * Returns { signals: string[], details: string[] }
+ */
+async function fetchAndScanPolicyPages(candidateUrls, originUrl) {
+  let hostname;
+  try {
+    hostname = new URL(originUrl).hostname;
+  } catch {
+    return { signals: [], details: [] };
+  }
+
+  // Check in-memory cache first.
+  if (policyPageMemoryCache.has(hostname)) {
+    const cached = policyPageMemoryCache.get(hostname);
+    if (Date.now() - cached.fetchedAtEpochMs <= POLICY_CACHE_TTL_MS) {
+      console.log('[BG] Policy cache hit (memory) for', hostname);
+      return { signals: cached.signals, details: cached.details };
+    }
+    policyPageMemoryCache.delete(hostname);
+  }
+
+  // Check persistent cache.
+  const persisted = await loadPolicyCacheEntry(hostname);
+  if (persisted) {
+    console.log('[BG] Policy cache hit (storage) for', hostname);
+    policyPageMemoryCache.set(hostname, persisted);
+    return { signals: persisted.signals, details: persisted.details };
+  }
+
+  // Fetch and scan (cache miss).
+  const signals = [];
+  const details = [];
+
+  for (const url of candidateUrls.slice(0, 3)) {
+    console.log('[BG] Fetching policy page:', url);
+    const text = await fetchPolicyPageText(url);
+    if (!text) continue;
+
+    // Age-verification text patterns.
+    if (typeof matchesAgeVerificationText === 'function' && matchesAgeVerificationText(text)) {
+      if (!signals.includes('ICRA:ageVerification')) {
+        signals.push('ICRA:ageVerification');
+        details.push('Age verification language found on: ' + url);
+        console.log('[BG] Age-verification language found on', url);
+      }
+    }
+
+    // Vocabulary matching against lowercased text.
+    if (typeof detectMetaVocabulary === 'function') {
+      const vocabSignals = detectMetaVocabulary(null, text);
+      for (const sig of vocabSignals) {
+        if (!signals.includes(sig)) {
+          signals.push(sig);
+          details.push('Vocabulary match (' + sig + ') found on: ' + url);
+          console.log('[BG] Vocabulary signal', sig, 'found on', url);
+        }
+      }
+    }
+
+    if (signals.length > 0) break; // Stop scanning further pages once we have a hit.
+  }
+
+  const entry = { signals, details, fetchedAtEpochMs: Date.now() };
+  policyPageMemoryCache.set(hostname, entry);
+  await savePolicyCacheEntry(hostname, entry);
+
+  return { signals, details };
+}
+
 // ============ Default State ============
 
 const DEFAULT_STATE = {
@@ -945,6 +1108,16 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
     return { valid };
   }
   
+  if (message.type === 'FETCH_POLICY_PAGES') {
+    const { urls, originUrl } = message;
+    if (!Array.isArray(urls) || urls.length === 0) {
+      return { signals: [], details: [] };
+    }
+    const result = await fetchAndScanPolicyPages(urls, originUrl || sender.url);
+    console.log('[BG] FETCH_POLICY_PAGES result:', result);
+    return result;
+  }
+
   if (message.type === 'BLOCK_OCCURRED') {
     const state = await loadState();
     
@@ -1036,7 +1209,9 @@ browser.runtime.onInstalled.addListener(async (details) => {
     await initializeState();
     browser.tabs.create({ url: 'options.html' });
   }
+  await pruneStaleCache();
 });
 
-// Initialize state on startup
+// Initialize state on startup and prune stale cache entries.
 initializeState();
+pruneStaleCache();

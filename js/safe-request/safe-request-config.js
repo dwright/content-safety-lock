@@ -101,6 +101,12 @@ const PROVIDER_RULES = {
     name: 'Reddit',
     match: (hostname) => /(^|\.)reddit\.com$/.test(hostname),
     isJsonFilter: true
+  },
+
+  bluesky: {
+    name: 'Bluesky',
+    match: (hostname) => /(^|\.)bsky\.(network|app)$/.test(hostname),
+    isJsonFilter: true
   }
 };
 
@@ -148,6 +154,17 @@ const DEFAULT_SAFE_REQUEST_CONFIG = {
     reddit: {
       enabled: true,
       filterNsfw: true
+    },
+    bluesky: {
+      enabled: true,
+      ageSetting: '18+',
+      blockedLabels: [
+        'porn', 'sexual', 'nudity', 'sexual-figurative', 'graphic-media',
+        'self-harm', 'sensitive', 'extremist', 'intolerant', 'threat',
+        'rude', 'illicit', 'security', 'unsafe-link', 'impersonation',
+        'misinformation', 'scam', 'engagement-farming', 'spam', 'rumor',
+        'misleading', 'inauthentic'
+      ]
     }
   }
 };
