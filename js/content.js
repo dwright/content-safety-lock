@@ -263,9 +263,7 @@ function injectBlockOverlay(blockData) {
   
   // Title
   const title = document.createElement('h1');
-  title.textContent = blockData.blockType === 'self-lock' 
-    ? '🔒 Blocked by Self-Lock' 
-    : '🛡️ Blocked by Content Filter';
+  title.textContent = '🛡️ Blocked by Content Filter';
   title.style.cssText = `
     margin: 0 0 16px 0;
     font-size: 28px;
@@ -307,134 +305,6 @@ function injectBlockOverlay(blockData) {
       whyContainer.appendChild(line);
     }
     box.appendChild(whyContainer);
-  }
-  
-  // Lock info (if self-lock)
-  if (blockData.lockInfo) {
-    const lockInfo = document.createElement('div');
-    lockInfo.style.cssText = `
-      background: #f5f5f5;
-      border-radius: 8px;
-      padding: 16px;
-      margin: 0 0 24px 0;
-      text-align: left;
-    `;
-    
-    const lockTitle = document.createElement('p');
-    lockTitle.textContent = 'Self-Lock Status';
-    lockTitle.style.cssText = `
-      margin: 0 0 8px 0;
-      font-weight: 600;
-      color: #333;
-    `;
-    lockInfo.appendChild(lockTitle);
-    
-    const lockDetails = document.createElement('p');
-    lockDetails.style.cssText = `
-      margin: 0;
-      font-size: 14px;
-      color: #666;
-      line-height: 1.6;
-    `;
-    
-    const endsStrong = document.createElement('strong');
-    endsStrong.textContent = 'Ends:';
-    lockDetails.appendChild(endsStrong);
-    lockDetails.appendChild(document.createTextNode(' ' + blockData.lockInfo.endsAt));
-    lockDetails.appendChild(document.createElement('br'));
-    
-    const remainingStrong = document.createElement('strong');
-    remainingStrong.textContent = 'Remaining:';
-    lockDetails.appendChild(remainingStrong);
-    lockDetails.appendChild(document.createTextNode(' ' + blockData.lockInfo.remainingFormatted));
-    
-    lockInfo.appendChild(lockDetails);
-    
-    box.appendChild(lockInfo);
-    
-    const allowEarlyUnlock = blockData.lockInfo.allowEarlyUnlock;
-    const earlyUnlockMode = blockData.lockInfo.earlyUnlockMode || (allowEarlyUnlock ? 'phrase' : 'none');
-    
-    // Game-mode early unlock: render Mastermind board inline.
-    if (earlyUnlockMode === 'game') {
-      // Slightly widen the box for the board.
-      box.style.maxWidth = '640px';
-      
-      const gameWrap = document.createElement('div');
-      gameWrap.style.cssText = `
-        background: #fff;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 16px;
-        margin: 0 0 16px 0;
-        text-align: left;
-      `;
-      const gameTitle = document.createElement('div');
-      gameTitle.textContent = '🎯 Early Unlock — Guessing Game';
-      gameTitle.style.cssText = 'font-weight: 700; color: #667eea; margin-bottom: 8px;';
-      gameWrap.appendChild(gameTitle);
-      
-      const gameHelp = document.createElement('p');
-      gameHelp.textContent = 'Crack the secret color sequence to release the lock early.';
-      gameHelp.style.cssText = 'margin: 0 0 12px 0; font-size: 13px; color: #666;';
-      gameWrap.appendChild(gameHelp);
-      
-      const boardContainer = document.createElement('div');
-      gameWrap.appendChild(boardContainer);
-      box.appendChild(gameWrap);
-      
-      try {
-        new MastermindBoard(boardContainer, {
-          getState: async () => browser.runtime.sendMessage({ type: 'GET_GAME_STATE' }),
-          submitGuess: async (guess) => browser.runtime.sendMessage({ type: 'SUBMIT_GAME_GUESS', guess }),
-          onWin: () => {
-            setTimeout(() => location.reload(), 800);
-          }
-        });
-      } catch (err) {
-        console.error('[CSL] Failed to init Mastermind board:', err);
-      }
-    } else if (allowEarlyUnlock && blockData.lockInfo.canRequestUnlock) {
-      // Unlock button (phrase mode, available and not on cool-down)
-      const unlockBtn = document.createElement('button');
-      unlockBtn.textContent = 'Request Early Unlock';
-      unlockBtn.style.cssText = `
-        background: #667eea;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 12px 24px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        margin: 0 8px 0 0;
-        transition: background 0.2s;
-      `;
-      unlockBtn.onmouseover = () => unlockBtn.style.background = '#5568d3';
-      unlockBtn.onmouseout = () => unlockBtn.style.background = '#667eea';
-      unlockBtn.onclick = () => showUnlockFlow(blockData);
-      box.appendChild(unlockBtn);
-    } else if (!allowEarlyUnlock) {
-      const disabledMsg = document.createElement('p');
-      disabledMsg.textContent = 'Early unlock is disabled for this self-lock session.';
-      disabledMsg.style.cssText = `
-        margin: 0;
-        font-size: 14px;
-        color: #666;
-        font-weight: 600;
-      `;
-      box.appendChild(disabledMsg);
-    } else if (blockData.lockInfo.cooldownRemaining > 0) {
-      const cooldownMsg = document.createElement('p');
-      cooldownMsg.textContent = `Cool-down active. Try again in ${blockData.lockInfo.cooldownRemainingFormatted}`;
-      cooldownMsg.style.cssText = `
-        margin: 0;
-        font-size: 14px;
-        color: #e74c3c;
-        font-weight: 600;
-      `;
-      box.appendChild(cooldownMsg);
-    }
   }
   
   // URL display
@@ -507,255 +377,6 @@ function injectBlockOverlay(blockData) {
       attributeFilter: ['style']
     });
   }
-}
-
-/**
- * Show unlock flow with passphrase and phrase verification
- */
-function showUnlockFlow(blockData) {
-  const overlay = document.getElementById('csl-block-overlay');
-  if (!overlay) return;
-  
-  const box = overlay.querySelector('div');
-  box.innerHTML = '';
-  const requiresPassword = blockData.lockInfo?.requiresPassword;
-  
-  // Title
-  const title = document.createElement('h2');
-  title.textContent = 'Request Early Unlock';
-  title.style.cssText = `
-    margin: 0 0 24px 0;
-    font-size: 24px;
-    color: #333;
-  `;
-  box.appendChild(title);
-  
-  // If no password required, request directly
-  if (!requiresPassword) {
-    const info = document.createElement('p');
-    info.textContent = 'No passphrase required. Confirm to proceed.';
-    info.style.cssText = `
-      margin: 0 0 16px 0;
-      font-size: 14px;
-      color: #666;
-      text-align: left;
-    `;
-    box.appendChild(info);
-    
-    const submitBtn = document.createElement('button');
-    submitBtn.textContent = 'Request Unlock';
-    submitBtn.style.cssText = `
-      background: #667eea;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 10px 20px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      width: 100%;
-    `;
-    box.appendChild(submitBtn);
-    
-    submitBtn.onclick = async () => {
-      try {
-        const response = await browser.runtime.sendMessage({
-          type: 'REQUEST_EARLY_UNLOCK',
-          passphrase: ''
-        });
-        
-        if (response.success) {
-          showPhraseVerification(box, response.unlockPhrase, response.cooldownMs, blockData);
-        } else {
-          const error = document.createElement('p');
-          error.textContent = response.error || 'Unlock request failed';
-          error.style.cssText = 'color: #e74c3c; font-size: 14px; margin-top: 8px;';
-          box.appendChild(error);
-        }
-      } catch (err) {
-        console.error('Unlock request failed:', err);
-      }
-    };
-    
-    return;
-  }
-  
-  // Step 1: Passphrase
-  const step1 = document.createElement('div');
-  step1.id = 'unlock-step-1';
-  step1.style.cssText = 'margin-bottom: 24px;';
-  
-  const passLabel = document.createElement('label');
-  passLabel.textContent = 'Enter Self-Lock Passphrase:';
-  passLabel.style.cssText = `
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: #333;
-    text-align: left;
-  `;
-  step1.appendChild(passLabel);
-  
-  const passInput = document.createElement('input');
-  passInput.type = 'password';
-  passInput.placeholder = 'Passphrase';
-  passInput.style.cssText = `
-    width: 100%;
-    padding: 10px;
-    border: 2px solid #ddd;
-    border-radius: 6px;
-    font-size: 14px;
-    box-sizing: border-box;
-    margin-bottom: 12px;
-  `;
-  step1.appendChild(passInput);
-  
-  const submitBtn = document.createElement('button');
-  submitBtn.textContent = 'Next';
-  submitBtn.style.cssText = `
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 10px 20px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    width: 100%;
-  `;
-  step1.appendChild(submitBtn);
-  
-  box.appendChild(step1);
-  
-  submitBtn.onclick = async () => {
-    const passphrase = passInput.value;
-    if (!passphrase) {
-      passInput.style.borderColor = '#e74c3c';
-      return;
-    }
-    
-    try {
-      const response = await browser.runtime.sendMessage({
-        type: 'REQUEST_EARLY_UNLOCK',
-        passphrase
-      });
-      
-      if (response.success) {
-        showPhraseVerification(box, response.unlockPhrase, response.cooldownMs, blockData);
-      } else {
-        passInput.style.borderColor = '#e74c3c';
-        const error = document.createElement('p');
-        error.textContent = response.error || 'Invalid passphrase';
-        error.style.cssText = 'color: #e74c3c; font-size: 14px; margin-top: 8px;';
-        step1.appendChild(error);
-      }
-    } catch (err) {
-      console.error('Unlock request failed:', err);
-    }
-  };
-}
-
-/**
- * Show phrase verification step
- */
-function showPhraseVerification(box, unlockPhrase, cooldownMs, blockData) {
-  box.innerHTML = '';
-  
-  // Title
-  const title = document.createElement('h2');
-  title.textContent = 'Verify Unlock Phrase';
-  title.style.cssText = `
-    margin: 0 0 24px 0;
-    font-size: 24px;
-    color: #333;
-  `;
-  box.appendChild(title);
-  
-  // Instructions
-  const instructions = document.createElement('p');
-  instructions.textContent = `Type the phrase below to confirm. Cool-down will begin for ${Math.round(cooldownMs / 60000)} minutes.`;
-  instructions.style.cssText = `
-    margin: 0 0 16px 0;
-    font-size: 14px;
-    color: #666;
-  `;
-  box.appendChild(instructions);
-  
-  // Phrase display
-  const phraseDisplay = document.createElement('div');
-  phraseDisplay.style.cssText = `
-    background: #f5f5f5;
-    border-radius: 6px;
-    padding: 12px;
-    margin-bottom: 16px;
-    font-family: monospace;
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-    letter-spacing: 2px;
-  `;
-  phraseDisplay.textContent = unlockPhrase;
-  box.appendChild(phraseDisplay);
-  
-  // Input
-  const phraseInput = document.createElement('input');
-  phraseInput.type = 'text';
-  phraseInput.placeholder = 'Type the phrase here';
-  phraseInput.style.cssText = `
-    width: 100%;
-    padding: 10px;
-    border: 2px solid #ddd;
-    border-radius: 6px;
-    font-size: 14px;
-    box-sizing: border-box;
-    margin-bottom: 12px;
-    font-family: monospace;
-  `;
-  box.appendChild(phraseInput);
-  
-  // Confirm button
-  const confirmBtn = document.createElement('button');
-  confirmBtn.textContent = 'Confirm Unlock';
-  confirmBtn.style.cssText = `
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 10px 20px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    width: 100%;
-  `;
-  box.appendChild(confirmBtn);
-  
-  confirmBtn.onclick = async () => {
-    const phrase = phraseInput.value;
-    if (phrase !== unlockPhrase) {
-      phraseInput.style.borderColor = '#e74c3c';
-      return;
-    }
-    
-    try {
-      const response = await browser.runtime.sendMessage({
-        type: 'CONFIRM_UNLOCK',
-        phrase
-      });
-      
-      if (response.success) {
-        // Reload page
-        location.reload();
-      } else {
-        phraseInput.style.borderColor = '#e74c3c';
-        const error = document.createElement('p');
-        error.textContent = response.error || 'Unlock failed';
-        error.style.cssText = 'color: #e74c3c; font-size: 14px; margin-top: 8px;';
-        box.appendChild(error);
-      }
-    } catch (err) {
-      console.error('Unlock confirmation failed:', err);
-    }
-  };
 }
 
 /**
@@ -1012,9 +633,8 @@ async function initTumblrInterception() {
     const safeRequest = state.safeRequestMode;
     const tumblrConfig = safeRequest.providers.tumblr;
     
-    const shouldEnable = (safeRequest.enabled || (state.selfLock.active && safeRequest.forceUnderSelfLock)) && 
+    const shouldEnable = safeRequest.enabled &&
                          tumblrConfig && tumblrConfig.enabled;
-                         
     if (!shouldEnable) {
       console.error('[CSL] Tumblr Safe Mode not enabled');
       return;
@@ -1092,7 +712,7 @@ async function initRedditInterception() {
     // Handle case where reddit config doesn't exist yet in old state
     const redditConfig = safeRequest.providers.reddit;
 
-    const shouldEnable = (safeRequest.enabled || (state.selfLock.active && safeRequest.forceUnderSelfLock)) &&
+    const shouldEnable = safeRequest.enabled &&
                          redditConfig && redditConfig.enabled;
 
     if (!shouldEnable) {
@@ -1132,7 +752,7 @@ async function initBlueskyInterception() {
     const safeRequest = state.safeRequestMode;
     const blueskyConfig = safeRequest.providers.bluesky;
 
-    const shouldEnable = (safeRequest.enabled || (state.selfLock.active && safeRequest.forceUnderSelfLock)) &&
+    const shouldEnable = safeRequest.enabled &&
                          blueskyConfig && blueskyConfig.enabled;
 
     if (!shouldEnable) {

@@ -116,8 +116,6 @@ const DEFAULT_SAFE_REQUEST_CONFIG = {
   enabled: true,
   addPreferSafeHeader: true,
   applyInPrivateWindows: true,
-  forceUnderSelfLock: true,
-  ignoreAllowlistUnderSelfLock: true,
   blockUserParamDowngrade: true,
   perFrameEnforcement: 'any',
   providers: {
@@ -230,12 +228,6 @@ async function shouldApplySafeRequest(state) {
   // Check if explicitly enabled
   if (state.safeRequestMode.enabled) {
     console.log('[SafeRequest] Safe Request Mode is explicitly enabled');
-    return true;
-  }
-  
-  // Check if forced by Self-Lock
-  if (state.selfLock.active && state.safeRequestMode.forceUnderSelfLock) {
-    console.log('[SafeRequest] Safe Request Mode forced by Self-Lock');
     return true;
   }
   

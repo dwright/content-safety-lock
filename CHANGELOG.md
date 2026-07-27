@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.4] - 2026-07-27
+
+### Fixed
+
+- **Self-Lock scope cleanup**: removed leftover Self-Lock content-blocking scope and `ignoreAllowlist` state fields, and removed Self-Lock status/early-unlock UI from the page block overlay.
+- **Block overlay title**: restored the shield emoji (`🛡️`) in the block page title.
+- **State migration**: `initializeState()` now strips deprecated `selfLock.scope`, `selfLock.ignoreAllowlist`, `safeRequestMode.forceUnderSelfLock`, and `safeRequestMode.ignoreAllowlistUnderSelfLock` fields from existing storage.
+
+### Changed
+
+- `manifest.json` no longer loads `js/components/mastermind-board.js` in the content script bundle (it is still used on the options page).
+- `package.json` / `package-lock.json` updated to `web-ext` `^10.5.0`.
+- `documentation/FEATURES.md`, `documentation/TESTING.md`, and `documentation/DEPLOYMENT.md` updated to reflect the simplified Self-Lock flow.
+- `create-github-releases.sh` now recommends installing the GitHub CLI via Homebrew (`brew install gh`) instead of MacPorts.
+
 ## [1.4.3] - 2026-05-30
 
 ### Added

@@ -189,34 +189,6 @@ function parseMetaTags(headElement) {
 }
 
 /**
- * Check if signals match a self-lock scope
- */
-function matchesSelfLockScope(signals, scope) {
-  if (!signals || signals.length === 0) return false;
-  
-  const signalSet = new Set(signals);
-  
-  switch (scope) {
-    case 'sexual':
-      return signalSet.has('GENERIC:adult') || 
-             signalSet.has('RTA') || 
-             signalSet.has('ICRA:sexual');
-    
-    case 'sexual-violence':
-      return signalSet.has('GENERIC:adult') || 
-             signalSet.has('RTA') || 
-             signalSet.has('ICRA:sexual') ||
-             signalSet.has('ICRA:violence');
-    
-    case 'all':
-      return signals.length > 0;
-    
-    default:
-      return false;
-  }
-}
-
-/**
  * Check if signals match parental policy categories
  */
 function matchesCategoryPolicy(signals, parentalConfig) {
@@ -689,7 +661,6 @@ if (typeof module !== 'undefined' && module.exports) {
     formatEpochTime,
     checkClockTamper,
     parseMetaTags,
-    matchesSelfLockScope,
     matchesCategoryPolicy,
     getBlockReason,
     getDomain,

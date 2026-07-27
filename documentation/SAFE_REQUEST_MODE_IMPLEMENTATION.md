@@ -36,8 +36,6 @@ safeRequestMode: {
   enabled: false,
   addPreferSafeHeader: true,
   applyInPrivateWindows: true,
-  forceUnderSelfLock: true,
-  ignoreAllowlistUnderSelfLock: true,
   blockUserParamDowngrade: true,
   perFrameEnforcement: "any",
   providers: {
@@ -175,7 +173,7 @@ safeRequestMode: {
 
 **Logic**:
 ```
-IF safeRequestMode.enabled OR (selfLock.active AND forceUnderSelfLock):
+IF safeRequestMode.enabled:
   IF addPreferSafeHeader:
     ADD "Prefer: safe" header
   IF youtube provider enabled AND hostname matches youtube pattern:
@@ -190,7 +188,7 @@ IF safeRequestMode.enabled OR (selfLock.active AND forceUnderSelfLock):
 
 **Logic**:
 ```
-IF safeRequestMode.enabled OR (selfLock.active AND forceUnderSelfLock):
+IF safeRequestMode.enabled:
   FOR EACH provider rule:
     IF provider.enabled AND hostname matches provider pattern:
       IF blockUserParamDowngrade:
@@ -282,8 +280,7 @@ IF safeRequestMode.enabled OR (selfLock.active AND forceUnderSelfLock):
 **Changes**:
 
 1. Add `safeRequestMode` to `DEFAULT_STATE` (see Section 2)
-2. Ensure Safe Request Mode state persists during Self-Lock
-3. Add message handler for Safe Request Mode updates (if needed)
+2. Add a message handler for Safe Request Mode updates (if needed)
 
 ---
 
@@ -320,7 +317,6 @@ IF safeRequestMode.enabled OR (selfLock.active AND forceUnderSelfLock):
 | DDG basic | `https://duckduckgo.com/?q=cats` | URL becomes `...&kp=1` |
 | YouTube header | `https://www.youtube.com/results?search_query=cats` | Header `YouTube-Restrict: Strict` added |
 | Subframe search | iframe loads `duckduckgo.com/?q=...` | `kp=1` enforced (if perFrameEnforcement=any) |
-| Self-Lock on | Any of above | Feature forcibly ON, UI read-only |
 | Private window | All above | Same enforcement if applyInPrivateWindows=true |
 | Feature disabled | Any of above | No modification; original URL/headers used |
 
@@ -343,13 +339,11 @@ IF safeRequestMode.enabled OR (selfLock.active AND forceUnderSelfLock):
 ### Phase 3: UI & Integration
 - [ ] Add "Safe Request Mode" tab to `options.html`
 - [ ] Implement load/save functions in `options.js`
-- [ ] Add Self-Lock integration (force enable when active)
 - [ ] Test UI state persistence
 
 ### Phase 4: Testing & Refinement
 - [ ] Create Playwright E2E tests for each provider
 - [ ] Test parameter override scenarios
-- [ ] Test Self-Lock forced activation
 - [ ] Test private window behavior
 - [ ] Performance profiling
 
@@ -370,12 +364,6 @@ IF safeRequestMode.enabled OR (selfLock.active AND forceUnderSelfLock):
 - Granular host permissions for covered providers
 - No telemetry by default
 - Optional debug logging toggle
-
-### Self-Lock Interaction
-- When Self-Lock is active and `forceUnderSelfLock: true`, Safe Request Mode cannot be disabled
-- If `ignoreAllowlistUnderSelfLock: true`, provider rules apply even to allow-listed sites
-
----
 
 ## 9. Error Handling & Edge Cases
 
@@ -419,7 +407,6 @@ IF safeRequestMode.enabled OR (selfLock.active AND forceUnderSelfLock):
 ### Changelog Entry
 - Version: X.Y.0 (minor release)
 - Include list of supported providers
-- Note: Feature disabled by default; enabled automatically under Self-Lock if configured
 
 ---
 
@@ -431,7 +418,6 @@ IF safeRequestMode.enabled OR (selfLock.active AND forceUnderSelfLock):
 - [ ] options.html tab added
 - [ ] options.js load/save functions implemented
 - [ ] webRequest hooks registered and tested
-- [ ] Self-Lock integration verified
 - [ ] E2E tests passing for all providers
 - [ ] Documentation updated
 - [ ] Privacy/security review completed

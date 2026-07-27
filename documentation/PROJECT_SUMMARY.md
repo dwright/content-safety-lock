@@ -57,12 +57,11 @@
 
 ### ✅ Self-Lock Mode
 - Flexible durations: 1h, 4h, 24h, 1 week, custom
-- Blocking scopes: Sexual only, Sexual+Violence, All adult labels
+- General settings tab lock while active
 - Passphrase protection (separate from admin PIN)
 - Cool-down delays: 30m, 1h, 4h, custom
 - Phrase verification for unlock (random 3-word phrases)
 - Monotonic time tracking for clock tamper detection
-- Private window support (identical enforcement)
 
 ### ✅ Anti-Tamper Features
 - Separate passphrases (admin vs self-lock)
@@ -99,9 +98,8 @@ Content script detects labels
 Sends signals to background worker
     ↓
 Policy engine evaluates:
-  1. Self-Lock rules (if active)
-  2. Parental rules (if enabled)
-  3. Allow/block lists
+  1. Parental rules (if enabled)
+  2. Allow/block lists
     ↓
 Decision: Block or Allow
     ↓
@@ -122,8 +120,6 @@ browser.storage.local
 │   └── settingsPINHash
 └── selfLock
     ├── active
-    ├── scope
-    ├── ignoreAllowlist
     ├── requiresPassword
     ├── cooldownMinutes
     ├── startedAtEpochMs
@@ -150,7 +146,7 @@ browser.storage.local
 
 - **Label Detection** (3 tests): RTA, adult, clean pages
 - **Filtering** (3 tests): Allow-list, block-list, categories
-- **Self-Lock** (5 tests): Activation, blocking, unlock flow
+- **Self-Lock** (5 tests): Activation, General-tab locking, options-page unlock flow
 - **Security** (3 tests): Passphrases, recovery codes, PIN
 - **Edge Cases** (3 tests): Dynamic injection, iframes, multiple labels
 - **Performance** (2 tests): Load time, memory usage

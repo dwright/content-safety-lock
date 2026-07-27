@@ -57,15 +57,14 @@ Complete feature documentation with implementation status and usage details.
 
 | Feature | Status | Details |
 |---------|--------|---------|
-| Duration Selection | ✅ Complete | Presets: 1h, 4h, 24h, 1 week, or custom |
-| Scope Selection | ✅ Complete | Sexual only, Sexual+Violence, All adult labels |
-| Ignore Allow-List | ✅ Complete | Option to ignore allow-list during lock |
-| Require Password | ✅ Complete | Require passphrase for early unlock |
+| Duration Selection | ✅ Complete | Choose a duration from 1 minute to 12 months |
+| General Settings Lock | ✅ Complete | Makes the General settings tab read-only while active |
+| Require Password | ✅ Complete | Require a passphrase for phrase-based early unlock |
 
 **Usage**:
-1. Set a passphrase in Security tab first
-2. Go to Self-Lock tab
-3. Select scope and duration
+1. Go to the Self-Lock tab
+2. Select a duration and early-unlock mode
+3. Configure a passphrase or game options when applicable
 4. Click "Activate Self-Lock"
 
 ### Lock Status
@@ -73,9 +72,8 @@ Complete feature documentation with implementation status and usage details.
 | Feature | Status | Details |
 |---------|--------|---------|
 | Active Status Display | ✅ Complete | Shows "Locked until [time]" |
-| Countdown Timer | ✅ Complete | Real-time countdown in popup |
-| Remaining Time | ✅ Complete | Formatted as HH:MM:SS |
-| Scope Summary | ✅ Complete | Shows what's being blocked |
+| General Tab Lock | ✅ Complete | Keeps the General settings tab read-only |
+| Remaining Time | ✅ Complete | Shows the remaining self-lock duration |
 
 **Usage**: 
 - Check popup for current lock status
@@ -84,18 +82,15 @@ Complete feature documentation with implementation status and usage details.
 ### Early Unlock
 | Feature | Status | Details |
 |---------|--------|---------|
-| Unlock Request | ✅ Complete | Button to request early unlock (only shown when **Allow early unlock** was enabled at activation) |
-| Passphrase Verification | ✅ Complete | Requires self-lock passphrase |
-| Phrase Verification | ✅ Complete | Must type random 3-word phrase |
-| Cool-Down Delay | ✅ Complete | Configurable: 30m, 1h, 4h, custom |
-| Final Confirmation | ✅ Complete | Requires both passphrase and phrase |
+| Phrase Unlock | ✅ Complete | Disable early with the configured self-lock passphrase |
+| Mastermind Unlock | ✅ Complete | Solve a color-sequence puzzle to disable early |
+| Cool-Down Delay | ✅ Complete | Configurable for phrase-based early unlock |
 
 **Usage**:
-1. Click "Request Early Unlock" on blocked page
-2. Enter your self-lock passphrase
-3. Type the verification phrase shown
-4. Wait for cool-down to complete
-5. Click "Confirm Unlock"
+1. Go to the Self-Lock tab while Self-Lock is active
+2. Use the configured phrase or Mastermind unlock control
+3. Complete the configured verification or puzzle
+4. Verify the General tab becomes editable when the lock is disabled
 
 ---
 
@@ -161,10 +156,8 @@ Complete feature documentation with implementation status and usage details.
 
 | Feature | Status | Details |
 |---------|--------|---------|
-| Clear Headline | ✅ Complete | "Blocked by Self-Lock" or "Blocked by Content Filter" |
-| Block Reason | ✅ Complete | Shows reason chips (RTA, Sexual, etc.) |
-| Lock Status | ✅ Complete | Shows remaining time if self-locked |
-| Unlock Button | ✅ Complete | "Request Early Unlock" if available |
+| Clear Headline | ✅ Complete | "Blocked by Content Filter" |
+| Block Reason | ✅ Complete | Shows detected category reasons |
 | URL Display | ✅ Complete | Shows blocked URL |
 
 **Usage**: Automatic when page is blocked
@@ -243,7 +236,6 @@ Complete feature documentation with implementation status and usage details.
 | Category Selection | ✅ Complete | Choose which categories to block |
 | Duration Customization | ✅ Complete | Custom durations in minutes |
 | Cool-Down Customization | ✅ Complete | Custom cool-down periods |
-| Scope Customization | ✅ Complete | Choose blocking scope |
 
 **Usage**: All in Settings pages
 

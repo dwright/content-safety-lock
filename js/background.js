@@ -211,8 +211,6 @@ const DEFAULT_STATE = {
   },
   selfLock: {
     active: false,
-    scope: 'sexual', // 'sexual', 'sexual-violence', 'all'
-    ignoreAllowlist: true,
     earlyUnlockMode: 'none', // 'none' | 'phrase' | 'game'
     allowEarlyUnlock: false,
     requiresPassword: false,
@@ -237,8 +235,6 @@ const DEFAULT_STATE = {
     enabled: true,
     addPreferSafeHeader: true,
     applyInPrivateWindows: true,
-    forceUnderSelfLock: true,
-    ignoreAllowlistUnderSelfLock: true,
     blockUserParamDowngrade: true,
     perFrameEnforcement: 'any',
     providers: {
@@ -599,6 +595,18 @@ async function initializeState() {
   const result = await browser.storage.local.get('state');
   if (!result.state) {
     await saveState(DEFAULT_STATE);
+    return;
+  }
+
+  const { scope, ignoreAllowlist, ...selfLock } = result.state.selfLock || {};
+  const { forceUnderSelfLock, ignoreAllowlistUnderSelfLock, ...safeRequestMode } = result.state.safeRequestMode || {};
+  if (
+    scope !== undefined ||
+    ignoreAllowlist !== undefined ||
+    forceUnderSelfLock !== undefined ||
+    ignoreAllowlistUnderSelfLock !== undefined
+  ) {
+    await saveState({ ...result.state, selfLock, safeRequestMode });
   }
 }
 
@@ -613,35 +621,6 @@ async function shouldBlock(signals, url) {
   // If no signals, don't block
   if (!signals || signals.length === 0) {
     return false;
-  }
-  
-  // Check Self-Lock first (if active and not expired)
-  if (state.selfLock.active) {
-    const now = Date.now();
-    if (now >= state.selfLock.endsAtEpochMs) {
-      state.selfLock.active = false;
-      await saveState(state);
-    } else {
-      // Check for clock tamper
-      const tamperCheck = checkClockTamper(
-        state.selfLock.startedAtEpochMs,
-        state.selfLock.elapsedMonotonicMsAtStart
-      );
-      if (tamperCheck.rolledBack) {
-        state.selfLock.endsAtEpochMs += tamperCheck.extendedDuration;
-        await saveState(state);
-      }
-      
-      // Check if allow-list should be ignored during self-lock
-      if (!state.selfLock.ignoreAllowlist && isInAllowList(url, state.parental.allowList)) {
-        return false;
-      }
-      
-      // Check if signals match self-lock scope
-      if (matchesSelfLockScope(signals, state.selfLock.scope)) {
-        return true;
-      }
-    }
   }
   
   // Parental mode - ALWAYS CHECK if enabled (regardless of self-lock)
@@ -675,39 +654,12 @@ async function shouldBlock(signals, url) {
  * Get block page data
  */
 async function getBlockPageData(signals, url, details) {
-  const state = await loadState();
-  const reasons = getBlockReason(signals);
-  
-  let blockType = 'parental';
-  let lockInfo = null;
-  
-  if (state.selfLock.active) {
-    blockType = 'self-lock';
-    const now = Date.now();
-    const remaining = Math.max(0, state.selfLock.endsAtEpochMs - now);
-    const cooldownRemaining = Math.max(0, state.selfLock.cooldownUntilEpochMs - now);
-    
-    const earlyUnlockMode = state.selfLock.earlyUnlockMode || 'none';
-    lockInfo = {
-      endsAt: formatEpochTime(state.selfLock.endsAtEpochMs),
-      remainingMs: remaining,
-      remainingFormatted: formatDuration(remaining),
-      scope: state.selfLock.scope,
-      earlyUnlockMode: earlyUnlockMode,
-      allowEarlyUnlock: state.selfLock.allowEarlyUnlock,
-      canRequestUnlock: earlyUnlockMode === 'phrase' && cooldownRemaining === 0,
-      requiresPassword: state.selfLock.requiresPassword,
-      cooldownRemaining: cooldownRemaining,
-      cooldownRemainingFormatted: formatDuration(cooldownRemaining)
-    };
-  }
-  
   return {
-    blockType,
+    blockType: 'parental',
     url,
-    reasons,
+    reasons: getBlockReason(signals),
     details: details || [],
-    lockInfo
+    lockInfo: null
   };
 }
 
@@ -954,75 +906,6 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
         guessesRemaining: Math.max(0, g.maxGuesses - g.guesses.length)
       }
     };
-  }
-  
-  if (message.type === 'REQUEST_EARLY_UNLOCK') {
-    const { passphrase } = message;
-    const state = await loadState();
-    
-    if (!state.selfLock.active) {
-      return { success: false, error: 'Self-lock not active' };
-    }
-    
-    if (!state.selfLock.allowEarlyUnlock || state.selfLock.earlyUnlockMode !== 'phrase') {
-      return { success: false, error: 'Phrase-based early unlock is not enabled for this session' };
-    }
-    
-    if (state.selfLock.requiresPassword) {
-      const isValid = await verifyPassphrase(passphrase, state.selfLock.passphraseHash);
-      if (!isValid) {
-        return { success: false, error: 'Invalid passphrase' };
-      }
-    }
-    
-    // Generate unlock phrase and set cool-down
-    const unlockPhrase = generateRandomPhrase();
-    const now = Date.now();
-    const cooldownMs = state.selfLock.cooldownMinutes * 60 * 1000;
-    
-    state.selfLock.pendingUnlockPhrase = unlockPhrase;
-    state.selfLock.pendingUnlockPhraseExpiry = now + (5 * 60 * 1000); // 5 min to type
-    state.selfLock.cooldownUntilEpochMs = now + cooldownMs;
-    
-    await saveState(state);
-    
-    return { success: true, unlockPhrase, cooldownMs };
-  }
-  
-  if (message.type === 'CONFIRM_UNLOCK') {
-    const { phrase } = message;
-    const state = await loadState();
-    
-    if (!state.selfLock.active) {
-      return { success: false, error: 'Self-lock not active' };
-    }
-    
-    const now = Date.now();
-    
-    // Check if phrase is still valid
-    if (now > state.selfLock.pendingUnlockPhraseExpiry) {
-      return { success: false, error: 'Unlock phrase expired' };
-    }
-    
-    // Check if cool-down has passed
-    if (now < state.selfLock.cooldownUntilEpochMs) {
-      return { success: false, error: 'Cool-down period not complete' };
-    }
-    
-    // Verify phrase
-    if (phrase !== state.selfLock.pendingUnlockPhrase) {
-      return { success: false, error: 'Incorrect phrase' };
-    }
-    
-    // Unlock
-    state.selfLock.active = false;
-    state.selfLock.pendingUnlockPhrase = null;
-    state.selfLock.pendingUnlockPhraseExpiry = 0;
-    state.selfLock.cooldownUntilEpochMs = 0;
-    
-    await saveState(state);
-    
-    return { success: true };
   }
   
   if (message.type === 'SET_SELF_LOCK_PASSPHRASE') {

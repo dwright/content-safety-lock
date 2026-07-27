@@ -11,7 +11,7 @@
 #   ./create-github-releases.sh 1.3.0 "New Features" --latest
 #
 # Prerequisites:
-#   1. GitHub CLI installed: sudo port install gh
+#   1. GitHub CLI installed: brew install gh
 #   2. Authenticated: gh auth login
 #   3. Build artifact exists: web-ext-artifacts/content_safety_lock-<version>.zip
 #   4. Release notes exist: web-ext-artifacts/RELEASE_NOTES_v<version>.md
@@ -52,7 +52,7 @@ NOTES_FILE="$ARTIFACTS_DIR/RELEASE_NOTES_v$VERSION.md"
 # Check if gh CLI is installed
 if ! command -v gh &> /dev/null; then
     echo "ERROR: GitHub CLI (gh) is not installed."
-    echo "Please install it: sudo port install gh"
+    echo "Please install it: brew install gh"
     echo "Then authenticate: gh auth login"
     exit 1
 fi

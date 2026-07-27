@@ -114,85 +114,70 @@
 
 ---
 
-### Test 7: Self-Lock Activation
+### Test 7: Self-Lock Activation and General Tab Lock
 
-**Objective**: Verify self-lock can be activated
+**Objective**: Verify Self-Lock activates and makes the General settings tab read-only
 
 **Steps**:
-1. Go to Options → Security tab
-2. Set a passphrase (e.g., "test123")
-3. Go to Options → Self-Lock tab
-4. Select "Sexual/Nudity only" scope
-5. Select "1 hour" duration
-6. Ensure "Require password for early unlock" is checked
-7. Click "Activate Self-Lock"
-8. Verify the status shows "Self-Lock Active"
+1. Go to Options → Self-Lock tab
+2. Select a duration and an early-unlock mode
+3. Configure a passphrase or game options when applicable
+4. Click "Activate Self-Lock"
+5. Verify the status shows "Self-Lock Active"
+6. Open the General tab
+7. Verify the General settings are read-only and cannot be unlocked until Self-Lock ends or is disabled through its configured early-unlock flow
 
-**Expected Result**: ✓ Self-Lock activates and status updates
+**Expected Result**: ✓ Self-Lock activates, status updates, and the General tab is locked
 
 ---
 
-### Test 8: Self-Lock Blocking
+### Test 8: Allow-Listed Content During Self-Lock
 
-**Objective**: Verify self-lock blocks pages
+**Objective**: Verify Self-Lock does not independently block allow-listed content
 
 **Steps**:
-1. Activate self-lock (see Test 7)
-2. Load `test-pages/adult-labeled.html`
-3. Verify the block overlay appears
-4. Check that it says "Blocked by Self-Lock"
-5. Verify the countdown timer is visible
+1. Add an adult-labeled test domain to the General-tab Allow-List
+2. Activate Self-Lock
+3. Load the adult-labeled page on that allow-listed domain
+4. Verify the page loads without a block overlay
 
-**Expected Result**: ✓ Block overlay shows self-lock status with countdown
+**Expected Result**: ✓ The allow-list remains effective while Self-Lock is active
 
 ---
 
-### Test 9: Early Unlock Flow
+### Test 9: Options-Page Early Unlock
 
-**Objective**: Verify early unlock process works
+**Objective**: Verify the configured early-unlock flow works from the Self-Lock tab
 
 **Prerequisites**:
-- Self-lock must be active (see Test 7)
-- Cool-down should be set to "None" for this test
+- Self-Lock must be active (see Test 7)
 
 **Steps**:
-1. Load `test-pages/adult-labeled.html` (should be blocked)
-2. Click "Request Early Unlock" button
-3. Enter your passphrase (e.g., "test123")
-4. Click "Next"
-5. Copy the verification phrase shown
-6. Paste it into the input field
-7. Click "Confirm Unlock"
-8. Verify the page reloads and loads normally
+1. Go to Options → Self-Lock tab
+2. Use the phrase or Mastermind early-unlock control configured at activation
+3. Complete the required passphrase verification or puzzle
+4. Verify the status changes to "Self-Lock Inactive"
+5. Open the General tab and verify settings are editable
 
-**Expected Result**: ✓ Page unlocks and reloads after verification
-
-**Troubleshooting**:
-- If unlock fails, verify you entered the correct passphrase
-- Ensure you typed the phrase exactly as shown
-- Check that cool-down is set to "None" for this test
+**Expected Result**: ✓ The configured options-page early-unlock flow disables Self-Lock
 
 ---
 
-### Test 10: Cool-Down Delay
+### Test 10: Phrase Unlock Cool-Down
 
-**Objective**: Verify cool-down prevents immediate unlock
+**Objective**: Verify the phrase-based early-unlock cool-down is enforced in the Self-Lock tab
 
 **Prerequisites**:
-- Self-lock must be active with cool-down set to "30 minutes"
+- Self-Lock must be active in phrase mode with a nonzero cool-down
 
 **Steps**:
-1. Load `test-pages/adult-labeled.html` (should be blocked)
-2. Click "Request Early Unlock"
-3. Enter your passphrase
-4. Click "Next"
-5. Type the verification phrase
-6. Click "Confirm Unlock"
-7. Verify it shows "Cool-down active. Try again in..."
-8. Wait a few seconds and reload the page
-9. Verify the cool-down countdown is still showing
+1. Go to Options → Self-Lock tab
+2. Start the phrase-based early-unlock flow and enter the configured passphrase
+3. Verify the cool-down status is shown before Self-Lock can be disabled
+4. Verify the General tab remains read-only during the cool-down
+5. Complete the flow after the cool-down ends
 
-**Expected Result**: ✓ Cool-down prevents immediate unlock
+**Expected Result**: ✓ The cool-down prevents immediate phrase-based unlock
 
 ---
 
@@ -216,20 +201,21 @@
 
 ---
 
-### Test 12: Private Window
+### Test 12: Private Window Parental Filtering
 
-**Objective**: Verify self-lock works in private windows
+**Objective**: Verify parental filtering remains active in private windows independently of Self-Lock
 
 **Prerequisites**:
-- Self-lock must be active
+- Parental filtering is enabled
 
 **Steps**:
 1. Open a private window (Ctrl+Shift+P or Cmd+Shift+P)
 2. Load `test-pages/adult-labeled.html`
-3. Verify the page is blocked with self-lock status
-4. Verify the unlock flow works the same way
+3. Verify the content-filter block overlay appears
+4. Repeat while Self-Lock is active
+5. Verify the same parental block behavior remains in effect
 
-**Expected Result**: ✓ Self-lock enforced identically in private windows
+**Expected Result**: ✓ Parental filtering is enforced identically in private windows
 
 ---
 
@@ -266,22 +252,22 @@
 
 ---
 
-### Test 15: Disable Self-Lock
+### Test 15: Auto-Increment on Blocked Access
 
-**Objective**: Verify self-lock can be disabled
+**Objective**: Verify a parental content block extends an active Self-Lock when Auto-Increment is enabled
 
 **Prerequisites**:
-- Self-lock must be active
+- Parental filtering and Self-Lock are active
+- Auto-Increment on Blocked Access is enabled in the Self-Lock tab
 
 **Steps**:
-1. Go to Options → Self-Lock tab
-2. Click "Disable Self-Lock" button
-3. Confirm the action
-4. Verify status changes to "Self-Lock Inactive"
-5. Load `test-pages/adult-labeled.html`
-6. Verify the page is NOT blocked (only parental rules apply)
+1. Note the active Self-Lock end time
+2. Load `test-pages/adult-labeled.html`
+3. Verify the content-filter block overlay appears
+4. Return to the Self-Lock tab
+5. Verify the end time has increased by the configured increment
 
-**Expected Result**: ✓ Self-lock can be disabled and parental mode takes over
+**Expected Result**: ✓ A parental content block extends the active Self-Lock
 
 ---
 
@@ -374,9 +360,10 @@ Run these tests after any code changes:
 1. ✓ Basic label detection (Test 1)
 2. ✓ RTA detection (Test 2)
 3. ✓ Clean pages load (Test 3)
-4. ✓ Self-lock activation (Test 7)
-5. ✓ Early unlock (Test 9)
-6. ✓ Private windows (Test 12)
+4. ✓ Self-Lock activation and General tab lock (Test 7)
+5. ✓ Options-page early unlock (Test 9)
+6. ✓ Private-window parental filtering (Test 12)
+7. ✓ Auto-increment on blocked access (Test 15)
 
 ---
 

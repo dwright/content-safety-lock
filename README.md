@@ -51,10 +51,10 @@ There is no database to maintain and no cloud service to pay for. The work happe
 
 ### Self-Lock — A Commitment Tool for Adults
 
-Self-Lock is the most distinctive feature of this extension. You set a duration — minutes, hours, days, weeks, even months — and the extension locks itself. Changing the settings is not possible until the timer expires.
+Self-Lock is the most distinctive feature of this extension. You set a duration — minutes, hours, days, weeks, even months — and the General settings tab becomes read-only until the timer expires.
 
 ![Self-Lock activation screen](docs/screenshots/self-lock-activate.png)
-*The Self-Lock tab lets you configure duration, scope, and anti-tamper options before committing.*
+*The Self-Lock tab lets you configure duration and anti-tamper options before committing.*
 
 **What makes it hard to cheat:**
 
@@ -65,7 +65,7 @@ Self-Lock is the most distinctive feature of this extension. You set a duration 
 - **Clock manipulation protection** — Attempting to trick the lock by rolling back your system clock is detected and backfires: the lock duration is extended by exactly the amount you tried to shave off.
 
 ![Self-Lock active state](docs/screenshots/self-lock-active.png)
-*When Self-Lock is active, blocked pages show a clear overlay with the remaining lock duration.*
+*When Self-Lock is active, the General settings tab remains locked until the selected duration ends.*
 
 ---
 

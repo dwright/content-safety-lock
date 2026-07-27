@@ -189,7 +189,7 @@
 
 3. ✅ **Self-Lock Mode**
    - Flexible durations (1h, 4h, 24h, 1w, custom)
-   - Multiple blocking scopes
+   - General settings tab lock while active
    - Passphrase protection
    - Cool-down delays
    - Phrase verification

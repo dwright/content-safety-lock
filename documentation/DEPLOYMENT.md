@@ -33,10 +33,10 @@ For testing and development:
    - `test-pages/clean-page.html` - Should load normally
 
 2. **Test self-lock**:
-   - Set a passphrase in Security tab
-   - Activate self-lock in Self-Lock tab
-   - Try to access blocked pages
-   - Test early unlock flow
+   - Activate self-lock in the Self-Lock tab
+   - Verify the General tab is read-only while the lock is active
+   - Test phrase or Mastermind early unlock from the Self-Lock tab
+   - Verify parental filtering still blocks labeled pages according to General-tab settings
 
 3. **See TESTING.md** for comprehensive test cases
 
