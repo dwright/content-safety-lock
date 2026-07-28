@@ -326,14 +326,16 @@ function expandWildcardEntries(policySection, defaultKeys) {
  * Returns { resolvedValue, isLocked } where resolvedValue is null when absent.
  */
 function resolveScalarField(field, defaultValue, parentLocked) {
-  if (field !== null && typeof field === 'object') {
-    const hasValue  = Object.prototype.hasOwnProperty.call(field, 'value');
-    const hasLocked = Object.prototype.hasOwnProperty.call(field, 'locked');
+  // Object form: { value?: any, locked?: boolean }
+  const isPlainObject = field !== null && typeof field === 'object' && !Array.isArray(field);
+  const hasValue = isPlainObject && Object.prototype.hasOwnProperty.call(field, 'value');
+  const hasLocked = isPlainObject && Object.prototype.hasOwnProperty.call(field, 'locked');
+  if (hasValue || hasLocked) {
     const resolvedValue = hasValue ? field.value : (defaultValue !== undefined ? defaultValue : null);
     const isLocked = hasLocked ? Boolean(field.locked) : Boolean(parentLocked);
     return { resolvedValue, isLocked };
   }
-  // Plain scalar value (legacy) — treat as locked.
+  // Plain scalar value (legacy) — arrays, strings, numbers, etc. — treat as locked.
   if (field !== undefined && field !== null) {
     return { resolvedValue: field, isLocked: true };
   }
@@ -399,11 +401,23 @@ function applyManagedPolicy(state, policy) {
     }
     const parentalLocked = lockedKeys.has('parental.enabled');
 
-    // parental scalar fields
-    const PARENTAL_SCALARS = ['treatMatureAsAdult', 'allowList', 'blockList'];
-    for (const key of PARENTAL_SCALARS) {
+    // parental boolean fields
+    const PARENTAL_BOOLEAN_FIELDS = ['treatMatureAsAdult'];
+    for (const key of PARENTAL_BOOLEAN_FIELDS) {
       if (p[key] !== undefined) {
         const def = resolveEnabledField(p[key], DEFAULT_STATE.parental[key], parentalLocked);
+        if (def.resolvedValue !== null) state.parental[key] = def.resolvedValue;
+        if (def.isLocked) lockedKeys.add(`parental.${key}`);
+      } else if (parentalLocked) {
+        lockedKeys.add(`parental.${key}`);
+      }
+    }
+
+    // parental non-boolean scalar fields (arrays, strings, etc.)
+    const PARENTAL_SCALAR_FIELDS = ['allowList', 'blockList'];
+    for (const key of PARENTAL_SCALAR_FIELDS) {
+      if (p[key] !== undefined) {
+        const def = resolveScalarField(p[key], DEFAULT_STATE.parental[key], parentalLocked);
         if (def.resolvedValue !== null) state.parental[key] = def.resolvedValue;
         if (def.isLocked) lockedKeys.add(`parental.${key}`);
       } else if (parentalLocked) {
@@ -458,11 +472,23 @@ function applyManagedPolicy(state, policy) {
     }
     const srmLocked = lockedKeys.has('safeRequestMode.enabled');
 
-    // safeRequestMode scalar fields
-    const SRM_SCALARS = ['addPreferSafeHeader', 'applyInPrivateWindows', 'blockUserParamDowngrade', 'perFrameEnforcement'];
-    for (const key of SRM_SCALARS) {
+    // safeRequestMode boolean fields
+    const SRM_BOOLEAN_FIELDS = ['addPreferSafeHeader', 'applyInPrivateWindows', 'blockUserParamDowngrade'];
+    for (const key of SRM_BOOLEAN_FIELDS) {
       if (s[key] !== undefined) {
         const def = resolveEnabledField(s[key], DEFAULT_STATE.safeRequestMode[key], srmLocked);
+        if (def.resolvedValue !== null) state.safeRequestMode[key] = def.resolvedValue;
+        if (def.isLocked) lockedKeys.add(`safeRequestMode.${key}`);
+      } else if (srmLocked) {
+        lockedKeys.add(`safeRequestMode.${key}`);
+      }
+    }
+
+    // safeRequestMode non-boolean scalar fields
+    const SRM_SCALAR_FIELDS = ['perFrameEnforcement'];
+    for (const key of SRM_SCALAR_FIELDS) {
+      if (s[key] !== undefined) {
+        const def = resolveScalarField(s[key], DEFAULT_STATE.safeRequestMode[key], srmLocked);
         if (def.resolvedValue !== null) state.safeRequestMode[key] = def.resolvedValue;
         if (def.isLocked) lockedKeys.add(`safeRequestMode.${key}`);
       } else if (srmLocked) {

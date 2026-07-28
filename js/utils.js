@@ -309,8 +309,11 @@ function getDomain(url) {
 function isInAllowList(url, allowList) {
   const domain = getDomain(url);
   if (!domain) return false;
-  
+
   return allowList.some(item => {
+    if (typeof item === 'string') {
+      return domain === item || domain.endsWith('.' + item);
+    }
     if (item.type === 'domain') {
       return domain === item.value || domain.endsWith('.' + item.value);
     } else if (item.type === 'exact') {
@@ -326,8 +329,11 @@ function isInAllowList(url, allowList) {
 function isInBlockList(url, blockList) {
   const domain = getDomain(url);
   if (!domain) return false;
-  
+
   return blockList.some(item => {
+    if (typeof item === 'string') {
+      return domain === item || domain.endsWith('.' + item);
+    }
     if (item.type === 'domain') {
       return domain === item.value || domain.endsWith('.' + item.value);
     } else if (item.type === 'exact') {

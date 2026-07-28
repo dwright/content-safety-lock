@@ -11,17 +11,24 @@ Request Mode).  Self-lock and security settings are intentionally excluded.
 
 ## How it works
 
-1. The administrator creates a **native-manifest JSON file** (see below) and
-   places it in the correct location for the target operating system.
-2. Firefox loads the file at browser startup and makes its `data` object
-   available via `browser.storage.managed`.
-3. The extension reads managed values each time state is loaded, merges them on
+There are two ways to deliver managed settings to the extension. Both surface
+identical data through `browser.storage.managed`.
+
+1. **Native managed storage manifest** — a JSON file named after the extension
+   ID and placed in Firefox's `ManagedStorage` directory.
+2. **Firefox enterprise policy** — a `policies.json` file (or macOS
+   plist/mobileconfig) using the `3rdparty.Extensions.<id>` key.
+
+In both cases:
+
+1. Firefox loads the policy at browser startup.
+2. The extension reads managed values each time state is loaded, merges them on
    top of any user-saved values, and locks the corresponding UI controls.
-4. Controls governed by managed policy display a blue **Managed** badge and
+3. Controls governed by managed policy display a blue **Managed** badge and
    cannot be interacted with.
 
-> **Note:** Firefox requires a browser restart to pick up changes to a native
-> manifest file.
+> **Note:** Firefox requires a browser restart to pick up changes to either a
+> native manifest or an enterprise policy file.
 
 ---
 
@@ -49,6 +56,25 @@ Examples:
 | `{ "value": true }` | `true` | Yes (unless parent is locked) |
 | `{ "value": false }` | `false` | Yes (unless parent is locked) |
 | `{}` or absent | DEFAULT_STATE value | Yes (unless parent is locked) |
+
+---
+
+## Array and string scalar fields
+
+`allowList` and `blockList` are **plain arrays**, not `{ "value": ..., "locked": ... }`
+objects:
+
+```json
+{
+  "parental": {
+    "allowList": ["example.com", "another-allowed.org"]
+  }
+}
+```
+
+`safeRequestMode.perFrameEnforcement` is a plain string (`"any"` or `"top"`).
+
+All other manageable boolean fields use the object form documented above.
 
 ---
 
@@ -241,15 +267,52 @@ The wildcard expansion preserves any explicitly-specified entries, so you can se
 
 ## Delivering the policy
 
-### macOS — recommended (system-wide, survives Firefox updates)
+### Method 1: Native managed storage manifest
 
-Place `org.mozilla.firefox.plist` in `/Library/Managed Preferences/`.
-macOS treats this directory as MDM-delivered managed preferences, and
-Firefox reads the `3rdparty` key from it.
+Create a JSON file named after the extension ID:
 
-The plist must contain `EnterprisePoliciesEnabled = true` and the
-`3rdparty` block.  A minimal example in JSON form (convert to plist with
-`plutil -convert xml1`):
+```text
+content-safety-lock@dwright.org.json
+```
+
+with this structure:
+
+```json
+{
+  "name": "content-safety-lock@dwright.org",
+  "description": "ignored",
+  "type": "storage",
+  "data": {
+    "locked": true,
+    "parental": {
+      "enabled": { "value": true, "locked": true },
+      "allowList": ["example.com"]
+    },
+    "safeRequestMode": {
+      "enabled": { "value": true, "locked": true }
+    }
+  }
+}
+```
+
+Place the file in one of the locations Firefox checks for native manifests:
+
+- **macOS** (system-wide): `/Library/Application Support/Mozilla/ManagedStorage/`
+- **macOS** (per-user): `~/Library/Application Support/Mozilla/ManagedStorage/`
+- **Linux** (system-wide): `/usr/lib/mozilla/managed-storage/` or `/usr/lib64/mozilla/managed-storage/`
+- **Windows**: registry key `HKLM\Software\Mozilla\ManagedStorage\content-safety-lock@dwright.org` pointing to the manifest file path
+
+### Method 2: Enterprise policy (3rdparty)
+
+Use this when Firefox is already managed via enterprise policy or MDM.
+
+#### macOS — plist or mobileconfig
+
+Place `org.mozilla.firefox.plist` in `/Library/Managed Preferences/` (system-wide)
+or `/Library/Managed Preferences/<username>/` (per-user). The plist must
+contain `EnterprisePoliciesEnabled = true` and the `3rdparty` block.
+
+Example in JSON form (convert to plist with `plutil -convert xml1`):
 
 ```json
 {
@@ -257,32 +320,82 @@ The plist must contain `EnterprisePoliciesEnabled = true` and the
   "3rdparty": {
     "Extensions": {
       "content-safety-lock@dwright.org": {
-        "parental": { "enabled": true },
-        "safeRequestMode": { "enabled": true }
+        "locked": true,
+        "parental": {
+          "enabled": { "value": true, "locked": true },
+          "categories": {
+            "sexual": { "value": true, "locked": true }
+          },
+          "allowList": ["example.com"]
+        },
+        "safeRequestMode": {
+          "enabled": { "value": true, "locked": true }
+        }
       }
     }
   }
 }
 ```
 
-To deploy as `admin`:
+To create and deploy the plist as `admin`:
 
 ```bash
-sudo cp /Library/Preferences/org.mozilla.firefox.plist \
-        "/Library/Managed Preferences/org.mozilla.firefox.plist"
+plutil -convert xml1 policy.json -o /Library/Managed\ Preferences/org.mozilla.firefox.plist
 ```
 
-To apply to a single user only, place it in the per-user subdirectory
-instead:
+To deploy via MDM, wrap the same data in a `.mobileconfig` profile:
 
-```bash
-sudo cp /Library/Preferences/org.mozilla.firefox.plist \
-        "/Library/Managed Preferences/<username>/org.mozilla.firefox.plist"
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>PayloadContent</key>
+  <array>
+    <dict>
+      <key>3rdparty</key>
+      <dict>
+        <key>Extensions</key>
+        <dict>
+          <key>content-safety-lock@dwright.org</key>
+          <dict>
+            <!-- policy values go here -->
+          </dict>
+        </dict>
+      </dict>
+      <key>EnterprisePoliciesEnabled</key>
+      <true/>
+      <key>PayloadIdentifier</key>
+      <string>org.mozilla.firefox.your-uuid</string>
+      <key>PayloadType</key>
+      <string>org.mozilla.firefox</string>
+      <key>PayloadUUID</key>
+      <string>your-uuid</string>
+      <key>PayloadVersion</key>
+      <integer>1</integer>
+    </dict>
+  </array>
+  <key>PayloadDisplayName</key>
+  <string>Firefox Content Safety Lock Settings</string>
+  <key>PayloadIdentifier</key>
+  <string>org.example.content-safety-lock.your-uuid</string>
+  <key>PayloadOrganization</key>
+  <string>org.example</string>
+  <key>PayloadRemovalDisallowed</key>
+  <false/>
+  <key>PayloadScope</key>
+  <string>System</string>
+  <key>PayloadType</key>
+  <string>Configuration</string>
+  <key>PayloadUUID</key>
+  <string>your-uuid</string>
+  <key>PayloadVersion</key>
+  <integer>1</integer>
+</dict>
+</plist>
 ```
 
-Restart Firefox after any change.
-
-### macOS — local testing only (wiped on Firefox update)
+#### macOS — local testing only (wiped on Firefox update)
 
 For quick local testing you can place a `policies.json` file inside the
 app bundle.  **This file is deleted when Firefox updates itself**, so it
@@ -292,11 +405,13 @@ is not suitable for production use.
 /Applications/Firefox.app/Contents/Resources/distribution/policies.json
 ```
 
-### Linux
+#### Linux
 
 ```text
 /etc/firefox/policies/policies.json     (system-wide)
 ```
+
+Example:
 
 ```bash
 sudo mkdir -p /etc/firefox/policies
@@ -306,8 +421,13 @@ sudo tee /etc/firefox/policies/policies.json > /dev/null << 'EOF'
     "3rdparty": {
       "Extensions": {
         "content-safety-lock@dwright.org": {
-          "parental": { "enabled": true },
-          "safeRequestMode": { "enabled": true }
+          "locked": true,
+          "parental": {
+            "enabled": { "value": true, "locked": true }
+          },
+          "safeRequestMode": {
+            "enabled": { "value": true, "locked": true }
+          }
         }
       }
     }
@@ -316,16 +436,18 @@ sudo tee /etc/firefox/policies/policies.json > /dev/null << 'EOF'
 EOF
 ```
 
-### Windows
+#### Windows
 
 Create `policies.json` in the `distribution` folder next to `firefox.exe`,
 or use Group Policy / ADMX templates to deploy the `3rdparty` policy key.
 See the [Firefox policy templates](https://github.com/mozilla/policy-templates)
 repository for ADMX/ADML files.
 
+> **Restart Firefox after any change.**
+
 ---
 
-## Enterprise policy (policies.json) full example
+## Full enterprise policy example
 
 ```json
 {
@@ -333,12 +455,46 @@ repository for ADMX/ADML files.
     "3rdparty": {
       "Extensions": {
         "content-safety-lock@dwright.org": {
+          "locked": true,
           "parental": {
-            "enabled": true,
-            "categories": { "sexual": true }
+            "enabled": { "value": true, "locked": true },
+            "treatMatureAsAdult": { "value": true, "locked": true },
+            "allowList": ["example.com"],
+            "blockList": [],
+            "categories": {
+              "sexual": { "value": true, "locked": true },
+              "violence": { "value": true, "locked": true },
+              "profanity": { "value": true, "locked": true },
+              "drugs": { "value": true, "locked": true },
+              "gambling": { "value": true, "locked": true },
+              "ageVerification": { "value": true, "locked": true },
+              "adultProductSales": { "value": true, "locked": true }
+            },
+            "adultProductSalesVendors": {
+              "*": { "value": true, "locked": true }
+            }
           },
           "safeRequestMode": {
-            "enabled": true
+            "enabled": { "value": true, "locked": true },
+            "addPreferSafeHeader": { "value": true, "locked": true },
+            "applyInPrivateWindows": { "value": true, "locked": true },
+            "blockUserParamDowngrade": { "value": true, "locked": true },
+            "perFrameEnforcement": { "value": "any", "locked": true },
+            "providers": {
+              "google": { "enabled": { "value": true, "locked": true } },
+              "bing": {
+                "enabled": { "value": true, "locked": true },
+                "useRedirect": { "value": true, "locked": true }
+              },
+              "yahoo": { "enabled": { "value": true, "locked": true } },
+              "ddg": { "enabled": { "value": true, "locked": true } },
+              "youtube": {
+                "enabled": { "value": true, "locked": true },
+                "headerMode": { "value": "strict", "locked": true }
+              },
+              "tumblr": { "enabled": { "value": true, "locked": true } },
+              "reddit": { "enabled": { "value": true, "locked": true } }
+            }
           }
         }
       }
@@ -346,9 +502,6 @@ repository for ADMX/ADML files.
   }
 }
 ```
-
-The `policies.json` file is placed in the Firefox installation directory under
-`distribution/policies.json` (or managed via MDM/GPO on Windows).
 
 ---
 
