@@ -169,7 +169,16 @@ All state — settings, lock status, passphrases (stored as SHA-256 hashes) — 
 
 > [Install from addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/content-safety-lock/)
 
-Developers and contributors: see [documentation/DEPLOYMENT.md](documentation/DEPLOYMENT.md) for instructions on loading from source and building a distributable package.
+### From source (Firefox, Chrome, Safari)
+
+```bash
+npm install
+npm run build:all   # -> build/firefox, build/chrome, build/safari
+```
+
+See [documentation/BUILDING.md](documentation/BUILDING.md) for per-browser build,
+packaging and loading instructions, and
+[documentation/DEPLOYMENT.md](documentation/DEPLOYMENT.md) for release steps.
 
 ---
 
@@ -192,6 +201,8 @@ For a step-by-step walkthrough see [QUICKSTART.md](QUICKSTART.md).
 | Firefox 109+ (desktop) | ✅ Full support |
 | Firefox ESR (latest) | ✅ Full support |
 | Firefox for Android | ✅ Full support |
+| Chrome / Edge / Brave / Opera 111+ | ✅ Full support except Safe Request Mode |
+| Safari (macOS, build from source) | ✅ Full support except Safe Request Mode |
 | Private browsing windows | ✅ Identical enforcement |
 | Windows / macOS / Linux | ✅ All platforms |
 

@@ -28,7 +28,7 @@ let activeMastermindBoard = null;
  * Load state from background
  */
 async function loadState() {
-  const response = await browser.runtime.sendMessage({ type: 'GET_STATE' });
+  const response = await browserAPI.runtime.sendMessage({ type: 'GET_STATE' });
   currentState = response.state;
   managedKeys = response.managedKeys || [];
   managedLocked = Boolean(response.managedLocked);
@@ -49,7 +49,7 @@ function applyManagedTabVisibility() {
  * Update state in background
  */
 async function updateState(updates) {
-  await browser.runtime.sendMessage({
+  await browserAPI.runtime.sendMessage({
     type: 'UPDATE_STATE',
     updates
   });
@@ -74,7 +74,7 @@ document.querySelectorAll('.tab-button').forEach(button => {
         isGeneralTabLocked = true;
       } else {
         // Otherwise check PIN status
-        const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
+        const pinStatus = await browserAPI.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
         if (pinStatus.isLocked) {
           isGeneralTabLocked = true;
         } else {
@@ -131,7 +131,7 @@ async function updateGeneralTabView() {
     
     // Show lock button only if PIN is set
     try {
-      const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
+      const pinStatus = await browserAPI.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
       if (lockButtonContainer) {
         lockButtonContainer.style.display = pinStatus.hasPIN ? 'block' : 'none';
       }
@@ -758,7 +758,7 @@ function setupAutoSave() {
  */
 async function updatePINStatusDisplay() {
   try {
-    const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
+    const pinStatus = await browserAPI.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
     const display = document.getElementById('pin-status-display');
     const currentPinGroup = document.getElementById('current-pin-group');
     const newPinLabel = document.getElementById('new-pin-label');
@@ -868,7 +868,7 @@ function showPINUnlockDialog() {
     }
     
     try {
-      const response = await browser.runtime.sendMessage({
+      const response = await browserAPI.runtime.sendMessage({
         type: 'PIN_UNLOCK',
         pin
       });
@@ -914,7 +914,7 @@ function resetPINInactivityTimer() {
   }
   
   pinLockTimeout = setTimeout(async () => {
-    const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
+    const pinStatus = await browserAPI.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
     if (pinStatus.hasPIN) {
       // Lock the general tab view
       const generalTab = document.getElementById('general');
@@ -933,7 +933,7 @@ function resetPINInactivityTimer() {
 async function updatePIN() {
   const currentPinInput = document.getElementById('current-pin');
   const newPin = document.getElementById('new-pin').value;
-  const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
+  const pinStatus = await browserAPI.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
   
   // If PIN is already set, verify the current PIN
   if (pinStatus.hasPIN) {
@@ -946,7 +946,7 @@ async function updatePIN() {
     
     try {
       // Verify current PIN
-      const response = await browser.runtime.sendMessage({
+      const response = await browserAPI.runtime.sendMessage({
         type: 'VERIFY_PASSPHRASE',
         passphrase: currentPin,
         passType: 'settings'
@@ -1001,7 +1001,7 @@ async function updatePIN() {
     }
     
     try {
-      await browser.runtime.sendMessage({
+      await browserAPI.runtime.sendMessage({
         type: 'SET_SETTINGS_PIN',
         pin: newPin
       });
@@ -1326,8 +1326,8 @@ function renderActiveGameBoard() {
   panel.appendChild(wrap);
   
   activeMastermindBoard = new MastermindBoard(boardContainer, {
-    getState: async () => browser.runtime.sendMessage({ type: 'GET_GAME_STATE' }),
-    submitGuess: async (guess) => browser.runtime.sendMessage({ type: 'SUBMIT_GAME_GUESS', guess }),
+    getState: async () => browserAPI.runtime.sendMessage({ type: 'GET_GAME_STATE' }),
+    submitGuess: async (guess) => browserAPI.runtime.sendMessage({ type: 'SUBMIT_GAME_GUESS', guess }),
     onWin: async () => {
       showAlert('self-lock-alerts', 'Correct sequence! Self-Lock released.', 'success');
       setTimeout(() => refreshSelfLockStatus(), 800);
@@ -1641,7 +1641,7 @@ async function activateSelfLock() {
       const incrementValue = incrementDurationPicker.getValue();
       const incrementMinutes = toTotalMinutes(incrementValue, incrementDurationPicker.config);
       
-      await browser.runtime.sendMessage({
+      await browserAPI.runtime.sendMessage({
         type: 'ACTIVATE_SELF_LOCK',
         durationMs: selectedDuration,
         earlyUnlockMode: mode,
@@ -1691,7 +1691,7 @@ document.getElementById('lock-increment-on-block').addEventListener('change', to
  * Load and display debug information on the About tab.
  */
 async function loadAboutTab() {
-  const info = await browser.runtime.sendMessage({ type: 'GET_DEBUG_INFO' });
+  const info = await browserAPI.runtime.sendMessage({ type: 'GET_DEBUG_INFO' });
 
   document.getElementById('about-version-value').textContent = info.version;
   document.getElementById('about-location-value').textContent = info.extensionUrl;
@@ -1861,7 +1861,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     isGeneralTabLocked = true;
   } else {
     // Check PIN status
-    const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
+    const pinStatus = await browserAPI.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
     if (pinStatus.isLocked) {
       // PIN is set and locked - show locked view
       isGeneralTabLocked = true;

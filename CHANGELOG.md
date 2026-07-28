@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Multi-browser support**: the extension now builds for Chrome/Edge/Brave/Opera and Safari in addition to Firefox, from one shared source tree (`src/`) plus a per-browser manifest (`platform/<browser>/manifest.json`).
+- **Platform abstraction layer** (`src/js/platform/`): `browser-api.js` detects the host browser at runtime and exposes a promise-based `browserAPI` global backed by `firefox.js`, `chrome.js`, or `safari.js`.
+- **Build system**: `build-scripts/build.js` with `npm run build:{firefox,chrome,safari,all}` and `npm run package:{firefox,chrome,safari}`; the build stamps the `package.json` version into each manifest, generates the Manifest V3 service worker entry point, and fails if a manifest references a missing file.
+- **Documentation**: `documentation/BUILDING.md` covering the layout, build commands, loading instructions, and platform limitations.
+- **Tests**: `test/platform-api.test.js` covers adapter selection, promise wrapping of callback-style Chromium APIs, and async `onMessage` handling.
+- PNG icons for Chrome and Safari, which do not accept SVG extension icons.
+
+### Changed
+
+- Sources moved from the repository root into `src/` (`js/`, `html/`, `css/`, `icons/`); the loadable extension is now `build/<browser>/`, not the repository root.
+- Application code calls `browserAPI.*` instead of `browser.*`.
+- Version is now maintained in `package.json` only.
+
+### Known Limitations
+
+- Safe Request Mode remains Firefox-only: it depends on blocking `webRequest`, which Manifest V3 removed and Safari does not provide. On Chrome and Safari it logs a warning and stays inactive pending the `declarativeNetRequest` refactor.
+
 ## [1.4.4] - 2026-07-27
 
 ### Fixed

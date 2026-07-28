@@ -10,12 +10,13 @@ This guide covers how to install, test, and deploy the Content Safety Lock Firef
 
 For testing and development:
 
-1. Open Firefox
-2. Navigate to `about:debugging`
-3. Click "This Firefox" in the sidebar
-4. Click "Load Temporary Add-on"
-5. Select `manifest.json` from the project directory
-6. The extension is now loaded (until Firefox restarts)
+1. Build the Firefox target: `npm install && npm run build:firefox`
+2. Open Firefox
+3. Navigate to `about:debugging`
+4. Click "This Firefox" in the sidebar
+5. Click "Load Temporary Add-on"
+6. Select `build/firefox/manifest.json`
+7. The extension is now loaded (until Firefox restarts)
 
 ### 2. Verify Installation
 
@@ -58,11 +59,10 @@ For testing and development:
 
 2. **Prepare Extension**:
    ```bash
-   # Install web-ext tool
-   npm install --global web-ext
-   
-   # Build the extension
-   web-ext build --source-dir=/path/to/extension
+   npm install
+
+   # Assemble build/firefox and package it into web-ext-artifacts/
+   npm run package:firefox
    ```
 
 3. **Submit to AMO**:
@@ -83,7 +83,7 @@ For testing and development:
    - Once approved, extension is published
 
 5. **Updates**:
-   - Increment version in `manifest.json`
+   - Increment version in `package.json`
    - Submit new version through Developer Hub
    - Review process repeats
 
@@ -93,7 +93,7 @@ For distributing outside the official store:
 
 1. **Build the extension**:
    ```bash
-   web-ext build --source-dir=/path/to/extension
+   npm run package:firefox
    ```
 
 2. **Sign the extension** (optional but recommended):
@@ -145,29 +145,27 @@ For organizations:
 ### Using web-ext
 
 ```bash
-# Install web-ext
-npm install --global web-ext
+npm install
 
-# Build the extension (run from the project root directory)
-web-ext build
+# Firefox: assembles build/firefox, then packages it
+npm run package:firefox
+# Output: web-ext-artifacts/content_safety_lock-1.4.4.zip
 
-# Output: web-ext-artifacts/content_safety_lock-1.4.0.zip
+# Chrome/Edge/Brave: assembles build/chrome, then zips it
+npm run package:chrome
+# Output: build/chrome.zip
+
+# Safari (macOS only): generates an Xcode project in safari-project/
+npm run package:safari
 ```
+
+See [BUILDING.md](BUILDING.md) for the full multi-browser build documentation.
 
 ### Manual Build
 
 ```bash
-# Create zip file with all necessary files
-zip -r content-safety-lock.zip \
-  manifest.json \
-  background.js \
-  content.js \
-  utils.js \
-  options.html \
-  options.js \
-  popup.html \
-  popup.js \
-  icons/
+# Zip a build directory produced by `npm run build:<target>`
+cd build/firefox && zip -r ../../content-safety-lock.zip .
 ```
 
 ## Version Management
@@ -184,7 +182,7 @@ Format: `MAJOR.MINOR.PATCH`
 
 When releasing a new version (e.g., v1.2.2):
 
-1. **Update version in `manifest.json`**:
+1. **Update version in `package.json`** (the build stamps it into every platform manifest):
    ```json
    {
      "version": "1.2.2",
@@ -204,7 +202,7 @@ When releasing a new version (e.g., v1.2.2):
 
 4. **Build the extension**:
    ```bash
-   web-ext build
+   npm run package:firefox
    # Output: web-ext-artifacts/content_safety_lock-1.2.2.zip
    ```
 

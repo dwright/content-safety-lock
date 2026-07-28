@@ -1,0 +1,68 @@
+{
+  "manifest_version": 3,
+  "name": "Content Safety Lock",
+  "version": "0.0.0",
+  "description": "Voluntary adult content blocker with self-lock mode for adults seeking structured guardrails",
+  "permissions": [
+    "storage",
+    "tabs",
+    "alarms",
+    "scripting"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "scripts": [
+      "js/platform/firefox.js",
+      "js/platform/chrome.js",
+      "js/platform/safari.js",
+      "js/platform/browser-api.js",
+      "js/utils.js",
+      "js/safe-request/safe-request-config.js",
+      "js/safe-request/safe-request-utils.js",
+      "js/safe-request/safe-request-handler.js",
+      "js/background.js"
+    ],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "js/platform/firefox.js",
+        "js/platform/chrome.js",
+        "js/platform/safari.js",
+        "js/platform/browser-api.js",
+        "js/utils.js",
+        "js/detectors/mature-content-detectors.js",
+        "js/detectors/2257-compliance-detector.js",
+        "js/content.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "js/interceptors/reddit-interceptor.js",
+        "js/interceptors/tumblr-interceptor.js",
+        "js/interceptors/bluesky-interceptor.js",
+        "js/interceptors/amazon-interceptor.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "action": {
+    "default_popup": "html/popup.html",
+    "default_title": "Content Safety Lock"
+  },
+  "options_ui": {
+    "page": "html/options.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}
