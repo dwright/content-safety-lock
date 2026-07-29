@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Application code calls `browserAPI.*` instead of `browser.*`.
 - Version is now maintained in `package.json` only.
 
+### Fixed
+
+- Popup now loads `js/utils.js`, so the active-lock countdown renders instead of failing with `formatDuration is not defined`.
+
 ### Known Limitations
 
 - Safe Request Mode remains Firefox-only: it depends on blocking `webRequest`, which Manifest V3 removed and Safari does not provide. On Chrome and Safari it logs a warning and stays inactive pending the `declarativeNetRequest` refactor.
