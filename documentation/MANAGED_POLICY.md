@@ -1,8 +1,15 @@
 # Managed Policy for Content Safety Lock
 
 Administrators can pre-configure and lock settings in Content Safety Lock using
-Firefox's managed-storage facility.  Settings delivered via managed policy take
-precedence over anything saved by the user.
+the browser's managed-storage facility.  Settings delivered via managed policy
+take precedence over anything saved by the user.
+
+**Browser support**: this guide documents Firefox, which is the primary managed
+platform.  Chrome and Edge expose the same data through their own policy
+mechanism (`3rdparty` / `ExtensionSettings` with a managed-storage schema, keyed
+by the extension ID), so the payload below applies there too.  Safari has no
+managed-storage equivalent — the adapter resolves managed values to an empty
+object, so every setting stays user-controlled.
 
 Only settings on the **General** tab are manageable (content filtering and Safe
 Request Mode).  Self-lock and security settings are intentionally excluded.
@@ -12,7 +19,7 @@ Request Mode).  Self-lock and security settings are intentionally excluded.
 ## How it works
 
 There are two ways to deliver managed settings to the extension. Both surface
-identical data through `browser.storage.managed`.
+identical data through managed storage (`browserAPI.storage.managed`).
 
 1. **Native managed storage manifest** — a JSON file named after the extension
    ID and placed in Firefox's `ManagedStorage` directory.

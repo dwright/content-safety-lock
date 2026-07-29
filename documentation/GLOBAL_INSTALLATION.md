@@ -2,6 +2,15 @@
 
 This guide explains how to install Content Safety Lock as a **global extension** so it cannot be removed or disabled by regular users.
 
+It covers **Firefox**, which supports sideloading a signed XPI into a global
+extensions directory. Chromium browsers have no equivalent directory: force-install
+Chrome/Edge/Brave with the `ExtensionInstallForcelist` policy instead (see
+[DEPLOYMENT.md](DEPLOYMENT.md#option-5-enterprise-deployment)), and Safari
+extensions are distributed as signed macOS apps.
+
+All commands below use the Firefox archive produced by `npm run package:firefox`
+(`dist/content-safety-lock-firefox-<version>.zip`).
+
 ## What is a Global Extension?
 
 A global extension is installed at the system or user level (outside individual Firefox profiles) and:
@@ -17,28 +26,21 @@ A global extension is installed at the system or user level (outside individual 
 
 **Platform: macOS**
 
-#### Option A: Without npm (Simplest)
+#### Option A: Zip the build directory manually
 
-1. **Create XPI file manually**:
+1. **Build, then create the XPI**:
    ```bash
-   cd /Users/dan/CascadeProjects/windsurf-project
-   
-   # Create a ZIP file with all extension files
-   zip content_safety_lock-1.0.0.xpi \
-     manifest.json \
-     background.js \
-     content.js \
-     utils.js \
-     options.html \
-     options.js \
-     popup.html \
-     popup.js
-   
-   # Add icons directory
-   zip -r content_safety_lock-1.0.0.xpi icons/
-   
-   # Verify structure
-   unzip -l content_safety_lock-1.0.0.xpi
+   cd /path/to/content-safety-lock
+   npm install
+   npm run build:firefox
+
+   # The XPI is just a zip of the build directory's contents
+   cd build/firefox
+   zip -r ../../content-safety-lock-1.5.0.xpi .
+   cd ../..
+
+   # Verify structure (manifest.json must be at the root of the archive)
+   unzip -l content-safety-lock-1.5.0.xpi
    ```
 
 2. **Sign the extension** (required for global installation):
@@ -56,11 +58,11 @@ A global extension is installed at the system or user level (outside individual 
    # 4. Generate new credentials
    # 5. Copy the JWT Issuer and JWT Secret
    
-   # Sign the extension
+   # Sign the Firefox build (not the repository root)
    web-ext sign \
      --api-key=YOUR_JWT_ISSUER \
      --api-secret=YOUR_JWT_SECRET \
-     --source-dir=/Users/dan/CascadeProjects/windsurf-project
+     --source-dir=/path/to/content-safety-lock/build/firefox
    
    # This creates a signed XPI in web-ext-artifacts/
    ```
@@ -70,20 +72,20 @@ A global extension is installed at the system or user level (outside individual 
    - Firefox will accept it if it's in the system extensions folder
    - See "Method 2: Unsigned Installation" below
 
-#### Option B: With npm (Advanced)
+#### Option B: With npm (recommended)
 
-1. **Build the extension**:
+1. **Build and package the extension**:
    ```bash
-   cd /Users/dan/CascadeProjects/windsurf-project
-   npm install --global web-ext
-   web-ext build
-   # Creates: web-ext-artifacts/content_safety_lock-1.0.0.zip
+   cd /path/to/content-safety-lock
+   npm install
+   npm run package:firefox
+   # Creates: dist/content-safety-lock-firefox-1.5.0.zip
    ```
 
 2. **Rename to XPI format**:
    ```bash
-   mv web-ext-artifacts/content_safety_lock-1.0.0.zip \
-      content_safety_lock-1.0.0.xpi
+   mv dist/content-safety-lock-firefox-1.5.0.zip \
+      content-safety-lock-1.5.0.xpi
    ```
 
 3. **Create global extensions directory** (if it doesn't exist):
@@ -93,7 +95,7 @@ A global extension is installed at the system or user level (outside individual 
 
 4. **Copy extension to global directory**:
    ```bash
-   sudo cp content_safety_lock-1.0.0.xpi \
+   sudo cp content-safety-lock-1.5.0.xpi \
       /Library/Application\ Support/Mozilla/Extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/
    ```
 
@@ -112,19 +114,9 @@ For global extensions in system directories, Firefox accepts unsigned XPIs. This
 
 1. **Create XPI file** (same as Method 1, step 1):
    ```bash
-   cd /Users/dan/CascadeProjects/windsurf-project
-   
-   zip content_safety_lock-1.0.0.xpi \
-     manifest.json \
-     background.js \
-     content.js \
-     utils.js \
-     options.html \
-     options.js \
-     popup.html \
-     popup.js
-   
-   zip -r content_safety_lock-1.0.0.xpi icons/
+   cd /path/to/content-safety-lock
+   npm run package:firefox
+   cp dist/content-safety-lock-firefox-1.5.0.zip content-safety-lock-1.5.0.xpi
    ```
 
 2. **Create global extensions directory**:
@@ -134,7 +126,7 @@ For global extensions in system directories, Firefox accepts unsigned XPIs. This
 
 3. **Copy unsigned XPI to global directory**:
    ```bash
-   sudo cp content_safety_lock-1.0.0.xpi \
+   sudo cp content-safety-lock-1.5.0.xpi \
       /Library/Application\ Support/Mozilla/Extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/
    ```
 
@@ -159,7 +151,7 @@ For global extensions in system directories, Firefox accepts unsigned XPIs. This
 
 3. **Copy extension**:
    ```powershell
-   Copy-Item "content_safety_lock-1.0.0.xpi" `
+   Copy-Item "content-safety-lock-1.5.0.xpi" `
       "C:\Program Files\Mozilla Firefox\browser\extensions\"
    ```
 
@@ -177,7 +169,7 @@ For global extensions in system directories, Firefox accepts unsigned XPIs. This
 
 3. **Copy extension**:
    ```bash
-   sudo cp content_safety_lock-1.0.0.xpi \
+   sudo cp content-safety-lock-1.5.0.xpi \
       /usr/lib/firefox/browser/extensions/
    ```
 
@@ -191,9 +183,9 @@ For global extensions in system directories, Firefox accepts unsigned XPIs. This
 
 1. **Build the extension**:
    ```bash
-   web-ext build
-   mv web-ext-artifacts/content_safety_lock-1.0.0.zip \
-      content_safety_lock-1.0.0.xpi
+   npm run package:firefox
+   mv dist/content-safety-lock-firefox-1.5.0.zip \
+      content-safety-lock-1.5.0.xpi
    ```
 
 2. **Create user extensions directory**:
@@ -203,7 +195,7 @@ For global extensions in system directories, Firefox accepts unsigned XPIs. This
 
 3. **Copy extension**:
    ```bash
-   cp content_safety_lock-1.0.0.xpi \
+   cp content-safety-lock-1.5.0.xpi \
       ~/Library/Application\ Support/Mozilla/Extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/
    ```
 
@@ -220,7 +212,7 @@ For global extensions in system directories, Firefox accepts unsigned XPIs. This
 
 3. **Copy extension**:
    ```powershell
-   Copy-Item "content_safety_lock-1.0.0.xpi" `
+   Copy-Item "content-safety-lock-1.5.0.xpi" `
       "$env:APPDATA\Mozilla\Extensions\{ec8030f7-c20a-464f-9b0e-13a3a9e97384}\"
    ```
 
@@ -237,7 +229,7 @@ For global extensions in system directories, Firefox accepts unsigned XPIs. This
 
 3. **Copy extension**:
    ```bash
-   cp content_safety_lock-1.0.0.xpi \
+   cp content-safety-lock-1.5.0.xpi \
       ~/.mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/
    ```
 
@@ -251,14 +243,14 @@ For global extensions in system directories, Firefox accepts unsigned XPIs. This
 
 1. **Build the extension** and host on a web server:
    ```
-   https://your-server.com/extensions/content_safety_lock-1.0.0.xpi
+   https://your-server.com/extensions/content-safety-lock-1.5.0.xpi
    ```
 
 2. **Create Group Policy Object (GPO)**:
    - Open Group Policy Editor (`gpedit.msc`)
    - Navigate to: `Computer Configuration > Administrative Templates > Mozilla Firefox > Extensions`
    - Create new policy: "Install Extensions"
-   - Set value: `https://your-server.com/extensions/content_safety_lock-1.0.0.xpi`
+   - Set value: `https://your-server.com/extensions/content-safety-lock-1.5.0.xpi`
 
 3. **Apply to users/computers** as needed
 
@@ -290,7 +282,7 @@ Your extension needs a unique ID. Update `manifest.json`:
 ### File Format
 
 - Global extensions must be `.xpi` files (ZIP archives with specific structure)
-- Use `web-ext build` to create properly formatted XPI files
+- Use `npm run package:firefox` to create properly formatted archives
 - Do NOT use raw directories
 
 ### Permissions
@@ -332,27 +324,27 @@ Your extension needs a unique ID. Update `manifest.json`:
 
 **macOS (System-wide)**:
 ```bash
-sudo rm /Library/Application\ Support/Mozilla/Extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/content_safety_lock-1.0.0.xpi
+sudo rm /Library/Application\ Support/Mozilla/Extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/content-safety-lock-1.5.0.xpi
 ```
 
 **macOS (User-level)**:
 ```bash
-rm ~/Library/Application\ Support/Mozilla/Extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/content_safety_lock-1.0.0.xpi
+rm ~/Library/Application\ Support/Mozilla/Extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/content-safety-lock-1.5.0.xpi
 ```
 
 **Windows (System-wide)**:
 ```powershell
-Remove-Item "C:\Program Files\Mozilla Firefox\browser\extensions\content_safety_lock-1.0.0.xpi"
+Remove-Item "C:\Program Files\Mozilla Firefox\browser\extensions\content-safety-lock-1.5.0.xpi"
 ```
 
 **Windows (User-level)**:
 ```powershell
-Remove-Item "$env:APPDATA\Mozilla\Extensions\{ec8030f7-c20a-464f-9b0e-13a3a9e97384}\content_safety_lock-1.0.0.xpi"
+Remove-Item "$env:APPDATA\Mozilla\Extensions\{ec8030f7-c20a-464f-9b0e-13a3a9e97384}\content-safety-lock-1.5.0.xpi"
 ```
 
 **Linux**:
 ```bash
-sudo rm /usr/lib/firefox/browser/extensions/content_safety_lock-1.0.0.xpi
+sudo rm /usr/lib/firefox/browser/extensions/content-safety-lock-1.5.0.xpi
 ```
 
 ---
@@ -446,18 +438,18 @@ This prevents users from disabling the extension even in the UI.
 #!/bin/bash
 
 # Build extension
-cd /Users/dan/CascadeProjects/windsurf-project
-web-ext build
+cd /path/to/content-safety-lock
+npm run package:firefox
 
 # Convert to XPI
-mv web-ext-artifacts/content_safety_lock-1.0.0.zip \
-   content_safety_lock-1.0.0.xpi
+mv dist/content-safety-lock-firefox-1.5.0.zip \
+   content-safety-lock-1.5.0.xpi
 
 # Create global directory
 sudo mkdir -p /Library/Application\ Support/Mozilla/Extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}
 
 # Install globally
-sudo cp content_safety_lock-1.0.0.xpi \
+sudo cp content-safety-lock-1.5.0.xpi \
    /Library/Application\ Support/Mozilla/Extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/
 
 echo "Extension installed globally!"
@@ -468,18 +460,18 @@ echo "Restart Firefox to activate."
 
 ```powershell
 # Build extension
-cd C:\Users\dan\CascadeProjects\windsurf-project
-web-ext build
+cd C:\path\to\content-safety-lock
+npm run package:firefox
 
 # Convert to XPI
-Rename-Item -Path "web-ext-artifacts\content_safety_lock-1.0.0.zip" `
-            -NewName "content_safety_lock-1.0.0.xpi"
+Rename-Item -Path "dist\content-safety-lock-firefox-1.5.0.zip" `
+            -NewName "content-safety-lock-1.5.0.xpi"
 
 # Create global directory
 New-Item -ItemType Directory -Force -Path "C:\Program Files\Mozilla Firefox\browser\extensions"
 
 # Install globally
-Copy-Item "content_safety_lock-1.0.0.xpi" `
+Copy-Item "content-safety-lock-1.5.0.xpi" `
           "C:\Program Files\Mozilla Firefox\browser\extensions\"
 
 Write-Host "Extension installed globally!"
@@ -496,7 +488,7 @@ Write-Host "Restart Firefox to activate."
 
 ---
 
-**Last Updated**: October 21, 2025
-**Version**: 1.0.0
+**Last Updated**: 2026-07-29
+**Version**: 1.5.0
 
 For questions or issues, refer to the main README.md or DEPLOYMENT.md.

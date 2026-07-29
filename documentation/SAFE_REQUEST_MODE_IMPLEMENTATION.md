@@ -1,5 +1,14 @@
 # Safe Request Mode Implementation Plan
 
+> **Firefox only.** Safe Request Mode depends on the blocking `webRequest` API,
+> which Manifest V3 removed and Safari does not provide, so it is inactive on the
+> Chrome and Safari builds (the handler logs a warning and returns). Porting it to
+> `declarativeNetRequest` (Chrome) and content-script interception (Safari) is
+> Phase 4 of [ROADMAP.md](ROADMAP.md).
+>
+> File paths below predate the 1.5.0 restructure: sources now live under
+> `src/js/` and manifests under `platform/<browser>/`.
+
 ## Overview
 
 This document outlines the implementation of "Request Safe Content from Server" mode for Content Safety Lock. This feature adds standardized headers and provider-specific URL parameters/redirects to request safer content at the source, complementing the existing parental filtering system.

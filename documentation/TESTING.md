@@ -3,15 +3,40 @@
 ## Test Environment Setup
 
 ### Prerequisites
-- Firefox (latest version)
-- This extension loaded in `about:debugging`
+- A supported browser: Firefox (latest), Chrome/Edge/Brave/Opera 111+, or Safari
+  16.4+ on macOS
+- A build of the extension: `npm install && npm run build:all`
+- The extension loaded from `build/<browser>/` (see
+  [BUILDING.md](BUILDING.md#loading-a-build))
 - Test pages (included in `test-pages/` directory)
 
+### Automated Checks
+
+Run these before the manual cases below:
+
+```bash
+npm test               # Unit tests (safe-request headers, platform layer)
+npm run build:all      # Fails if any manifest reference is missing
+npm run lint:firefox   # web-ext lint against build/firefox
+```
+
 ### Loading Test Pages
-1. Open Firefox
+1. Open the browser
 2. Press `Ctrl+L` (or `Cmd+L` on Mac)
 3. Type: `file:///path/to/test-pages/adult-labeled.html`
 4. Press Enter
+
+In Chrome, file URLs require enabling "Allow access to file URLs" for the
+extension on `chrome://extensions`.
+
+### Per-browser differences to expect
+
+| Area | Firefox | Chrome | Safari |
+|---|---|---|---|
+| Label-based blocking | ✅ | ✅ | ✅ |
+| Self-Lock, options, popup | ✅ | ✅ | ✅ |
+| Safe Request Mode (Tests covering safe search) | ✅ | ❌ logs "unavailable" warning | ❌ logs "unavailable" warning |
+| Background inspection | `about:debugging` → Inspect | `chrome://extensions` → service worker | Safari → Develop menu |
 
 ## Test Cases
 
@@ -294,7 +319,7 @@
 **Objective**: Verify extension doesn't leak memory
 
 **Steps**:
-1. Open `about:memory` in Firefox
+1. Open `about:memory` in Firefox (or Chrome's Task Manager: Window → Task Manager)
 2. Note the extension's memory usage
 3. Load and unload test pages 10 times
 4. Check memory usage again
@@ -378,8 +403,9 @@ If you find issues during testing:
 
 2. **Gather information**:
    - Browser console errors (F12)
-   - Extension console (about:debugging → Inspect)
-   - State dump: `browser.runtime.sendMessage({type: 'GET_STATE'})`
+   - Extension console (Firefox: `about:debugging` → Inspect; Chrome:
+     `chrome://extensions` → service worker)
+   - State dump: `browserAPI.runtime.sendMessage({type: 'GET_STATE'})`
 
 3. **Create a minimal reproduction**:
    - Simplest test case that reproduces the issue
@@ -393,8 +419,9 @@ If you find issues during testing:
 
 ```
 Test Date: [DATE]
-Firefox Version: [VERSION]
-Extension Version: 1.0.0
+Browser & Version: [e.g. Firefox 139 / Chrome 138 / Safari 18]
+Build tested: build/[firefox|chrome|safari]
+Extension Version: 1.5.0
 
 Test Results:
 - Test 1 (Basic Label Detection): [PASS/FAIL]

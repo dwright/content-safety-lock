@@ -1,0 +1,104 @@
+name: Release
+
+# Publishes a GitHub release carrying one archive per browser.
+#
+# Triggered by pushing a version tag (`git tag v1.5.0 && git push origin v1.5.0`)
+# or manually from the Actions tab. The tag must match package.json's version,
+# because the build stamps that version into every platform manifest.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 1.5.0), must match package.json'
+        required: true
+      latest:
+        description: 'Mark this release as latest'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version="${{ inputs.version }}"
+          fi
+          pkg_version=$(node -p "require('./package.json').version")
+          if [ "$version" != "$pkg_version" ]; then
+            echo "::error::Release version $version does not match package.json version $pkg_version"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Run tests
+        run: npm test
+
+      - name: Lint Firefox build
+        run: npm run lint:firefox
+
+      - name: Package all browsers
+        run: npm run package:all
+
+      - name: Resolve release notes
+        id: notes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          notes_file="release-notes/RELEASE_NOTES_v${VERSION}.md"
+          if [ -f "$notes_file" ]; then
+            echo "file=$notes_file" >> "$GITHUB_OUTPUT"
+          else
+            # Fall back to the matching CHANGELOG section so a missing notes
+            # file cannot silently publish an empty release body.
+            awk -v version="$VERSION" '
+              $0 ~ "^## \\[" version "\\]" { capture = 1; next }
+              capture && /^## \[/ { exit }
+              capture { print }
+            ' CHANGELOG.md > generated-notes.md
+            if [ ! -s generated-notes.md ]; then
+              echo "::error::No release notes found for $VERSION (release-notes/ or CHANGELOG.md)"
+              exit 1
+            fi
+            echo "file=generated-notes.md" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          NOTES_FILE: ${{ steps.notes.outputs.file }}
+          LATEST: ${{ github.event_name == 'push' && 'true' || inputs.latest }}
+        run: |
+          latest_flag=()
+          if [ "$LATEST" = "true" ]; then
+            latest_flag=(--latest)
+          fi
+          gh release create "v${VERSION}" \
+            --title "Content Safety Lock v${VERSION}" \
+            --notes-file "$NOTES_FILE" \
+            "${latest_flag[@]}" \
+            "dist/content-safety-lock-firefox-${VERSION}.zip#Firefox (${VERSION})" \
+            "dist/content-safety-lock-chrome-${VERSION}.zip#Chrome / Edge / Brave / Opera (${VERSION})" \
+            "dist/content-safety-lock-safari-${VERSION}.zip#Safari unpacked extension (${VERSION})"

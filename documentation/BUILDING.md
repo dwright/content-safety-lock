@@ -17,7 +17,9 @@ platform/
 ├── chrome/manifest.json   # Manifest V3 (service worker)
 └── safari/manifest.json   # Manifest V3 (non-persistent background scripts)
 build/                     # Build output (gitignored)
+dist/                      # Release archives (gitignored)
 build-scripts/build.js     # Build orchestrator
+build-scripts/package.js   # Packaging orchestrator (one archive per browser)
 ```
 
 ## Commands
@@ -34,13 +36,25 @@ npm test                   # Unit tests (safe-request headers, platform layer)
 npm run lint:firefox       # web-ext lint against the Firefox build
 ```
 
-Packaging:
+Packaging (writes `dist/content-safety-lock-<browser>-<version>.zip`):
 
 ```bash
-npm run package:firefox    # web-ext build -> web-ext-artifacts/*.zip
-npm run package:chrome     # build/chrome.zip for the Chrome Web Store
-npm run package:safari     # Xcode project via safari-web-extension-converter (macOS only)
+npm run package:firefox    # AMO upload / signing input
+npm run package:chrome     # Chrome Web Store, Edge Add-ons, Opera
+npm run package:safari     # unpacked extension, input for the Safari converter
+npm run package:all        # all three
+
+npm run xcode:safari       # macOS only: safari-project/ via
+                           # xcrun safari-web-extension-converter
 ```
+
+Archives are produced with `web-ext build` for every target (it only zips a
+directory), so packaging needs no tooling beyond the existing dependency, and
+the version in each filename comes from `package.json`.
+
+Releases attach all three archives; see
+[DEPLOYMENT.md](DEPLOYMENT.md#github-releases) for the tag-triggered release
+workflow.
 
 ## What the build does
 
@@ -61,7 +75,7 @@ npm run package:safari     # Xcode project via safari-web-extension-converter (m
   select `build/firefox/manifest.json`.
 - **Chrome / Edge / Brave**: `chrome://extensions` → enable Developer mode →
   Load unpacked → select `build/chrome`.
-- **Safari**: run `npm run package:safari` on macOS, then open the generated
+- **Safari**: run `npm run xcode:safari` on macOS, then open the generated
   Xcode project in `safari-project/` and run it. Enable the extension in
   Safari → Settings → Extensions (Develop → Allow Unsigned Extensions is
   required for unsigned local builds).

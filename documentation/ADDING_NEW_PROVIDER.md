@@ -14,9 +14,9 @@ Adding a new provider involves several components:
 
 ### 1. Create the Interceptor Script
 
-Create a new file: `{provider}-interceptor.js`
+Create a new file: `src/js/interceptors/{provider}-interceptor.js`
 
-**Example: `reddit-interceptor.js`**
+**Example: `src/js/interceptors/reddit-interceptor.js`**
 
 ```javascript
 /**
@@ -104,7 +104,7 @@ Create a new file: `{provider}-interceptor.js`
 
 ### 2. Update Safe Request Configuration
 
-Edit `safe-request-config.js` to add the provider.
+Edit `src/js/safe-request/safe-request-config.js` to add the provider.
 
 **Add Provider Rule:**
 
@@ -144,7 +144,7 @@ const DEFAULT_CONFIG = {
 
 ### 3. Update Content Script
 
-Edit `content.js` to detect and initialize the provider.
+Edit `src/js/content.js` to detect and initialize the provider.
 
 **Add Detection Function:**
 
@@ -152,7 +152,7 @@ Edit `content.js` to detect and initialize the provider.
 async function init{Provider}Interception() {
   try {
     // Check if Safe Request Mode is enabled for this provider
-    const result = await browser.storage.sync.get('safeRequestConfig');
+    const result = await browserAPI.storage.local.get('safeRequestConfig');
     const config = result.safeRequestConfig || DEFAULT_CONFIG;
     const {provider}Config = config.providers?.['{provider}'];
     const shouldEnable = config.enabled && 
@@ -241,18 +241,20 @@ function check{Provider}NsfwPages() {
 }
 ```
 
-### 4. Update Manifest
+### 4. Update Every Platform Manifest
 
-Edit `manifest.json` to include the new interceptor script.
+Each browser has its own manifest, so add the interceptor to **all three**:
+`platform/firefox/manifest.json`, `platform/chrome/manifest.json`, and
+`platform/safari/manifest.json`.
 
 ```json
 {
   "web_accessible_resources": [
     {
       "resources": [
-        "reddit-interceptor.js",
-        "tumblr-interceptor.js",
-        "{provider}-interceptor.js"
+        "js/interceptors/reddit-interceptor.js",
+        "js/interceptors/tumblr-interceptor.js",
+        "js/interceptors/{provider}-interceptor.js"
       ],
       "matches": ["<all_urls>"]
     }
@@ -260,32 +262,43 @@ Edit `manifest.json` to include the new interceptor script.
 }
 ```
 
+(Firefox's Manifest V2 uses the flat string form: `"web_accessible_resources":
+["js/interceptors/{provider}-interceptor.js"]`.)
+
+Then run `npm run build:all` — the build fails if a manifest references a file
+that does not exist, which catches typos immediately.
+
+> Note: interceptors run through `browserAPI`, so no browser-specific code is
+> needed. Safe Request Mode itself is Firefox-only, but interceptor-based
+> filtering works on every target.
+
 ## Reddit Implementation Example
 
 Here's what we implemented for Reddit:
 
 ### Files Modified:
 
-1. **`reddit-interceptor.js`** (new file)
+1. **`src/js/interceptors/reddit-interceptor.js`** (new file)
    - Intercepts `fetch` and `JSON.parse`
    - Filters NSFW posts from API responses (checks `over_18` flag)
    - DOM observer removes elements with `nsfw` attribute
    - Filters search results across all tabs (Posts, Communities, Comments, Media, People)
    - Uses `data-faceplate-tracking-context` JSON for search result filtering
 
-2. **`safe-request-config.js`**
+2. **`src/js/safe-request/safe-request-config.js`**
    - Added Reddit provider rule with domain patterns
    - No required headers/params (filtering done via interceptor)
 
-3. **`content.js`**
+3. **`src/js/content.js`**
    - Added `initRedditInterception()` function
    - Added `checkRedditNsfwPages()` function
    - Blocks NSFW user profiles (checks `profile.isNsfw`)
    - Blocks NSFW subreddits (checks `subreddit.isNsfw`)
    - Uses `reddit-page-data` element for page-level metadata
 
-4. **`manifest.json`**
-   - Added `reddit-interceptor.js` to `web_accessible_resources`
+4. **`platform/*/manifest.json`**
+   - Added `js/interceptors/reddit-interceptor.js` to `web_accessible_resources`
+     in every platform manifest
 
 ### Key Reddit-Specific Details:
 

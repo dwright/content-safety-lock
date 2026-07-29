@@ -1,6 +1,6 @@
 {
   "name": "content-safety-lock",
-  "version": "1.4.4",
+  "version": "1.5.0",
   "description": "Voluntary adult content blocker with self-lock mode for adults seeking structured guardrails",
   "license": "GPL-3.0-or-later",
   "private": true,
@@ -10,9 +10,12 @@
     "build:chrome": "node build-scripts/build.js chrome",
     "build:safari": "node build-scripts/build.js safari",
     "build:all": "node build-scripts/build.js all",
-    "package:firefox": "npm run build:firefox && web-ext build --source-dir build/firefox --artifacts-dir web-ext-artifacts --overwrite-dest",
-    "package:chrome": "npm run build:chrome && cd build/chrome && zip -qr ../chrome.zip .",
-    "package:safari": "npm run build:safari && xcrun safari-web-extension-converter build/safari --project-location safari-project --no-open --force",
+    "package": "node build-scripts/package.js all",
+    "package:firefox": "node build-scripts/package.js firefox",
+    "package:chrome": "node build-scripts/package.js chrome",
+    "package:safari": "node build-scripts/package.js safari",
+    "package:all": "node build-scripts/package.js all",
+    "xcode:safari": "npm run build:safari && xcrun safari-web-extension-converter build/safari --project-location safari-project --no-open --force",
     "lint:firefox": "npm run build:firefox && web-ext lint --source-dir build/firefox",
     "test": "node test/youtube-header.test.js && node test/platform-api.test.js"
   },

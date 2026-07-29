@@ -1,6 +1,6 @@
 # Content Safety Lock - Documentation Index
 
-Welcome! This is your guide to all documentation and resources for the Content Safety Lock Firefox extension.
+Welcome! This is your guide to all documentation and resources for the Content Safety Lock browser extension (Firefox, Chrome/Edge/Brave/Opera, and Safari).
 
 ## 🚀 Quick Navigation
 
@@ -21,7 +21,10 @@ Welcome! This is your guide to all documentation and resources for the Content S
 **Test the extension**
 → Follow [documentation/TESTING.md](documentation/TESTING.md) (30 minutes)
 
-**Deploy to production**
+**Build the extension for a specific browser**
+→ Follow [documentation/BUILDING.md](documentation/BUILDING.md) (5 minutes)
+
+**Deploy to production or cut a release**
 → Follow [documentation/DEPLOYMENT.md](documentation/DEPLOYMENT.md) (20 minutes)
 
 **Check version history**
@@ -42,7 +45,8 @@ Welcome! This is your guide to all documentation and resources for the Content S
 | File | Purpose | Read Time | Audience |
 |------|---------|-----------|----------|
 | [documentation/TESTING.md](documentation/TESTING.md) | Comprehensive test cases | 30 min | QA/Developers |
-| [documentation/DEPLOYMENT.md](documentation/DEPLOYMENT.md) | Installation & deployment | 20 min | Developers |
+| [documentation/BUILDING.md](documentation/BUILDING.md) | Multi-browser build & packaging | 5 min | Developers |
+| [documentation/DEPLOYMENT.md](documentation/DEPLOYMENT.md) | Installation, deployment & releases | 20 min | Developers |
 | [documentation/ADDING_NEW_PROVIDER.md](documentation/ADDING_NEW_PROVIDER.md) | Guide to adding new providers | 30 min | Developers |
 | [CHANGELOG.md](CHANGELOG.md) | Version history & roadmap | 10 min | Everyone |
 
@@ -63,29 +67,33 @@ content-safety-lock/
 │       ├── ADDING_NEW_PROVIDER.md  ← Provider integration
 │       └── [other technical docs]
 │
-├── 🔧 Extension Files
-│   ├── manifest.json               ← Extension config
-│   ├── options.html                ← Settings UI
-│   ├── popup.html                  ← Quick popup
-│   ├── icons/                      ← Icons (3 sizes)
+├── 🔧 Shared Source (src/)
+│   ├── html/                       ← options.html, popup.html
+│   ├── css/                        ← Stylesheets
+│   ├── icons/                      ← SVG (Firefox) + PNG (Chrome/Safari)
 │   └── js/                         ← JavaScript files
-│       ├── background.js           ← Service worker
+│       ├── background.js           ← Background script / service worker
 │       ├── content.js              ← Content script
 │       ├── popup.js                ← Popup logic
 │       ├── options.js              ← Settings logic
 │       ├── utils.js                ← Shared utilities
+│       ├── platform/               ← browserAPI abstraction
+│       │   ├── browser-api.js      ← Runtime platform detection
+│       │   ├── firefox.js
+│       │   ├── chrome.js
+│       │   └── safari.js
 │       ├── components/             ← UI components
-│       │   ├── time-interval-picker.js
-│       │   └── time-interval-picker.css
 │       ├── detectors/              ← Content detection
-│       │   └── mature-content-detectors.js
 │       ├── interceptors/           ← Provider interceptors
-│       │   ├── reddit-interceptor.js
-│       │   └── tumblr-interceptor.js
-│       └── safe-request/           ← Safe request mode
-│           ├── safe-request-config.js
-│           ├── safe-request-handler.js
-│           └── safe-request-utils.js
+│       └── safe-request/           ← Safe request mode (Firefox only)
+│
+├── 🌐 Per-browser Config & Build
+│   ├── platform/firefox/manifest.json   ← Manifest V2
+│   ├── platform/chrome/manifest.json    ← Manifest V3
+│   ├── platform/safari/manifest.json    ← Manifest V3
+│   ├── build-scripts/build.js           ← Builds build/<browser>/
+│   ├── build-scripts/package.js         ← Builds dist/*.zip archives
+│   └── .github/workflows/              ← CI + tag-triggered releases
 │
 └── 🧪 Test Resources
     └── test-pages/
@@ -107,12 +115,13 @@ content-safety-lock/
 1. [documentation/PROJECT_SUMMARY.md](documentation/PROJECT_SUMMARY.md) - Architecture overview
 2. [README.md](README.md) - Full feature documentation
 3. Review source code:
-   - `manifest.json` - Configuration
-   - `js/background.js` - Policy engine
-   - `js/content.js` - Label detection
-   - `js/utils.js` - Shared utilities
-   - `js/interceptors/` - Provider interceptors
-   - `js/safe-request/` - Safe request mode
+   - `platform/<browser>/manifest.json` - Per-browser configuration
+   - `src/js/platform/` - Browser API abstraction
+   - `src/js/background.js` - Policy engine
+   - `src/js/content.js` - Label detection
+   - `src/js/utils.js` - Shared utilities
+   - `src/js/interceptors/` - Provider interceptors
+   - `src/js/safe-request/` - Safe request mode
 4. [documentation/TESTING.md](documentation/TESTING.md) - Test cases
 5. [documentation/ADDING_NEW_PROVIDER.md](documentation/ADDING_NEW_PROVIDER.md) - Adding providers
 
@@ -170,10 +179,12 @@ A voluntary commitment tool that:
 - [x] Beautiful UI with modern design
 - [x] Comprehensive documentation
 - [x] 20+ test cases
+- [x] Multi-browser support (Firefox, Chrome/Edge/Brave/Opera, Safari)
+- [x] Automated multi-browser builds and releases
 
 ### 🔮 Future Enhancements
 
-- [ ] Multi-browser support (Chrome, Safari)
+- [ ] Safe Request Mode on Chrome (`declarativeNetRequest`) and Safari
 - [ ] Mobile support (iOS Safari, Firefox Android)
 - [ ] File-based sync across devices (user-controlled cloud storage)
 - [ ] Scheduled self-lock windows (with US Holidays support)
@@ -217,25 +228,12 @@ See [documentation/ROADMAP.md](documentation/ROADMAP.md) for comprehensive long-
 3. Check browser console (F12) for errors
 4. Review source code comments
 
-## 📊 Statistics
-
-| Metric | Value |
-|--------|-------|
-| Total Files | 28 |
-| Documentation Files | 6 |
-| JavaScript Files | 13 |
-| HTML Files | 2 |
-| Test Files | 3 |
-| Total Lines of Code | 2,000+ |
-| Total Documentation | 10,000+ words |
-| Test Cases | 20+ |
-| Features | 15+ |
-
 ## 🎓 Learning Resources
 
-### Understanding Firefox Extensions
+### Understanding Browser Extensions
 - [Mozilla WebExtensions Docs](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/)
-- [Manifest V3 Guide](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json)
+- [Chrome Manifest V3 Guide](https://developer.chrome.com/docs/extensions/develop/migrate)
+- [Safari Web Extensions](https://developer.apple.com/documentation/safariservices/safari_web_extensions)
 
 ### Understanding Content Labels
 - [RTA Label](https://www.rtalabel.org/)
@@ -250,9 +248,10 @@ See [documentation/ROADMAP.md](documentation/ROADMAP.md) for comprehensive long-
 Before deploying, verify:
 
 - [ ] Read [documentation/PROJECT_SUMMARY.md](documentation/PROJECT_SUMMARY.md)
+- [ ] Run `npm test`, `npm run build:all`, `npm run lint:firefox`
 - [ ] Run all tests in [documentation/TESTING.md](documentation/TESTING.md)
 - [ ] Review [documentation/DEPLOYMENT.md](documentation/DEPLOYMENT.md)
-- [ ] Test on clean Firefox profile
+- [ ] Test on clean Firefox and Chrome profiles
 - [ ] Test on Windows, macOS, Linux
 - [ ] Review all code changes
 - [ ] Update [CHANGELOG.md](CHANGELOG.md)
@@ -262,7 +261,8 @@ Before deploying, verify:
 ## 🚀 Getting Started (30 seconds)
 
 1. **Read**: [QUICKSTART.md](QUICKSTART.md)
-2. **Install**: Follow installation steps
+2. **Build & install**: `npm install && npm run build:all`, then load
+   `build/<browser>/` (see [BUILDING.md](documentation/BUILDING.md))
 3. **Test**: Load `test-pages/adult-labeled.html`
 4. **Explore**: Click extension icon and open Full Options
 
@@ -285,8 +285,8 @@ Before deploying, verify:
 
 ---
 
-**Last Updated**: 2025-11-29
-**Version**: 1.2.1
+**Last Updated**: 2026-07-29
+**Version**: 1.5.0
 **Status**: ✅ Complete & Ready
 
 *Happy exploring! 🔒*

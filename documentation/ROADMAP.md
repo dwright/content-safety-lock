@@ -107,12 +107,16 @@ js/sync/
 
 ### 2. Multi-Browser Support
 
+**Status**: ✅ **Implemented in 1.5.0** (desktop). See
+[BUILDING.md](BUILDING.md) for the resulting build system. Mobile Safari remains
+future work (goal 3), and Safe Request Mode is still Firefox-only (goal 4).
+
 **Goal**: Support Firefox, Chrome/Edge/Brave, and Safari with a single codebase.
 
 **Target Browsers**:
-- ✅ **Firefox** (current, primary development platform)
-- 🎯 **Chrome/Edge/Brave/Opera** (Chromium-based)
-- 🎯 **Safari** (macOS, iOS, iPadOS)
+- ✅ **Firefox** (primary development platform)
+- ✅ **Chrome/Edge/Brave/Opera** (Chromium-based, Manifest V3)
+- ✅ **Safari** (macOS; iOS/iPadOS still planned)
 
 **Build Strategy**:
 
@@ -194,20 +198,22 @@ Each platform implements the interface:
 
 #### Build System
 
-**Package.json scripts**:
+**Package.json scripts** (as implemented in 1.5.0):
 ```json
 {
   "scripts": {
     "build:firefox": "node build-scripts/build.js firefox",
     "build:chrome": "node build-scripts/build.js chrome",
     "build:safari": "node build-scripts/build.js safari",
-    "build:all": "node build-scripts/build.js firefox chrome safari",
-    "watch:firefox": "nodemon --watch src --exec 'npm run build:firefox'",
-    "package:firefox": "cd build/firefox && web-ext build",
-    "package:chrome": "cd build/chrome && zip -r ../chrome.zip ."
+    "build:all": "node build-scripts/build.js all",
+    "package:all": "node build-scripts/package.js all",
+    "xcode:safari": "... safari-web-extension-converter build/safari ..."
   }
 }
 ```
+
+`package:*` writes `dist/content-safety-lock-<browser>-<version>.zip`, and
+pushing a `v<version>` tag publishes all three archives as a GitHub release.
 
 **Build Process**:
 1. Clean target build directory
@@ -684,15 +690,15 @@ src/
 ---
 
 ### 4. Build System Improvements
-**Current State**: Manual `web-ext build`  
-**Goal**: Automated builds with CI/CD
+**Current State**: `npm run build:all` / `npm run package:all`, with GitHub Actions
+CI on pull requests and tag-triggered multi-browser releases (added in 1.5.0)  
+**Goal**: Fully automated release pipeline
 
-**Improvements**:
-- GitHub Actions for automated builds
+**Remaining improvements**:
 - Automatic version bumping
 - Changelog generation
-- Release artifact creation
-- Automated testing before build
+- Automated store submission (AMO / Chrome Web Store APIs)
+- Broader automated testing before build (headless browser runs)
 
 ---
 
@@ -736,11 +742,11 @@ documentation/
 - 80%+ test coverage for critical code
 
 ### Platform Coverage
-- ✅ Firefox desktop
-- ✅ Chrome/Edge desktop
-- ✅ Safari desktop
-- ✅ Safari iOS/iPadOS
-- ✅ Firefox Android (optional)
+- ✅ Firefox desktop (shipped)
+- ✅ Chrome/Edge desktop (shipped in 1.5.0)
+- ✅ Safari desktop (shipped in 1.5.0, local Xcode conversion)
+- ⬜ Safari iOS/iPadOS
+- ⬜ Firefox Android (optional)
 
 ---
 
@@ -1185,6 +1191,12 @@ GNU General Public License v3.0 - See LICENSE file for details
 ---
 
 ## Changelog
+
+### 2026-07-29
+- Goal 2 (Multi-Browser Support) and Phase 1 delivered in 1.5.0: shared `src/`
+  tree, `browserAPI` abstraction, per-browser manifests, build/packaging scripts,
+  CI, and tag-triggered multi-browser releases
+- Safe Request Mode remains Firefox-only (Phase 4)
 
 ### 2024-11-29
 - Initial roadmap created

@@ -182,7 +182,7 @@ Complete feature documentation with implementation status and usage details.
 | Feature | Status | Details |
 |---------|--------|---------|
 | Local Storage | ✅ Complete | Uses browser.storage.local |
-| Profile-Scoped | ✅ Complete | Data per Firefox profile |
+| Profile-Scoped | ✅ Complete | Data per browser profile |
 | No Sync | ✅ Complete | Not synced across devices (by default) |
 | Persistence | ✅ Complete | Survives browser restart |
 
@@ -200,22 +200,24 @@ Complete feature documentation with implementation status and usage details.
 
 ## 🌐 Browser Support
 
-### Firefox Versions
+### Browsers
 
-| Version | Status | Notes |
+| Browser | Status | Notes |
 |---------|--------|-------|
-| Firefox 109+ | ✅ Supported | MV3 support required |
-| Firefox 108 | ❌ Not Supported | MV2 only |
+| Firefox 109+ | ✅ Supported | Manifest V2 build; full feature set |
 | Firefox ESR | ✅ Supported | Latest ESR version |
+| Chrome / Edge / Brave / Opera 111+ | ✅ Supported | Manifest V3 build; Safe Request Mode unavailable |
+| Safari 16.4+ (macOS) | ✅ Supported | Manifest V3 build; requires local Xcode conversion; Safe Request Mode unavailable |
 
 ### Platforms
 
 | Platform | Status | Notes |
 |----------|--------|-------|
-| Windows | ✅ Supported | All versions |
-| macOS | ✅ Supported | All versions |
-| Linux | ✅ Supported | All distributions |
+| Windows | ✅ Supported | Firefox, Chrome/Edge/Brave/Opera |
+| macOS | ✅ Supported | Firefox, Chromium browsers, Safari |
+| Linux | ✅ Supported | Firefox, Chromium browsers |
 | Android | ✅ Supported | Firefox Mobile |
+| iOS | ❌ Not Supported | Mobile Safari planned |
 
 ### Browsing Modes
 
@@ -258,9 +260,9 @@ Complete feature documentation with implementation status and usage details.
 
 | Standard | Status | Details |
 |----------|--------|---------|
-| Manifest V3 | ✅ Complete | Latest Firefox extension standard |
+| Manifest V2 / V3 | ✅ Complete | V2 for Firefox, V3 for Chrome and Safari |
 | Web Crypto API | ✅ Complete | For SHA-256 hashing |
-| Storage API | ✅ Complete | browser.storage.local |
+| Storage API | ✅ Complete | Extension local storage via `browserAPI.storage` |
 | Content Scripts | ✅ Complete | document_start execution |
 
 ### Security Standards
@@ -311,8 +313,9 @@ Complete feature documentation with implementation status and usage details.
 
 | Limitation | Impact | Notes |
 |-----------|--------|-------|
-| No webRequest API in MV3 | Low | Using content scripts instead |
-| No background page in MV3 | Low | Using service workers |
+| No blocking webRequest in MV3 / Safari | Medium | Safe Request Mode is Firefox-only; label-based blocking still works everywhere |
+| No persistent background page in MV3 | Low | Chrome/Safari use a service worker with persisted state |
+| Safari needs local Xcode conversion | Medium | Distribute as a signed macOS app |
 | Storage limited to 10MB | Low | Sufficient for this extension |
 
 ---
@@ -403,8 +406,8 @@ Complete feature documentation with implementation status and usage details.
 
 ---
 
-**Last Updated**: 2025-10-21
-**Version**: 1.0.0
+**Last Updated**: 2026-07-29
+**Version**: 1.5.0
 **Status**: ✅ Complete
 
 *All core features implemented and tested*

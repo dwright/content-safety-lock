@@ -23,5 +23,6 @@ node_modules/
 
 # Multi-platform build output
 build/
-chrome.zip
+dist/
 safari-project/
+generated-notes.md

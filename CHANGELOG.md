@@ -7,12 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-07-29
+
 ### Added
 
 - **Multi-browser support**: the extension now builds for Chrome/Edge/Brave/Opera and Safari in addition to Firefox, from one shared source tree (`src/`) plus a per-browser manifest (`platform/<browser>/manifest.json`).
 - **Platform abstraction layer** (`src/js/platform/`): `browser-api.js` detects the host browser at runtime and exposes a promise-based `browserAPI` global backed by `firefox.js`, `chrome.js`, or `safari.js`.
-- **Build system**: `build-scripts/build.js` with `npm run build:{firefox,chrome,safari,all}` and `npm run package:{firefox,chrome,safari}`; the build stamps the `package.json` version into each manifest, generates the Manifest V3 service worker entry point, and fails if a manifest references a missing file.
-- **Documentation**: `documentation/BUILDING.md` covering the layout, build commands, loading instructions, and platform limitations.
+- **Build system**: `build-scripts/build.js` with `npm run build:{firefox,chrome,safari,all}`; the build stamps the `package.json` version into each manifest, generates the Manifest V3 service worker entry point, and fails if a manifest references a missing file.
+- **Packaging system**: `build-scripts/package.js` with `npm run package:{firefox,chrome,safari,all}`, producing one release archive per browser in `dist/` (`content-safety-lock-<browser>-<version>.zip`). `npm run xcode:safari` generates the Safari Xcode project on macOS.
+- **Automated releases**: `.github/workflows/release.yml` builds, tests, lints and publishes a GitHub release with all three browser archives when a `v<version>` tag is pushed (or via manual dispatch). `create-github-releases.sh` does the same locally and now attaches every browser archive instead of Firefox only.
+- **CI**: `.github/workflows/ci.yml` runs the unit tests, all three builds, and `web-ext lint` on pushes to `main` and pull requests.
+- Release notes are now tracked in `release-notes/RELEASE_NOTES_v<version>.md` (the previous location, `web-ext-artifacts/`, is gitignored build output).
+- **Documentation**: `documentation/BUILDING.md` covering the layout, build commands, loading instructions, and platform limitations; `documentation/DEPLOYMENT.md` now documents building, packaging and releasing for all three browsers.
 - **Tests**: `test/platform-api.test.js` covers adapter selection, promise wrapping of callback-style Chromium APIs, and async `onMessage` handling.
 - PNG icons for Chrome and Safari, which do not accept SVG extension icons.
 
