@@ -51,7 +51,8 @@
       alarms: {
         create: (name, info) => api.alarms.create(name, info),
         clear: (name) => api.alarms.clear(name),
-        onAlarm: api.alarms.onAlarm
+        // Resolved lazily: privileged namespaces are absent in content scripts.
+        get onAlarm() { return api.alarms?.onAlarm; }
       },
 
       scripting: {

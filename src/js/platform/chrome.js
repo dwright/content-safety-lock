@@ -88,7 +88,8 @@
         // accepted a callback, so it is normalized rather than promisified.
         create: (name, info) => Promise.resolve(api.alarms.create(name, info)),
         clear: (name) => promisify(api.alarms.clear, api.alarms, [name]),
-        onAlarm: api.alarms.onAlarm
+        // Resolved lazily: privileged namespaces are absent in content scripts.
+        get onAlarm() { return api.alarms?.onAlarm; }
       },
 
       scripting: {

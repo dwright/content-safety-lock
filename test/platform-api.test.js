@@ -132,6 +132,36 @@ async function testChromeLastError() {
   await assert.rejects(() => api.storage.local.get('state'), /storage unavailable/);
 }
 
+/**
+ * Content scripts only receive a subset of the extension APIs: `alarms`,
+ * `scripting` and `storage.managed` are absent. Building an adapter must not
+ * touch them, or `browserAPI` is never published and every call site breaks.
+ */
+async function testContentScriptContext() {
+  const namespace = firefoxNamespace();
+  delete namespace.alarms;
+  delete namespace.scripting;
+  delete namespace.storage.managed;
+  delete namespace.webRequest;
+
+  const firefoxApi = loadPlatformLayer({ browser: namespace });
+  assert.strictEqual(firefoxApi.platform, 'firefox');
+  assert.strictEqual(firefoxApi.alarms.onAlarm, undefined);
+  assert.deepStrictEqual(await firefoxApi.runtime.sendMessage({ type: 'GET_STATE' }), {
+    echo: { type: 'GET_STATE' }
+  });
+
+  const chrome = chromeNamespace();
+  delete chrome.namespace.alarms;
+  delete chrome.namespace.scripting;
+  delete chrome.namespace.storage.managed;
+
+  const chromeApi = loadPlatformLayer({ chrome: chrome.namespace });
+  assert.strictEqual(chromeApi.platform, 'chrome');
+  assert.strictEqual(chromeApi.alarms.onAlarm, undefined);
+  assert.deepStrictEqual(await chromeApi.storage.local.get('state'), { keys: 'state' });
+}
+
 async function testSafariAdapter() {
   const namespace = firefoxNamespace();
   namespace.runtime.getManifest = () => ({ manifest_version: 3 });
@@ -151,6 +181,7 @@ async function testSafariAdapter() {
   await testFirefoxAdapter();
   await testChromeAdapter();
   await testChromeLastError();
+  await testContentScriptContext();
   await testSafariAdapter();
   console.log('PASS: platform abstraction selects the right adapter on each browser');
 })();
