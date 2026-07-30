@@ -275,6 +275,16 @@ pushing a `v<version>` tag publishes all three archives as a GitHub release.
 
 ### 4. Safe Request Mode Refactoring
 
+**Tracked as**: [#2 Chrome/Edge declarativeNetRequest port](https://github.com/dwright/content-safety-lock/issues/2)
+and [#3 Safari enforcement](https://github.com/dwright/content-safety-lock/issues/3).
+Related cross-browser gaps: [#4 Safari managed policy](https://github.com/dwright/content-safety-lock/issues/4),
+[#5 Safari signing/distribution](https://github.com/dwright/content-safety-lock/issues/5),
+[#6 Firefox/Safari runtime test coverage](https://github.com/dwright/content-safety-lock/issues/6).
+
+Until the port lands, the options page hides the affected settings and shows
+"Safe Request Mode for search and video providers not supported for
+&lt;browser&gt; yet", driven by `src/js/platform/features.js`.
+
 **Challenge**: Current implementation uses `webRequestBlocking`, which is:
 - ✅ Fully supported in Firefox
 - ⚠️ Deprecated in Chrome Manifest V3
