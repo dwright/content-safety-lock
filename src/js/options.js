@@ -217,13 +217,18 @@ async function displayLockedSettings() {
     enabledCategories.push(`Adult Product Sales (${enabledVendors.length} vendors: ${enabledVendors.join(', ')})`);
   }
   
-  // Build provider list
+  // Build provider list. Search/video providers rely on network enforcement,
+  // so they are omitted where the browser cannot perform it.
   const enabledProviders = [];
-  if (safeRequest.providers.google.enabled) enabledProviders.push('Google');
-  if (safeRequest.providers.bing.enabled) enabledProviders.push('Bing');
-  if (safeRequest.providers.yahoo.enabled) enabledProviders.push('Yahoo');
-  if (safeRequest.providers.ddg.enabled) enabledProviders.push('DuckDuckGo');
-  if (safeRequest.providers.youtube.enabled) enabledProviders.push('YouTube');
+  const networkEnforcement = typeof CSLFeatures === 'undefined' ||
+    CSLFeatures.isSupported('safeRequestNetworkEnforcement');
+  if (networkEnforcement) {
+    if (safeRequest.providers.google.enabled) enabledProviders.push('Google');
+    if (safeRequest.providers.bing.enabled) enabledProviders.push('Bing');
+    if (safeRequest.providers.yahoo.enabled) enabledProviders.push('Yahoo');
+    if (safeRequest.providers.ddg.enabled) enabledProviders.push('DuckDuckGo');
+    if (safeRequest.providers.youtube.enabled) enabledProviders.push('YouTube');
+  }
   if (safeRequest.providers.tumblr?.enabled) enabledProviders.push('Tumblr');
   if (safeRequest.providers.reddit?.enabled) enabledProviders.push('Reddit');
   if (safeRequest.providers.bluesky?.enabled) enabledProviders.push('Bluesky');
@@ -1685,7 +1690,73 @@ document.getElementById('lock-increment-on-block').addEventListener('change', to
   if (el) el.addEventListener('input', updateGameDifficultyFeedback);
 });
 
+// ============ Platform Feature Gating ============
+
+/**
+ * Hide controls for features the running browser cannot support and explain
+ * why, so a Chrome user is not left toggling settings that do nothing.
+ */
+function applyPlatformFeatureGating() {
+  if (typeof CSLFeatures === 'undefined') return;
+
+  const gated = [
+    { feature: 'safeRequestNetworkEnforcement', group: 'safe-request-network-group', notice: 'safe-request-unsupported' }
+  ];
+
+  for (const { feature, group, notice } of gated) {
+    const groupEl = document.getElementById(group);
+    const noticeEl = document.getElementById(notice);
+    if (CSLFeatures.isSupported(feature)) {
+      if (noticeEl) noticeEl.style.display = 'none';
+      continue;
+    }
+
+    if (groupEl) groupEl.style.display = 'none';
+    if (!noticeEl) continue;
+
+    noticeEl.textContent = '';
+    const headline = document.createElement('strong');
+    headline.textContent = CSLFeatures.unsupportedMessage(feature);
+    noticeEl.appendChild(headline);
+
+    const detail = CSLFeatures.unsupportedDetail(feature);
+    if (detail) {
+      noticeEl.appendChild(document.createElement('br'));
+      noticeEl.appendChild(document.createTextNode(detail));
+    }
+    noticeEl.style.display = 'block';
+  }
+}
+
 // ============ About Tab ============
+
+/**
+ * Human-readable browser line for the About tab and debug report, e.g.
+ * "Chrome 141.0.7390.65 (chrome build, Manifest V3)".
+ */
+function describeBrowser(info) {
+  const browser = typeof CSLFeatures !== 'undefined' ? CSLFeatures.browser : null;
+  if (!browser) return 'unknown';
+
+  const name = browser.version ? `${browser.name} ${browser.version}` : browser.name;
+  const details = [`${browser.platform} build`];
+  const manifestVersion = browser.manifestVersion ?? info?.manifestVersion;
+  if (manifestVersion) details.push(`Manifest V${manifestVersion}`);
+
+  return `${name} (${details.join(', ')})`;
+}
+
+/**
+ * Features unavailable on this browser, for the debug report.
+ */
+function describeUnsupportedFeatures() {
+  if (typeof CSLFeatures === 'undefined') return 'unknown';
+
+  const unsupported = CSLFeatures.names.filter((name) => !CSLFeatures.isSupported(name));
+  if (unsupported.length === 0) return '(none)';
+
+  return unsupported.map((name) => CSLFeatures.label(name)).join(', ');
+}
 
 /**
  * Load and display debug information on the About tab.
@@ -1695,6 +1766,9 @@ async function loadAboutTab() {
 
   document.getElementById('about-version-value').textContent = info.version;
   document.getElementById('about-location-value').textContent = info.extensionUrl;
+
+  const browserText = describeBrowser(info);
+  document.getElementById('about-browser-value').textContent = browserText;
 
   const managedDump = document.getElementById('about-managed-dump');
   const managedError = document.getElementById('about-managed-error');
@@ -1750,6 +1824,8 @@ async function loadAboutTab() {
         '===================================',
         '',
         'Version:        ' + info.version,
+        'Browser:        ' + browserText,
+        'Unsupported:    ' + describeUnsupportedFeatures(),
         'Install URL:    ' + info.extensionUrl,
         'Extension ID:   content-safety-lock@dwright.org',
         '',
@@ -1876,6 +1952,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Update the view based on lock status
   await updateGeneralTabView();
+  
+  // Hide options for features this browser cannot support
+  applyPlatformFeatureGating();
   
   // Setup collapsible sections
   setupCollapsibleSections();

@@ -97,11 +97,28 @@ The adapters normalize three real differences:
 
 ## Known platform limitations
 
-- **Safe Request Mode is Firefox-only for now.** It relies on blocking
-  `webRequest`, which Manifest V3 removed and Safari never had. On Chrome and
-  Safari the handler logs a warning and stays inactive; porting it to
-  `declarativeNetRequest` (Chrome) and early content-script injection (Safari)
-  is Phase 4 of the roadmap.
+- **Safe Request Mode's search/video enforcement is Firefox-only for now.** It
+  relies on blocking `webRequest`, which Manifest V3 removed and Safari never
+  had. On Chrome and Safari the handler logs a warning and stays inactive;
+  porting it to `declarativeNetRequest` (Chrome) and early content-script
+  injection (Safari) is Phase 4 of the roadmap. The in-page site filtering
+  (Tumblr, Reddit, Bluesky) is content-script based and works on every target.
+
+  Unavailable features are declared in `src/js/platform/features.js` with the
+  `browserAPI.capabilities` flag each one needs, and the options page hides
+  their controls behind a "<feature> not supported for <browser> yet" notice:
+
+  ```js
+  safeRequestNetworkEnforcement: {
+    label: 'Safe Request Mode for search and video providers',
+    requires: 'blockingWebRequest'
+  }
+  ```
+
+  Add an entry there (and a `{ feature, group, notice }` row in
+  `applyPlatformFeatureGating()`) when a new feature is browser-dependent, so
+  users never see settings that cannot take effect. The About tab's debug
+  report lists the browser, its version and the features it lacks.
 - **Chrome runs the background as a service worker**, which is terminated when
   idle. Self-lock timing already relies on `alarms` plus persisted state, so it
   survives restarts, but any new background state must be persisted.

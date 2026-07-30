@@ -17,7 +17,7 @@
     "package:all": "node build-scripts/package.js all",
     "xcode:safari": "npm run build:safari && xcrun safari-web-extension-converter build/safari --project-location safari-project --no-open --force",
     "lint:firefox": "npm run build:firefox && web-ext lint --source-dir build/firefox",
-    "test": "node test/youtube-header.test.js && node test/platform-api.test.js"
+    "test": "node test/youtube-header.test.js && node test/platform-api.test.js && node test/platform-features.test.js"
   },
   "dependencies": {
     "web-ext": "^10.5.0"

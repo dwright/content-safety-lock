@@ -19,13 +19,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CI**: `.github/workflows/ci.yml` runs the unit tests, all three builds, and `web-ext lint` on pushes to `main` and pull requests.
 - Release notes are now tracked in `release-notes/RELEASE_NOTES_v<version>.md` (the previous location, `web-ext-artifacts/`, is gitignored build output).
 - **Documentation**: `documentation/BUILDING.md` covering the layout, build commands, loading instructions, and platform limitations; `documentation/DEPLOYMENT.md` now documents building, packaging and releasing for all three browsers.
-- **Tests**: `test/platform-api.test.js` covers adapter selection, promise wrapping of callback-style Chromium APIs, and async `onMessage` handling.
+- **Per-browser feature gating** (`src/js/platform/features.js`): browser name/version detection plus a registry of features and the capability each needs. The options page hides controls the running browser cannot honour and shows "<feature> not supported for <browser> yet" instead, so the Safe Request Mode search/video provider settings no longer appear active on Chrome and Safari.
+- **About tab**: the debug report now includes the browser name, version, build target, manifest version, and the list of features unavailable on that browser.
+- **Tests**: `test/platform-api.test.js` covers adapter selection, promise wrapping of callback-style Chromium APIs, and async `onMessage` handling; `test/platform-features.test.js` covers browser detection (including Edge/Brave disambiguation) and feature availability.
 - PNG icons for Chrome and Safari, which do not accept SVG extension icons.
 
 ### Changed
 
 - Sources moved from the repository root into `src/` (`js/`, `html/`, `css/`, `icons/`); the loadable extension is now `build/<browser>/`, not the repository root.
 - Application code calls `browserAPI.*` instead of `browser.*`.
+- Safe Request Mode settings are split into "Search & Video Providers" (network enforcement, Firefox only) and "Site Content Filtering" (Tumblr, Reddit, Bluesky — in-page, works on every browser).
 - Version is now maintained in `package.json` only.
 
 ### Fixed

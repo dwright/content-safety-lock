@@ -39,9 +39,11 @@ to Firefox, built from a single shared source tree.
 
 ## Known limitations
 
-- **Safe Request Mode is Firefox-only.** It depends on the blocking
-  `webRequest` API, which Manifest V3 removed and Safari does not provide. On
-  Chrome and Safari it logs a warning and stays inactive; the
-  `declarativeNetRequest` port is planned.
+- **Safe Request Mode's SafeSearch enforcement is Firefox-only.** It depends on
+  the blocking `webRequest` API, which Manifest V3 removed and Safari does not
+  provide, so the Google/Bing/Yahoo/DuckDuckGo/YouTube settings are hidden on
+  Chrome and Safari with a "not supported for <browser> yet" notice; the
+  `declarativeNetRequest` port is planned. In-page site filtering (Tumblr,
+  Reddit, Bluesky) and label-based blocking work on every browser.
 - Safari builds must be converted and signed locally with Xcode; there is no
   prebuilt Safari app yet.

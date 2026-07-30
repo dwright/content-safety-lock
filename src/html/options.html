@@ -706,7 +706,9 @@
             Send standardized safety headers and provider-specific SafeSearch/Restricted-Mode controls to supported search engines and video platforms. This does not analyze pages—it asks providers to filter results at the source.
           </p>
           
-          <div class="form-group">
+          <div id="safe-request-unsupported" class="alert alert-info" style="display: none;"></div>
+
+          <div class="form-group" id="safe-request-toggle-group">
             <div class="checkbox-group">
               <input type="checkbox" id="safe-request-enabled">
               <label class="checkbox-label" for="safe-request-enabled">Enable Safe Request Mode</label>
@@ -714,13 +716,14 @@
           </div>
           
           <div id="safe-request-details" style="display: none; margin-top: 16px;">
+            <div id="safe-request-network-group">
             <div class="checkbox-group">
               <input type="checkbox" id="safe-request-prefer-header" checked>
               <label class="checkbox-label" for="safe-request-prefer-header">Add "Prefer: safe" header to all requests</label>
             </div>
             
             <div style="margin-top: 20px;">
-              <h4 style="font-size: 14px; font-weight: 600; color: #333; margin-bottom: 12px;">Provider Settings</h4>
+              <h4 style="font-size: 14px; font-weight: 600; color: #333; margin-bottom: 12px;">Search &amp; Video Providers</h4>
               
               <div style="background: #f9f9f9; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
                 <h5 style="margin: 0 0 12px 0; font-size: 13px; color: #333; font-weight: 600;">Google Search</h5>
@@ -773,6 +776,34 @@
                 </div>
               </div>
               
+              <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e0e0e0;">
+                <h5 style="margin: 0 0 12px 0; font-size: 13px; color: #333; font-weight: 600;">Advanced Options</h5>
+                
+                <div class="checkbox-group">
+                  <input type="checkbox" id="safe-request-block-downgrade" checked>
+                  <label class="checkbox-label" for="safe-request-block-downgrade">Block user attempts to disable safe parameters</label>
+                </div>
+                
+                <div class="form-group">
+                  <label for="safe-request-frame-enforcement" style="font-size: 13px;">Frame Enforcement:</label>
+                  <select id="safe-request-frame-enforcement" style="width: 100%; padding: 8px 10px; border: 2px solid #ddd; border-radius: 4px; font-size: 13px;">
+                    <option value="any">All frames and subresources (stronger)</option>
+                    <option value="top">Top frame only (faster)</option>
+                  </select>
+                </div>
+                
+                <div class="checkbox-group">
+                  <input type="checkbox" id="safe-request-private-windows" checked>
+                  <label class="checkbox-label" for="safe-request-private-windows">Apply in private windows</label>
+                </div>
+              </div>
+            </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+              <h4 style="font-size: 14px; font-weight: 600; color: #333; margin-bottom: 12px;">Site Content Filtering</h4>
+              <p class="help-text" style="margin-bottom: 12px;">These providers are filtered in the page itself, so they work on every supported browser.</p>
+
               <div style="background: #f9f9f9; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
                 <h5 style="margin: 0 0 12px 0; font-size: 13px; color: #333; font-weight: 600;">Tumblr</h5>
                 <div class="checkbox-group" style="margin-bottom: 0;">
@@ -817,27 +848,6 @@
                 </div>
               </div>
 
-              <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e0e0e0;">
-                <h5 style="margin: 0 0 12px 0; font-size: 13px; color: #333; font-weight: 600;">Advanced Options</h5>
-                
-                <div class="checkbox-group">
-                  <input type="checkbox" id="safe-request-block-downgrade" checked>
-                  <label class="checkbox-label" for="safe-request-block-downgrade">Block user attempts to disable safe parameters</label>
-                </div>
-                
-                <div class="form-group">
-                  <label for="safe-request-frame-enforcement" style="font-size: 13px;">Frame Enforcement:</label>
-                  <select id="safe-request-frame-enforcement" style="width: 100%; padding: 8px 10px; border: 2px solid #ddd; border-radius: 4px; font-size: 13px;">
-                    <option value="any">All frames and subresources (stronger)</option>
-                    <option value="top">Top frame only (faster)</option>
-                  </select>
-                </div>
-                
-                <div class="checkbox-group">
-                  <input type="checkbox" id="safe-request-private-windows" checked>
-                  <label class="checkbox-label" for="safe-request-private-windows">Apply in private windows</label>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -1037,6 +1047,10 @@
             <span class="about-info-label">Version:</span>
             <span class="about-info-value" id="about-version-value">Loading&hellip;</span>
           </div>
+          <div id="about-browser" class="about-info-row">
+            <span class="about-info-label">Browser:</span>
+            <span class="about-info-value" id="about-browser-value">Loading&hellip;</span>
+          </div>
           <div id="about-location" class="about-info-row">
             <span class="about-info-label">Install location:</span>
             <span class="about-info-value" id="about-location-value">Loading&hellip;</span>
@@ -1096,6 +1110,7 @@
   <script src="../js/platform/chrome.js"></script>
   <script src="../js/platform/safari.js"></script>
   <script src="../js/platform/browser-api.js"></script>
+  <script src="../js/platform/features.js"></script>
   <script src="../js/components/time-interval-picker.js"></script>
   <script src="../js/utils.js"></script>
   <script src="../js/components/mastermind-board.js"></script>

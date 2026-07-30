@@ -206,8 +206,8 @@ Complete feature documentation with implementation status and usage details.
 |---------|--------|-------|
 | Firefox 109+ | ✅ Supported | Manifest V2 build; full feature set |
 | Firefox ESR | ✅ Supported | Latest ESR version |
-| Chrome / Edge / Brave / Opera 111+ | ✅ Supported | Manifest V3 build; Safe Request Mode unavailable |
-| Safari 16.4+ (macOS) | ✅ Supported | Manifest V3 build; requires local Xcode conversion; Safe Request Mode unavailable |
+| Chrome / Edge / Brave / Opera 111+ | ✅ Supported | Manifest V3 build; Safe Request Mode search/video enforcement unavailable (its options are hidden) |
+| Safari 16.4+ (macOS) | ✅ Supported | Manifest V3 build; requires local Xcode conversion; Safe Request Mode search/video enforcement unavailable (its options are hidden) |
 
 ### Platforms
 
@@ -313,7 +313,7 @@ Complete feature documentation with implementation status and usage details.
 
 | Limitation | Impact | Notes |
 |-----------|--------|-------|
-| No blocking webRequest in MV3 / Safari | Medium | Safe Request Mode is Firefox-only; label-based blocking still works everywhere |
+| No blocking webRequest in MV3 / Safari | Medium | Safe Request Mode's search/video enforcement is Firefox-only, and its options are hidden elsewhere; in-page site filtering and label-based blocking work everywhere |
 | No persistent background page in MV3 | Low | Chrome/Safari use a service worker with persisted state |
 | Safari needs local Xcode conversion | Medium | Distribute as a signed macOS app |
 | Storage limited to 10MB | Low | Sufficient for this extension |
