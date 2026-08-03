@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [1.5.0] - 2026-07-29
+
+### Added
+
+- **Multi-browser support**: the extension now builds for Chrome/Edge/Brave/Opera and Safari in addition to Firefox, from one shared source tree (`src/`) plus a per-browser manifest (`platform/<browser>/manifest.json`).
+- **Platform abstraction layer** (`src/js/platform/`): `browser-api.js` detects the host browser at runtime and exposes a promise-based `browserAPI` global backed by `firefox.js`, `chrome.js`, or `safari.js`.
+- **Build system**: `build-scripts/build.js` with `npm run build:{firefox,chrome,safari,all}`; the build stamps the `package.json` version into each manifest, generates the Manifest V3 service worker entry point, and fails if a manifest references a missing file.
+- **Packaging system**: `build-scripts/package.js` with `npm run package:{firefox,chrome,safari,all}`, producing one release archive per browser in `dist/` (`content-safety-lock-<browser>-<version>.zip`). `npm run xcode:safari` generates the Safari Xcode project on macOS.
+- **Automated releases**: `.github/workflows/release.yml` builds, tests, lints and publishes a GitHub release with all three browser archives when a `v<version>` tag is pushed (or via manual dispatch). `create-github-releases.sh` does the same locally and now attaches every browser archive instead of Firefox only.
+- **CI**: `.github/workflows/ci.yml` runs the unit tests, all three builds, and `web-ext lint` on pushes to `main` and pull requests.
+- Release notes are now tracked in `release-notes/RELEASE_NOTES_v<version>.md` (the previous location, `web-ext-artifacts/`, is gitignored build output).
+- **Documentation**: `documentation/BUILDING.md` covering the layout, build commands, loading instructions, and platform limitations; `documentation/DEPLOYMENT.md` now documents building, packaging and releasing for all three browsers.
+- **Per-browser feature gating** (`src/js/platform/features.js`): browser name/version detection plus a registry of features and the capability each needs. The options page hides controls the running browser cannot honour and shows "<feature> not supported for <browser> yet" instead, so the Safe Request Mode search/video provider settings no longer appear active on Chrome and Safari.
+- **About tab**: the debug report now includes the browser name, version, build target, manifest version, and the list of features unavailable on that browser.
+- **Tests**: `test/platform-api.test.js` covers adapter selection, promise wrapping of callback-style Chromium APIs, and async `onMessage` handling; `test/platform-features.test.js` covers browser detection (including Edge/Brave disambiguation) and feature availability.
+- PNG icons for Chrome and Safari, which do not accept SVG extension icons.
+
+### Changed
+
+- Sources moved from the repository root into `src/` (`js/`, `html/`, `css/`, `icons/`); the loadable extension is now `build/<browser>/`, not the repository root.
+- Application code calls `browserAPI.*` instead of `browser.*`.
+- Safe Request Mode settings are split into "Search & Video Providers" (network enforcement, Firefox only) and "Site Content Filtering" (Tumblr, Reddit, Bluesky — in-page, works on every browser).
+- Version is now maintained in `package.json` only.
+
+### Fixed
+
+- Popup now loads `js/utils.js`, so the active-lock countdown renders instead of failing with `formatDuration is not defined`.
+
+### Known Limitations
+
+- Safe Request Mode remains Firefox-only: it depends on blocking `webRequest`, which Manifest V3 removed and Safari does not provide. On Chrome and Safari it logs a warning and stays inactive pending the `declarativeNetRequest` refactor.
+
 ## [1.4.4] - 2026-07-27
 
 ### Fixed

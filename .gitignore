@@ -20,3 +20,9 @@ node_modules/
 *.swp
 *.swo
 *~
+
+# Multi-platform build output
+build/
+dist/
+safari-project/
+generated-notes.md

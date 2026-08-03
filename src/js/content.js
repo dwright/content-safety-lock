@@ -220,7 +220,7 @@ function detectLabels() {
  */
 function injectBlockOverlay(blockData) {
   // Notify background that a block occurred (for increment feature)
-  browser.runtime.sendMessage({
+  browserAPI.runtime.sendMessage({
     type: 'BLOCK_OCCURRED'
   }).catch(err => {
     console.log('[CSL] Block notification sent (or not needed):', err);
@@ -403,7 +403,7 @@ async function checkAndBlock() {
     try {
       console.log('[CSL] Sending CHECK_BLOCK message with signals:', signals);
       console.log('[CSL] *** ABOUT TO SEND MESSAGE TO BACKGROUND ***');
-      const response = await browser.runtime.sendMessage({
+      const response = await browserAPI.runtime.sendMessage({
         type: 'CHECK_BLOCK',
         signals,
         details
@@ -502,7 +502,7 @@ async function checkPolicyPages() {
   console.log('[CSL] checkPolicyPages: candidates:', candidates);
 
   try {
-    const response = await browser.runtime.sendMessage({
+    const response = await browserAPI.runtime.sendMessage({
       type: 'FETCH_POLICY_PAGES',
       urls: candidates,
       originUrl: window.location.href
@@ -510,7 +510,7 @@ async function checkPolicyPages() {
 
     if (response && response.signals && response.signals.length > 0) {
       console.log('[CSL] checkPolicyPages: signals from policy pages:', response.signals);
-      const blockResponse = await browser.runtime.sendMessage({
+      const blockResponse = await browserAPI.runtime.sendMessage({
         type: 'CHECK_BLOCK',
         signals: response.signals,
         details: response.details || []
@@ -595,7 +595,7 @@ function injectScript(filename) {
   try {
     console.error('[CSL] Injecting script:', filename);
     const script = document.createElement('script');
-    script.src = browser.runtime.getURL(filename);
+    script.src = browserAPI.runtime.getURL(filename);
     
     // Try to find a nonce from existing scripts
     // Reddit uses nonces for CSP
@@ -626,7 +626,7 @@ async function initTumblrInterception() {
   console.error('[CSL] Tumblr detected, checking Safe Request Mode settings...');
 
   try {
-    const response = await browser.runtime.sendMessage({ type: 'GET_STATE' });
+    const response = await browserAPI.runtime.sendMessage({ type: 'GET_STATE' });
     const state = response.state;
     
     // Check if Safe Request Mode is active and Tumblr provider is enabled
@@ -704,7 +704,7 @@ async function initRedditInterception() {
   console.error('[CSL] Reddit detected, checking Safe Request Mode settings...');
 
   try {
-    const response = await browser.runtime.sendMessage({ type: 'GET_STATE' });
+    const response = await browserAPI.runtime.sendMessage({ type: 'GET_STATE' });
     const state = response.state;
 
     // Check if Safe Request Mode is active and Reddit provider is enabled
@@ -745,7 +745,7 @@ async function initBlueskyInterception() {
   console.error('[CSL] Bluesky detected, checking Safe Request Mode settings...');
 
   try {
-    const response = await browser.runtime.sendMessage({ type: 'GET_STATE' });
+    const response = await browserAPI.runtime.sendMessage({ type: 'GET_STATE' });
     const state = response.state;
 
     // Check if Safe Request Mode is active and Bluesky provider is enabled
@@ -865,7 +865,7 @@ async function initAmazonInterception() {
     console.log('[CSL] Amazon detected, checking parental controls settings...');
 
     try {
-        const response = await browser.runtime.sendMessage({ type: 'GET_STATE' });
+        const response = await browserAPI.runtime.sendMessage({ type: 'GET_STATE' });
         const state = response.state;
 
         // Check if the Adult Product Sales category AND Amazon vendor are enabled

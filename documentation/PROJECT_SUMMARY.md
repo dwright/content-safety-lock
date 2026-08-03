@@ -1,8 +1,8 @@
-# Project Summary - Content Safety Lock Firefox Extension
+# Project Summary - Content Safety Lock Browser Extension
 
 ## Project Overview
 
-**Content Safety Lock** is a comprehensive Firefox extension that provides voluntary adult content blocking with an innovative self-lock mode for adults seeking structured guardrails.
+**Content Safety Lock** is a comprehensive browser extension that provides voluntary adult content blocking with an innovative self-lock mode for adults seeking structured guardrails. It builds for Firefox, Chrome/Edge/Brave/Opera, and Safari from one shared source tree.
 
 **Status**: ✅ Complete and ready for testing/deployment
 
@@ -12,15 +12,17 @@
 
 | File | Purpose | Lines |
 |------|---------|-------|
-| `manifest.json` | Extension configuration (MV3) | 38 |
-| `background.js` | Service worker, policy engine | 350+ |
-| `content.js` | Label detection, blocking | 400+ |
-| `utils.js` | Shared utilities (crypto, time, parsing) | 300+ |
-| `options.html` | Settings UI | 400+ |
-| `options.js` | Settings logic | 350+ |
-| `popup.html` | Quick status popup | 100+ |
-| `popup.js` | Popup logic | 50+ |
-| `icons/*.svg` | Extension icons (3 sizes) | - |
+| `platform/<browser>/manifest.json` | Per-browser configuration (MV2 for Firefox, MV3 for Chrome/Safari) | - |
+| `src/js/platform/*.js` | `browserAPI` abstraction + per-browser adapters | 400+ |
+| `src/js/background.js` | Background script / service worker, policy engine | 350+ |
+| `src/js/content.js` | Label detection, blocking | 400+ |
+| `src/js/utils.js` | Shared utilities (crypto, time, parsing) | 300+ |
+| `src/html/options.html` | Settings UI | 400+ |
+| `src/js/options.js` | Settings logic | 350+ |
+| `src/html/popup.html` | Quick status popup | 100+ |
+| `src/js/popup.js` | Popup logic | 50+ |
+| `src/icons/*` | Extension icons (SVG for Firefox, PNG for Chrome/Safari) | - |
+| `build-scripts/*.js` | Build and packaging orchestrators | 250+ |
 
 ### Documentation (5 files)
 
@@ -132,10 +134,11 @@ browser.storage.local
 
 ## Key Technologies
 
-- **Manifest V3** (MV3): Latest Firefox extension standard
+- **Manifest V2 (Firefox) and Manifest V3 (Chrome, Safari)**, generated per target
+- **`browserAPI` abstraction**: one promise-based API across all browsers
 - **Web Crypto API**: SHA-256 hashing
-- **browser.storage.local**: Profile-scoped data storage
-- **browser.alarms**: Periodic lock status checks
+- **Extension local storage**: profile-scoped data storage
+- **Alarms API**: periodic lock status checks
 - **Content Scripts**: document_start execution for early detection
 - **Service Workers**: Background processing
 - **Modern CSS**: Gradients, flexbox, responsive design
@@ -156,9 +159,9 @@ browser.storage.local
 
 ## Browser Support
 
-- ✅ Firefox 109+ (MV3 support)
-- ✅ Desktop Firefox
-- ✅ Mobile Firefox
+- ✅ Firefox 109+ (desktop, ESR, Android)
+- ✅ Chrome / Edge / Brave / Opera 111+ (no Safe Request Mode)
+- ✅ Safari 16.4+ on macOS, after local Xcode conversion (no Safe Request Mode)
 - ✅ Private browsing windows
 
 ## Known Limitations
@@ -201,23 +204,26 @@ browser.storage.local
 ### For Development
 
 ```bash
-1. Open Firefox → about:debugging
-2. Click "This Firefox"
-3. Click "Load Temporary Add-on"
-4. Select manifest.json
+npm install
+npm run build:all   # -> build/firefox, build/chrome, build/safari
 ```
+
+- Firefox: `about:debugging` → This Firefox → Load Temporary Add-on →
+  `build/firefox/manifest.json`
+- Chrome: `chrome://extensions` → Developer mode → Load unpacked → `build/chrome`
+- Safari: `npm run xcode:safari` on macOS, then run the Xcode project
 
 ### For Production
 
 ```bash
-# Using web-ext
-npm install --global web-ext
-web-ext build --source-dir=/path/to/extension
-
-# Then submit to addons.mozilla.org
+npm run package:all   # -> dist/content-safety-lock-<browser>-<version>.zip
 ```
 
-See DEPLOYMENT.md for detailed instructions.
+Then submit each archive to the matching store (AMO, Chrome Web Store, Edge
+Add-ons, App Store). Pushing a `v<version>` tag publishes a GitHub release with
+all three archives.
+
+See BUILDING.md and DEPLOYMENT.md for detailed instructions.
 
 ## Documentation Structure
 
@@ -232,29 +238,37 @@ README.md           ← Start here for overview
 ## File Structure
 
 ```
-windsurf-project/
-├── manifest.json              # Extension config
-├── background.js              # Service worker
-├── content.js                 # Content script
-├── utils.js                   # Shared utilities
-├── options.html               # Settings UI
-├── options.js                 # Settings logic
-├── popup.html                 # Quick popup
-├── popup.js                   # Popup logic
-├── icons/                     # Extension icons
-│   ├── icon-16.svg
-│   ├── icon-48.svg
-│   └── icon-128.svg
-├── test-pages/                # Test resources
-│   ├── adult-labeled.html
-│   ├── rta-labeled.html
-│   └── clean-page.html
+content-safety-lock/
+├── src/                       # Shared source (not loadable directly)
+│   ├── js/
+│   │   ├── background.js      # Background script / service worker
+│   │   ├── content.js         # Content script
+│   │   ├── options.js         # Settings logic
+│   │   ├── popup.js           # Popup logic
+│   │   ├── utils.js           # Shared utilities
+│   │   ├── platform/          # browserAPI abstraction + adapters
+│   │   ├── components/
+│   │   ├── detectors/
+│   │   ├── interceptors/
+│   │   └── safe-request/      # Firefox-only network enforcement
+│   ├── html/                  # options.html, popup.html
+│   ├── css/
+│   └── icons/                 # SVG (Firefox) + PNG (Chrome/Safari)
+├── platform/                  # Per-browser manifests
+│   ├── firefox/manifest.json
+│   ├── chrome/manifest.json
+│   └── safari/manifest.json
+├── build-scripts/             # build.js, package.js
+├── build/                     # Loadable output per browser (gitignored)
+├── dist/                      # Release archives (gitignored)
+├── test/                      # Unit tests
+├── test-pages/                # Manual test resources
+├── release-notes/             # Per-version release notes
+├── .github/workflows/         # CI + release automation
 ├── README.md                  # Full documentation
 ├── QUICKSTART.md              # Getting started
-├── TESTING.md                 # Test guide
-├── DEPLOYMENT.md              # Deployment guide
 ├── CHANGELOG.md               # Version history
-└── PROJECT_SUMMARY.md         # This file
+└── documentation/             # BUILDING.md, TESTING.md, DEPLOYMENT.md, ...
 ```
 
 ## Next Steps
@@ -263,7 +277,7 @@ windsurf-project/
 
 1. ✅ Review all code
 2. ✅ Run test suite (TESTING.md)
-3. ✅ Test on clean Firefox profile
+3. ✅ Test on clean Firefox and Chrome profiles
 4. ✅ Verify on Windows, macOS, Linux
 
 ### Short-term (This Month)
@@ -314,7 +328,7 @@ Before deployment, ensure:
 
 ## Conclusion
 
-**Content Safety Lock** is a fully-featured, well-documented Firefox extension ready for testing and deployment. It provides a unique combination of:
+**Content Safety Lock** is a fully-featured, well-documented multi-browser extension ready for testing and deployment. It provides a unique combination of:
 
 - **Voluntary label detection** (RTA, ICRA/SafeSurf)
 - **Flexible parental controls** (categories, lists, PIN)

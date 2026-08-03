@@ -1,9 +1,9 @@
 # Content Safety Lock
 
-> **Smarter content filtering for Firefox — no subscription, no cloud, no compromises.**
+> **Smarter content filtering for Firefox, Chrome and Safari — no subscription, no cloud, no compromises.**
 
 [![Firefox Add-on](https://img.shields.io/badge/Firefox-Add--on-orange?logo=firefox)](https://addons.mozilla.org/en-US/firefox/addon/content-safety-lock/)
-[![Version](https://img.shields.io/badge/version-1.4.2-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.0-blue)](CHANGELOG.md)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue)](LICENSE)
 [![Privacy: 100% Local](https://img.shields.io/badge/Privacy-100%25%20Local-brightgreen)](#privacy-first-by-design)
 
@@ -43,7 +43,7 @@ There is no database to maintain and no cloud service to pay for. The work happe
 |----------|----------|
 | **Adults seeking self-control** | Set a time-locked commitment to stay clean — with anti-tamper tools that make it genuinely hard to cheat |
 | **Parents** | Configure category-based filtering with a PIN-protected settings page, safe-search enforcement, and per-site block lists |
-| **IT administrators** | Deploy managed policy via Firefox's enterprise policy engine to enforce settings across a fleet |
+| **IT administrators** | Deploy managed policy via Firefox or Chrome/Edge enterprise policy to enforce settings across a fleet |
 
 ---
 
@@ -86,6 +86,10 @@ Before a page even loads, Content Safety Lock modifies outbound requests to majo
 | **Tumblr** | Removes mature/explicit/adult posts from feeds |
 | **Bluesky** | Filters posts by official moderation labels; controls age & adult content settings |
 
+> **Firefox only for now.** Safe Request Mode rewrites requests through the
+> blocking `webRequest` API, which Manifest V3 removed and Safari does not
+> provide. On Chrome and Safari it stays inactive; every other feature works.
+
 ---
 
 ### Parental Controls — Surgical, Category-Based Filtering
@@ -124,7 +128,7 @@ Content Safety Lock layers multiple detection methods so content can't easily sl
 
 ### Managed Policy (Enterprise / IT)
 
-Administrators can push a Firefox managed policy JSON to lock down settings across an entire organization or household.
+Administrators can push a managed policy JSON (Firefox enterprise policy or Chrome/Edge managed storage) to lock down settings across an entire organization or household. Safari has no managed-storage equivalent.
 
 ```json
 {
@@ -159,17 +163,38 @@ See [documentation/MANAGED_POLICY.md](documentation/MANAGED_POLICY.md) for the f
 | Subscription required | **No** |
 | Account required | **No** |
 
-All state — settings, lock status, passphrases (stored as SHA-256 hashes) — lives exclusively in your local Firefox profile via `browser.storage.local`.
+All state — settings, lock status, passphrases (stored as SHA-256 hashes) — lives exclusively in your local browser profile via extension local storage.
 
 ---
 
 ## Installation
 
-### From Firefox Add-ons (recommended)
+### From Firefox Add-ons (recommended for Firefox)
 
 > [Install from addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/content-safety-lock/)
 
-Developers and contributors: see [documentation/DEPLOYMENT.md](documentation/DEPLOYMENT.md) for instructions on loading from source and building a distributable package.
+### From a GitHub release
+
+Every [release](https://github.com/dwright/content-safety-lock/releases) contains
+one archive per browser:
+
+| Browser | Asset | Install |
+|---|---|---|
+| Firefox | `content-safety-lock-firefox-<version>.zip` | Unzip, then `about:debugging` → This Firefox → Load Temporary Add-on → `manifest.json` |
+| Chrome / Edge / Brave / Opera | `content-safety-lock-chrome-<version>.zip` | Unzip, then `chrome://extensions` → Developer mode → Load unpacked → the unzipped folder |
+| Safari (macOS) | `content-safety-lock-safari-<version>.zip` | Unzip, then `xcrun safari-web-extension-converter <folder>` and run the Xcode project |
+
+### From source (Firefox, Chrome, Safari)
+
+```bash
+npm install
+npm run build:all     # -> build/firefox, build/chrome, build/safari
+npm run package:all   # -> dist/content-safety-lock-<browser>-<version>.zip
+```
+
+See [documentation/BUILDING.md](documentation/BUILDING.md) for per-browser build,
+packaging and loading instructions, and
+[documentation/DEPLOYMENT.md](documentation/DEPLOYMENT.md) for release steps.
 
 ---
 
@@ -192,6 +217,8 @@ For a step-by-step walkthrough see [QUICKSTART.md](QUICKSTART.md).
 | Firefox 109+ (desktop) | ✅ Full support |
 | Firefox ESR (latest) | ✅ Full support |
 | Firefox for Android | ✅ Full support |
+| Chrome / Edge / Brave / Opera 111+ | ✅ Full support except Safe Request Mode |
+| Safari 16.4+ (macOS, requires local Xcode conversion) | ✅ Full support except Safe Request Mode |
 | Private browsing windows | ✅ Identical enforcement |
 | Windows / macOS / Linux | ✅ All platforms |
 
@@ -204,7 +231,7 @@ This extension is a voluntary tool. It is designed to raise the cost of impulsiv
 - **It depends on publishers labeling their content honestly.** Most responsible adult content publishers do — but malicious actors don't. Sites that deliberately avoid labeling their content will not be caught by this extension alone. Conversely, this extension catches labeled content that blocklist-based filters miss entirely. For the strongest coverage, use it alongside a traditional blocklist-based filter — the two approaches are complementary, not competing.
 - **A user with admin privileges can uninstall the extension.** Using a separate OS user account without admin rights significantly strengthens the commitment.
 - **OS-level clock changes are detected but not prevented.** Clock rollback extends the lock duration by the manipulated amount.
-- **Deleting the Firefox profile removes all lock state.** Store recovery codes somewhere safe and offline.
+- **Deleting the browser profile removes all lock state.** Store recovery codes somewhere safe and offline.
 
 For tips on stronger setups see [documentation/SECURITY.md](documentation/SECURITY.md).
 

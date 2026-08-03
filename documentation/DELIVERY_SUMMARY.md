@@ -1,5 +1,12 @@
 # Delivery Summary - Content Safety Lock Firefox Extension
 
+> **Historical document.** This describes the original 1.0.0 Firefox-only
+> delivery, when the extension lived at the repository root. Since 1.5.0 the
+> sources live in `src/`, each browser has its own manifest under
+> `platform/<browser>/`, and builds are produced by `npm run build:all`. See
+> [BUILDING.md](BUILDING.md) and [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) for the
+> current structure.
+
 **Project**: Content Safety Lock - Voluntary Adult Content Blocker with Self-Lock Mode
 **Status**: ✅ **COMPLETE & READY FOR DEPLOYMENT**
 **Delivery Date**: October 21, 2025

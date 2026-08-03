@@ -109,19 +109,22 @@ async function handleBeforeRequest(details) {
  * Initialize Safe Request Mode handlers
  */
 function initializeSafeRequestHandlers() {
-  if (!browser?.webRequest) {
-    console.error('[CSL] ERROR: browser.webRequest API is not available');
+  if (!browserAPI.capabilities.blockingWebRequest) {
+    console.warn(
+      `[CSL] Safe Request Mode is unavailable on ${browserAPI.platform}: ` +
+      'the blocking webRequest API is not supported'
+    );
     return;
   }
   
   try {
-    browser.webRequest.onBeforeSendHeaders.addListener(
+    browserAPI.webRequest.onBeforeSendHeaders.addListener(
       handleBeforeSendHeaders,
       { urls: ['<all_urls>'] },
       ['blocking', 'requestHeaders']
     );
     
-    browser.webRequest.onBeforeRequest.addListener(
+    browserAPI.webRequest.onBeforeRequest.addListener(
       handleBeforeRequest,
       { urls: ['<all_urls>'] },
       ['blocking']
