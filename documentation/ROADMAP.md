@@ -279,7 +279,8 @@ pushing a `v<version>` tag publishes all three archives as a GitHub release.
 and [#3 Safari enforcement](https://github.com/dwright/content-safety-lock/issues/3).
 Related cross-browser gaps: [#4 Safari managed policy](https://github.com/dwright/content-safety-lock/issues/4),
 [#5 Safari signing/distribution](https://github.com/dwright/content-safety-lock/issues/5),
-[#6 Firefox/Safari runtime test coverage](https://github.com/dwright/content-safety-lock/issues/6).
+[#6 Firefox/Safari runtime test coverage](https://github.com/dwright/content-safety-lock/issues/6),
+[#7 Chrome blocking stops once the MV3 service worker goes dormant](https://github.com/dwright/content-safety-lock/issues/7).
 
 Until the port lands, the options page hides the affected settings and shows
 "Safe Request Mode for search and video providers not supported for
