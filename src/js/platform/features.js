@@ -28,28 +28,55 @@
     { name: 'Safari', pattern: /Version\/([\d.]+).*Safari/ }
   ];
 
-  // Chromium's brand list pads itself with intentionally meaningless entries
-  // ("Not/A)Brand", ";Not A Brand", ...) that must never be reported.
-  const PLACEHOLDER_BRAND = /not[/\s(;.]*a[/\s)(;.]*brand/i;
+  // Brands worth reporting, most specific first. Chromium deliberately pads its
+  // brand list with a randomly punctuated placeholder ("Not(A:Brand",
+  // ";Not A Brand", ...), so brands are matched against this allow list rather
+  // than filtered against a placeholder pattern.
+  const KNOWN_BRANDS = [
+    { brand: 'Brave', name: 'Brave' },
+    { brand: 'Microsoft Edge', name: 'Edge' },
+    { brand: 'Opera', name: 'Opera' },
+    { brand: 'Vivaldi', name: 'Vivaldi' },
+    { brand: 'Yandex', name: 'Yandex' },
+    { brand: 'Google Chrome', name: 'Chrome' },
+    { brand: 'Chromium', name: 'Chromium' }
+  ];
 
-  function detectBrand(userAgent, userAgentData) {
-    const brands = userAgentData?.brands;
-    if (Array.isArray(brands)) {
-      const real = brands.filter(
-        (b) => !PLACEHOLDER_BRAND.test(b.brand) && b.brand !== 'Chromium'
-      );
-      // Brave reports itself here even though its user agent hides it.
-      if (real.length > 0) {
-        return { name: real[0].brand, version: real[0].version };
-      }
-    }
-
+  function matchUserAgent(userAgent) {
     for (const { name, pattern } of UA_BRANDS) {
       const match = pattern.exec(userAgent || '');
       if (match) return { name, version: match[1] };
     }
+    return null;
+  }
 
-    return { name: null, version: null };
+  function matchBrands(brands) {
+    if (!Array.isArray(brands)) return null;
+
+    for (const known of KNOWN_BRANDS) {
+      const entry = brands.find((b) => b.brand === known.brand);
+      if (entry) return { name: known.name, version: entry.version };
+    }
+    return null;
+  }
+
+  function detectBrand(userAgent, userAgentData) {
+    const fromUserAgent = matchUserAgent(userAgent);
+    // Brave and Edge announce themselves here even though their user agent
+    // strings claim to be Chrome.
+    const fromBrands = matchBrands(userAgentData?.brands);
+    // A bare "Chromium" brand says nothing the user agent does not say better:
+    // Chrome for Testing, for instance, lists only Chromium and the placeholder.
+    if (!fromBrands || (fromBrands.name === 'Chromium' && fromUserAgent)) {
+      return fromUserAgent || { name: null, version: null };
+    }
+
+    // Brand lists carry only the major version; the user agent has the full one.
+    const version = fromUserAgent?.name === fromBrands.name
+      ? fromUserAgent.version
+      : fromBrands.version;
+
+    return { name: fromBrands.name, version };
   }
 
   /**
