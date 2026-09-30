@@ -1,7 +1,26 @@
 /**
  * Safe Request Mode Handler
- * Implements webRequest hooks for header and URL parameter enforcement
+ * Implements DNR rules with blocking webRequest as a fallback
  */
+
+const safeRequestUsesDNR = Boolean(browserAPI.capabilities.declarativeNetRequest);
+
+if (safeRequestUsesDNR) {
+  browserAPI.storage.onChanged.addListener((changes, area) => {
+    if ((area === 'local' && changes.state) || area === 'managed') {
+      refreshSafeRequestRules();
+    }
+  });
+}
+
+async function refreshSafeRequestRules() {
+  try {
+    const state = await loadState();
+    await syncSafeRequestRules(browserAPI.declarativeNetRequest, state.safeRequestMode);
+  } catch (err) {
+    console.error('[CSL] Failed to refresh Safe Request Mode rules:', err);
+  }
+}
 
 // ============ Request Hooks ============
 
@@ -109,6 +128,12 @@ async function handleBeforeRequest(details) {
  * Initialize Safe Request Mode handlers
  */
 function initializeSafeRequestHandlers() {
+  if (safeRequestUsesDNR) {
+    refreshSafeRequestRules();
+    console.debug('[CSL] Safe Request Mode DNR rules initialized');
+    return;
+  }
+
   if (!browserAPI.capabilities.blockingWebRequest) {
     console.warn(
       `[CSL] Safe Request Mode is unavailable on ${browserAPI.platform}: ` +

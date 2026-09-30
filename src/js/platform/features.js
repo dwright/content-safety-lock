@@ -107,12 +107,12 @@
   const FEATURES = {
     safeRequestNetworkEnforcement: {
       label: 'Safe Request Mode for search and video providers',
-      requires: 'blockingWebRequest',
+      requires: ['declarativeNetRequest', 'blockingWebRequest'],
       // Shown in place of the hidden controls, after the generic message.
       detail:
         'Rewriting SafeSearch parameters and adding safety headers needs the ' +
-        'blocking webRequest API, which Manifest V3 removed. Label-based ' +
-        'blocking and in-page site filtering are unaffected.'
+        'declarativeNetRequest API (or blocking webRequest), which this browser ' +
+        'does not provide. Label-based blocking and in-page site filtering are unaffected.'
     }
   };
 
@@ -122,7 +122,7 @@
     function isSupported(feature) {
       const spec = FEATURES[feature];
       if (!spec) return true;
-      return Boolean(api?.capabilities?.[spec.requires]);
+      return [].concat(spec.requires).some((flag) => Boolean(api?.capabilities?.[flag]));
     }
 
     function label(feature) {
