@@ -69,9 +69,9 @@ For testing and development:
    ```
    The same checks run in CI (`.github/workflows/ci.yml`) on every pull request.
 
-> Safe Request Mode is Firefox-only: it depends on the blocking `webRequest`
-> API, which Manifest V3 removed and Safari does not provide. On Chrome and
-> Safari it logs a warning and stays inactive.
+> Safe Request Mode uses `declarativeNetRequest` on Chrome MV3, Safari MV3, and
+> Firefox MV2 where available, with blocking `webRequest` as a fallback on
+> Firefox versions without DNR.
 
 ## Production Deployment
 
@@ -282,8 +282,8 @@ locally.
 | Archive | Manifest | Icons | Notes |
 |---|---|---|---|
 | `-firefox-` | V2, `background.scripts`, blocking `webRequest` | SVG | Safe Request Mode active |
-| `-chrome-` | V3, generated service worker entry point | PNG | Safe Request Mode inactive |
-| `-safari-` | V3, non-persistent background scripts | PNG | Safe Request Mode inactive; needs Xcode conversion |
+| `-chrome-` | V3, generated service worker entry point | PNG | Safe Request Mode via declarativeNetRequest |
+| `-safari-` | V3, non-persistent background scripts | PNG | Safe Request Mode via declarativeNetRequest; needs Xcode conversion |
 
 See [BUILDING.md](BUILDING.md) for the full multi-browser build documentation.
 

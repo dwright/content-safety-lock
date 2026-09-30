@@ -1,10 +1,9 @@
 # Safe Request Mode Implementation Plan
 
-> **Firefox only.** Safe Request Mode depends on the blocking `webRequest` API,
-> which Manifest V3 removed and Safari does not provide, so it is inactive on the
-> Chrome and Safari builds (the handler logs a warning and returns). Porting it to
-> `declarativeNetRequest` (Chrome) and content-script interception (Safari) is
-> Phase 4 of [ROADMAP.md](ROADMAP.md).
+> Safe Request Mode uses `declarativeNetRequest` on Chrome MV3, Safari MV3, and
+> Firefox MV2 where available, with blocking `webRequest` as a fallback on older
+> Firefox versions. DNR replaces any existing safe-search parameter value with
+> the enforced value, including values the earlier implementation left unchanged.
 >
 > File paths below predate the 1.5.0 restructure: sources now live under
 > `src/js/` and manifests under `platform/<browser>/`.

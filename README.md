@@ -86,9 +86,11 @@ Before a page even loads, Content Safety Lock modifies outbound requests to majo
 | **Tumblr** | Removes mature/explicit/adult posts from feeds |
 | **Bluesky** | Filters posts by official moderation labels; controls age & adult content settings |
 
-> **Firefox only for now.** Safe Request Mode rewrites requests through the
-> blocking `webRequest` API, which Manifest V3 removed and Safari does not
-> provide. On Chrome and Safari it stays inactive; every other feature works.
+> Safe Request Mode uses `declarativeNetRequest` on Chrome MV3, Safari MV3, and
+> Firefox MV2 where available, with blocking `webRequest` as a fallback on
+> Firefox versions without DNR. DNR replaces any existing safe-search parameter
+> value with the enforced value, including values the previous implementation
+> left unchanged.
 
 ---
 
@@ -217,8 +219,8 @@ For a step-by-step walkthrough see [QUICKSTART.md](QUICKSTART.md).
 | Firefox 109+ (desktop) | ✅ Full support |
 | Firefox ESR (latest) | ✅ Full support |
 | Firefox for Android | ✅ Full support |
-| Chrome / Edge / Brave / Opera 111+ | ✅ Full support except Safe Request Mode |
-| Safari 16.4+ (macOS, requires local Xcode conversion) | ✅ Full support except Safe Request Mode |
+| Chrome / Edge / Brave / Opera 111+ | ✅ Full support, including Safe Request Mode |
+| Safari 16.4+ (macOS, requires local Xcode conversion) | ✅ Full support, including Safe Request Mode |
 | Private browsing windows | ✅ Identical enforcement |
 | Windows / macOS / Linux | ✅ All platforms |
 

@@ -39,7 +39,8 @@ to Firefox, built from a single shared source tree.
 
 ## Known limitations
 
-- **Safe Request Mode's SafeSearch enforcement is Firefox-only.** It depends on
+- **At the original 1.5.0 release, Safe Request Mode's SafeSearch enforcement
+  was Firefox-only.** It depended on
   the blocking `webRequest` API, which Manifest V3 removed and Safari does not
   provide, so the Google/Bing/Yahoo/DuckDuckGo/YouTube settings are hidden on
   Chrome and Safari with a "not supported for <browser> yet" notice; the

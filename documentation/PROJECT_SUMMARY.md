@@ -160,8 +160,8 @@ browser.storage.local
 ## Browser Support
 
 - ✅ Firefox 109+ (desktop, ESR, Android)
-- ✅ Chrome / Edge / Brave / Opera 111+ (no Safe Request Mode)
-- ✅ Safari 16.4+ on macOS, after local Xcode conversion (no Safe Request Mode)
+- ✅ Chrome / Edge / Brave / Opera 111+ (Safe Request Mode via declarativeNetRequest)
+- ✅ Safari 16.4+ on macOS, after local Xcode conversion (Safe Request Mode via declarativeNetRequest)
 - ✅ Private browsing windows
 
 ## Known Limitations
@@ -250,7 +250,7 @@ content-safety-lock/
 │   │   ├── components/
 │   │   ├── detectors/
 │   │   ├── interceptors/
-│   │   └── safe-request/      # Firefox-only network enforcement
+│   │   └── safe-request/      # DNR network enforcement with webRequest fallback
 │   ├── html/                  # options.html, popup.html
 │   ├── css/
 │   └── icons/                 # SVG (Firefox) + PNG (Chrome/Safari)

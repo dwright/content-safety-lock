@@ -109,7 +109,8 @@ js/sync/
 
 **Status**: ✅ **Implemented in 1.5.0** (desktop). See
 [BUILDING.md](BUILDING.md) for the resulting build system. Mobile Safari remains
-future work (goal 3), and Safe Request Mode is still Firefox-only (goal 4).
+future work (goal 3). Safe Request Mode uses declarativeNetRequest on DNR-capable
+browsers and retains blocking webRequest as a Firefox fallback (goal 4).
 
 **Goal**: Support Firefox, Chrome/Edge/Brave, and Safari with a single codebase.
 
@@ -535,18 +536,18 @@ consider buying me a coffee!
 
 ---
 
-### Phase 4: Safe Request Mode Refactor (1-2 months)
+### Phase 4: Safe Request Mode Refactor (completed)
 
 **Goals**:
-- Refactor Safe Request Mode for Chrome and Safari
-- Maintain Firefox's powerful implementation
+- Use declarativeNetRequest for Chrome MV3, Safari MV3, and Firefox MV2
+- Retain blocking webRequest as a fallback where DNR is unavailable
 
 **Tasks**:
 1. ✅ Audit current Safe Request Mode implementation
 2. ✅ Design platform-specific architecture
-3. ✅ Keep Firefox implementation as-is
-4. ✅ Implement Chrome version using `declarativeNetRequest`
-5. ✅ Implement Safari version using content script injection
+3. ✅ Keep blocking webRequest as the Firefox fallback
+4. ✅ Implement shared DNR rules for Chrome, Safari, and Firefox
+5. ✅ Use the same DNR rule implementation across supported targets
 6. ✅ Create platform selector in build system
 7. ✅ Test Google SafeSearch on all platforms
 8. ✅ Test Bing Strict Mode on all platforms
@@ -556,7 +557,7 @@ consider buying me a coffee!
 12. ✅ Update user documentation
 
 **Deliverables**:
-- Platform-specific Safe Request Mode implementations
+- Shared DNR Safe Request Mode implementation with Firefox fallback
 - All providers working on all platforms (or documented limitations)
 - Updated documentation
 
@@ -1207,7 +1208,8 @@ GNU General Public License v3.0 - See LICENSE file for details
 - Goal 2 (Multi-Browser Support) and Phase 1 delivered in 1.5.0: shared `src/`
   tree, `browserAPI` abstraction, per-browser manifests, build/packaging scripts,
   CI, and tag-triggered multi-browser releases
-- Safe Request Mode remains Firefox-only (Phase 4)
+- Safe Request Mode now uses declarativeNetRequest across DNR-capable browsers,
+  with blocking webRequest retained as a Firefox fallback
 
 ### 2024-11-29
 - Initial roadmap created

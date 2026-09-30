@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Cross-browser Safe Request Mode enforcement**: use `declarativeNetRequest`
+  on Chrome MV3, Safari MV3, and Firefox MV2, retaining blocking `webRequest`
+  as a fallback on Firefox versions without DNR.
+
+### Changed
+
+- DNR replaces any existing non-strict safe-search parameter value with the
+  enforced value; the previous implementation left unrecognized values alone.
+
 ## [1.5.0] - 2026-07-29
 
 ### Added
@@ -19,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CI**: `.github/workflows/ci.yml` runs the unit tests, all three builds, and `web-ext lint` on pushes to `main` and pull requests.
 - Release notes are now tracked in `release-notes/RELEASE_NOTES_v<version>.md` (the previous location, `web-ext-artifacts/`, is gitignored build output).
 - **Documentation**: `documentation/BUILDING.md` covering the layout, build commands, loading instructions, and platform limitations; `documentation/DEPLOYMENT.md` now documents building, packaging and releasing for all three browsers.
-- **Per-browser feature gating** (`src/js/platform/features.js`): browser name/version detection plus a registry of features and the capability each needs. The options page hides controls the running browser cannot honour and shows "<feature> not supported for <browser> yet" instead, so the Safe Request Mode search/video provider settings no longer appear active on Chrome and Safari.
+- **Per-browser feature gating** (`src/js/platform/features.js`): browser name/version detection plus a registry of features and the capability each needs. The options page hides controls the running browser cannot honour and shows "<feature> not supported for <browser> yet" instead.
 - **About tab**: the debug report now includes the browser name, version, build target, manifest version, and the list of features unavailable on that browser.
 - **Tests**: `test/platform-api.test.js` covers adapter selection, promise wrapping of callback-style Chromium APIs, and async `onMessage` handling; `test/platform-features.test.js` covers browser detection (including Edge/Brave disambiguation) and feature availability.
 - PNG icons for Chrome and Safari, which do not accept SVG extension icons.
@@ -28,16 +39,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Sources moved from the repository root into `src/` (`js/`, `html/`, `css/`, `icons/`); the loadable extension is now `build/<browser>/`, not the repository root.
 - Application code calls `browserAPI.*` instead of `browser.*`.
-- Safe Request Mode settings are split into "Search & Video Providers" (network enforcement, Firefox only) and "Site Content Filtering" (Tumblr, Reddit, Bluesky — in-page, works on every browser).
+- Safe Request Mode settings are split into "Search & Video Providers" (network enforcement) and "Site Content Filtering" (Tumblr, Reddit, Bluesky — in-page, works on every browser).
 - Version is now maintained in `package.json` only.
 
 ### Fixed
 
 - Popup now loads `js/utils.js`, so the active-lock countdown renders instead of failing with `formatDuration is not defined`.
-
-### Known Limitations
-
-- Safe Request Mode remains Firefox-only: it depends on blocking `webRequest`, which Manifest V3 removed and Safari does not provide. On Chrome and Safari it logs a warning and stays inactive pending the `declarativeNetRequest` refactor.
 
 ## [1.4.4] - 2026-07-27
 

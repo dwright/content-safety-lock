@@ -97,12 +97,10 @@ The adapters normalize three real differences:
 
 ## Known platform limitations
 
-- **Safe Request Mode's search/video enforcement is Firefox-only for now.** It
-  relies on blocking `webRequest`, which Manifest V3 removed and Safari never
-  had. On Chrome and Safari the handler logs a warning and stays inactive;
-  porting it to `declarativeNetRequest` (Chrome) and early content-script
-  injection (Safari) is Phase 4 of the roadmap. The in-page site filtering
-  (Tumblr, Reddit, Bluesky) is content-script based and works on every target.
+- **Safe Request Mode's search/video enforcement uses `declarativeNetRequest`**
+  on Chrome MV3, Safari MV3, and Firefox MV2 where available. Firefox keeps
+  blocking `webRequest` as a fallback. The in-page site filtering (Tumblr,
+  Reddit, Bluesky) remains content-script based and works on every target.
 
   Unavailable features are declared in `src/js/platform/features.js` with the
   `browserAPI.capabilities` flag each one needs, and the options page hides
@@ -111,7 +109,7 @@ The adapters normalize three real differences:
   ```js
   safeRequestNetworkEnforcement: {
     label: 'Safe Request Mode for search and video providers',
-    requires: 'blockingWebRequest'
+    requires: ['declarativeNetRequest', 'blockingWebRequest']
   }
   ```
 

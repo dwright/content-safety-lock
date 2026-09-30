@@ -85,7 +85,7 @@ content-safety-lock/
 │       ├── components/             ← UI components
 │       ├── detectors/              ← Content detection
 │       ├── interceptors/           ← Provider interceptors
-│       └── safe-request/           ← Safe request mode (Firefox only)
+│       └── safe-request/           ← DNR network enforcement with webRequest fallback
 │
 ├── 🌐 Per-browser Config & Build
 │   ├── platform/firefox/manifest.json   ← Manifest V2

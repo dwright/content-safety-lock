@@ -269,8 +269,9 @@ Then run `npm run build:all` — the build fails if a manifest references a file
 that does not exist, which catches typos immediately.
 
 > Note: interceptors run through `browserAPI`, so no browser-specific code is
-> needed. Safe Request Mode itself is Firefox-only, but interceptor-based
-> filtering works on every target.
+> needed. Safe Request Mode uses declarativeNetRequest where available and
+> blocking webRequest as a fallback; interceptor-based filtering works on every
+> target.
 
 ## Reddit Implementation Example
 

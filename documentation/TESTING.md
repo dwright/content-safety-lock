@@ -35,7 +35,7 @@ extension on `chrome://extensions`.
 |---|---|---|---|
 | Label-based blocking | ✅ | ✅ | ✅ |
 | Self-Lock, options, popup | ✅ | ✅ | ✅ |
-| Safe Request Mode search/video enforcement (safe search tests) | ✅ | ❌ options hidden, logs "unavailable" warning | ❌ options hidden, logs "unavailable" warning |
+| Safe Request Mode search/video enforcement (safe search tests) | ✅ DNR or blocking webRequest fallback | ✅ DNR | ✅ DNR |
 | Safe Request Mode site filtering (Tumblr, Reddit, Bluesky) | ✅ | ✅ | ✅ |
 | Background inspection | `about:debugging` → Inspect | `chrome://extensions` → service worker | Safari → Develop menu |
 
