@@ -2,7 +2,6 @@ const SAFE_REQUEST_RULE_ID_BASE = 1000;
 
 const PARAM_REDIRECT = 1;
 const ALREADY_SAFE_ALLOW = 2;
-const HOST_REDIRECT = 3;
 const HEADERS = 3;
 
 const TOP_TYPES = ['main_frame', 'sub_frame'];
@@ -80,28 +79,6 @@ function buildSafeRequestRules(config) {
       condition: condition(providerRule.alreadySafeRegex)
     });
 
-    if (providerName === 'bing' && provider.useRedirect) {
-      rules.push({
-        id: nextId++,
-        priority: HOST_REDIRECT,
-        action: {
-          type: 'redirect',
-          redirect: {
-            transform: {
-              host: 'strict.bing.com',
-              queryTransform: {
-                addOrReplaceParams: [{ key: 'adlt', value: 'strict' }]
-              }
-            }
-          }
-        },
-        condition: {
-          regexFilter: String.raw`^https?://www\.bing\.com/`,
-          isUrlFilterCaseSensitive: false,
-          resourceTypes
-        }
-      });
-    }
   }
 
   if (config.providers.youtube.enabled) {

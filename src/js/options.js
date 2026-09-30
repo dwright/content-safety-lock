@@ -345,7 +345,6 @@ async function loadGeneralSettings() {
   // Load provider settings
   document.getElementById('provider-google-enabled').checked = config.providers.google.enabled;
   document.getElementById('provider-bing-enabled').checked = config.providers.bing.enabled;
-  document.getElementById('provider-bing-redirect').checked = config.providers.bing.useRedirect;
   document.getElementById('provider-yahoo-enabled').checked = config.providers.yahoo.enabled;
   document.getElementById('provider-ddg-enabled').checked = config.providers.ddg.enabled;
   document.getElementById('provider-youtube-enabled').checked = config.providers.youtube.enabled;
@@ -480,7 +479,6 @@ const MANAGED_KEY_TO_ELEMENT_IDS = {
   'safeRequestMode.applyInPrivateWindows':      ['safe-request-private-windows'],
   'safeRequestMode.providers.google':           ['provider-google-enabled'],
   'safeRequestMode.providers.bing':             ['provider-bing-enabled'],
-  'safeRequestMode.providers.bing.useRedirect': ['provider-bing-redirect'],
   'safeRequestMode.providers.yahoo':            ['provider-yahoo-enabled'],
   'safeRequestMode.providers.ddg':              ['provider-ddg-enabled'],
   'safeRequestMode.providers.youtube':          ['provider-youtube-enabled'],
@@ -592,8 +590,7 @@ async function saveGeneralSettings(showSuccessMessage = false) {
         },
         bing: {
           ...currentState.safeRequestMode.providers.bing,
-          enabled: document.getElementById('provider-bing-enabled').checked,
-          useRedirect: document.getElementById('provider-bing-redirect').checked
+          enabled: document.getElementById('provider-bing-enabled').checked
         },
         yahoo: {
           ...currentState.safeRequestMode.providers.yahoo,

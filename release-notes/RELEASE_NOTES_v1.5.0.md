@@ -34,6 +34,8 @@ to Firefox, built from a single shared source tree.
   `build/<browser>/` instead.
 - The version lives only in `package.json` and is stamped into every manifest at
   build time.
+- Removed Bing's optional redirect to `strict.bing.com`, which now redirects back
+  to `www.bing.com` and caused a loop; `adlt=strict` enforcement is unchanged.
 
 ## Fixed
 

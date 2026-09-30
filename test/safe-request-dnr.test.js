@@ -124,19 +124,6 @@ function testRegexCoverage(context) {
     }
   }
 
-  const bingConfig = cloneConfig(context);
-  bingConfig.providers.bing.useRedirect = true;
-  const hostRule = build(context, bingConfig).find(
-    (rule) => rule.action.redirect?.transform?.host === 'strict.bing.com'
-  );
-  assert(hostRule);
-  const redirected = new URL('https://www.bing.com/search?q=x');
-  redirected.hostname = hostRule.action.redirect.transform.host;
-  redirected.searchParams.set('adlt', 'strict');
-  assert.strictEqual(
-    new RegExp(hostRule.condition.regexFilter, 'i').test(redirected.href),
-    false
-  );
 }
 
 function testToggles(context) {
@@ -149,13 +136,18 @@ function testToggles(context) {
   assert.strictEqual(rules.some((rule) =>
     rule.condition.regexFilter?.includes('bing\\.')), false);
 
-  const bingRedirectConfig = cloneConfig(context);
-  bingRedirectConfig.providers.bing.useRedirect = true;
-  rules = build(context, bingRedirectConfig);
-  assert.strictEqual(
-    rules.find((rule) => rule.action.redirect?.transform?.host)?.action.redirect.transform.host,
-    'strict.bing.com'
-  );
+  const staleBingRedirectConfig = cloneConfig(context);
+  staleBingRedirectConfig.providers.bing.useRedirect = true;
+  rules = build(context, staleBingRedirectConfig);
+  assert.deepStrictEqual({
+    hasHostRedirect: rules.some((rule) => rule.action.redirect?.transform?.host),
+    bingActions: rules
+      .filter((rule) => rule.condition.regexFilter?.includes('bing\\.'))
+      .map((rule) => rule.action.type)
+  }, {
+    hasHostRedirect: false,
+    bingActions: ['redirect', 'allow']
+  });
 
   const moderateConfig = cloneConfig(context);
   moderateConfig.providers.youtube.headerMode = 'moderate';

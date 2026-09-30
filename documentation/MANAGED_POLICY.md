@@ -153,21 +153,6 @@ settings but has no controls and no unlock button.
 }
 ```
 
-### Lock Bing on and force the strict.bing.com redirect
-
-```json
-{
-  "safeRequestMode": {
-    "providers": {
-      "bing": {
-        "enabled":     { "value": true, "locked": true },
-        "useRedirect": { "value": true, "locked": true }
-      }
-    }
-  }
-}
-```
-
 ---
 
 ## Wildcard shorthand (`*`)
@@ -262,7 +247,6 @@ The wildcard expansion preserves any explicitly-specified entries, so you can se
 | `safeRequestMode.perFrameEnforcement` | string | `"any"` or `"top"` |
 | `safeRequestMode.providers.google` | object | Google SafeSearch — `enabled` |
 | `safeRequestMode.providers.bing` | object | Bing Strict Mode — `enabled` |
-| `safeRequestMode.providers.bing.useRedirect` | object | Redirect to strict.bing.com |
 | `safeRequestMode.providers.yahoo` | object | Yahoo Strict Mode — `enabled` |
 | `safeRequestMode.providers.ddg` | object | DuckDuckGo Strict Mode — `enabled` |
 | `safeRequestMode.providers.youtube` | object | YouTube Restricted Mode — `enabled` |
@@ -489,10 +473,7 @@ repository for ADMX/ADML files.
             "perFrameEnforcement": { "value": "any", "locked": true },
             "providers": {
               "google": { "enabled": { "value": true, "locked": true } },
-              "bing": {
-                "enabled": { "value": true, "locked": true },
-                "useRedirect": { "value": true, "locked": true }
-              },
+              "bing": { "enabled": { "value": true, "locked": true } },
               "yahoo": { "enabled": { "value": true, "locked": true } },
               "ddg": { "enabled": { "value": true, "locked": true } },
               "youtube": {

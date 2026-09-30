@@ -78,7 +78,7 @@ Before a page even loads, Content Safety Lock modifies outbound requests to majo
 | Service | What it does |
 |---------|--------------|
 | **Google** | Enforces SafeSearch |
-| **Bing** | Enforces Strict mode (optional redirect to `strict.bing.com`) |
+| **Bing** | Enforces Strict mode (`adlt=strict`) |
 | **Yahoo** | Enforces Strict mode |
 | **DuckDuckGo** | Enforces Safe mode |
 | **YouTube** | Enforces Restricted mode (Strict or Moderate) |

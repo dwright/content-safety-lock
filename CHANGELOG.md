@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - DNR replaces any existing non-strict safe-search parameter value with the
   enforced value; the previous implementation left unrecognized values alone.
+- Removed the Bing "Redirect to strict.bing.com" option (and its
+  `safeRequestMode.providers.bing.useRedirect` managed-policy key):
+  `strict.bing.com` now redirects back to `www.bing.com`, which caused a redirect
+  loop. `adlt=strict` enforcement is unchanged.
 - Sources moved from the repository root into `src/` (`js/`, `html/`, `css/`, `icons/`); the loadable extension is now `build/<browser>/`, not the repository root.
 - Application code calls `browserAPI.*` instead of `browser.*`.
 - Safe Request Mode settings are split into "Search & Video Providers" (network enforcement) and "Site Content Filtering" (Tumblr, Reddit, Bluesky — in-page, works on every browser).

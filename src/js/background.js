@@ -239,7 +239,7 @@ const DEFAULT_STATE = {
     perFrameEnforcement: 'any',
     providers: {
       google: { enabled: true, useParam: true, enforceCookie: false, useRedirect: false },
-      bing: { enabled: true, useParam: true, usePreferSafeHonor: true, useRedirect: false },
+      bing: { enabled: true, useParam: true, usePreferSafeHonor: true },
       yahoo: { enabled: true, useParam: true },
       ddg: { enabled: true, useParam: true, useRedirect: false },
       youtube: { enabled: true, headerMode: 'strict', useRestrictHostRedirect: false },
@@ -523,17 +523,6 @@ function applyManagedPolicy(state, policy) {
 
         // Provider sub-fields (provider-level lock is the parent).
         const providerLocked = def.isLocked;
-        if (providerName === 'bing' && providerPolicy.useRedirect !== undefined) {
-          const subDef = resolveEnabledField(providerPolicy.useRedirect, providerDefault.useRedirect, providerLocked);
-          if (subDef.resolvedValue !== null) {
-            state.safeRequestMode.providers.bing = {
-              ...providerDefault,
-              ...state.safeRequestMode.providers.bing,
-              useRedirect: subDef.resolvedValue
-            };
-          }
-          if (subDef.isLocked) lockedKeys.add('safeRequestMode.providers.bing.useRedirect');
-        }
         if (providerName === 'youtube' && providerPolicy.headerMode !== undefined) {
           const subDef = resolveScalarField(providerPolicy.headerMode, providerDefault.headerMode, providerLocked);
           if (subDef.resolvedValue !== null) {
