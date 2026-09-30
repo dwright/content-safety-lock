@@ -87,10 +87,8 @@ Before a page even loads, Content Safety Lock modifies outbound requests to majo
 | **Bluesky** | Filters posts by official moderation labels; controls age & adult content settings |
 
 > Safe Request Mode uses `declarativeNetRequest` on Chrome MV3, Safari MV3, and
-> Firefox MV2 where available, with blocking `webRequest` as a fallback on
-> Firefox versions without DNR. DNR replaces any existing safe-search parameter
-> value with the enforced value, including values the previous implementation
-> left unchanged.
+> Firefox MV2, with blocking `webRequest` as a fallback on Firefox versions
+> without DNR.
 
 ---
 
