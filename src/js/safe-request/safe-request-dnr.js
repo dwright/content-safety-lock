@@ -78,7 +78,6 @@ function buildSafeRequestRules(config) {
       action: { type: 'allow' },
       condition: condition(providerRule.alreadySafeRegex)
     });
-
   }
 
   if (config.providers.youtube.enabled) {

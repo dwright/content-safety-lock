@@ -123,7 +123,6 @@ function testRegexCoverage(context) {
       assert(pair.safe.test(transformed.href), `${transformed.href} must match its allow rule`);
     }
   }
-
 }
 
 function testToggles(context) {
