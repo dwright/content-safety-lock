@@ -32,7 +32,11 @@ function testBrowserDetection() {
     { name: 'Firefox', version: '128.0' }
   );
 
-  const chrome = loadFeatures({ manifestVersion: 3, blockingWebRequest: false }, 'chrome', {
+  const chrome = loadFeatures({
+    manifestVersion: 3,
+    blockingWebRequest: false,
+    declarativeNetRequest: true
+  }, 'chrome', {
     userAgent: CHROME_UA
   });
   assert.strictEqual(chrome.browser.name, 'Chrome');
@@ -45,7 +49,11 @@ function testBrowserDetection() {
   assert.strictEqual(edge.browser.name, 'Edge');
   assert.strictEqual(edge.browser.version, '141.0.3537.57');
 
-  const safari = loadFeatures({ manifestVersion: 3, blockingWebRequest: false }, 'safari', {
+  const safari = loadFeatures({
+    manifestVersion: 3,
+    blockingWebRequest: false,
+    declarativeNetRequest: true
+  }, 'safari', {
     userAgent: SAFARI_UA
   });
   assert.strictEqual(safari.browser.name, 'Safari');
@@ -126,13 +134,39 @@ function testFeatureAvailability() {
   });
   assert.strictEqual(firefox.isSupported('safeRequestNetworkEnforcement'), true);
 
-  const chrome = loadFeatures({ manifestVersion: 3, blockingWebRequest: false }, 'chrome', {
+  const chrome = loadFeatures({
+    manifestVersion: 3,
+    blockingWebRequest: false,
+    declarativeNetRequest: true
+  }, 'chrome', {
     userAgent: CHROME_UA
   });
-  assert.strictEqual(chrome.isSupported('safeRequestNetworkEnforcement'), false);
+  assert.strictEqual(chrome.isSupported('safeRequestNetworkEnforcement'), true);
+
+  const safari = loadFeatures({
+    manifestVersion: 3,
+    blockingWebRequest: false,
+    declarativeNetRequest: true
+  }, 'safari', {
+    userAgent: SAFARI_UA
+  });
+  assert.strictEqual(safari.isSupported('safeRequestNetworkEnforcement'), true);
+
+  const unsupported = loadFeatures({
+    manifestVersion: 3,
+    blockingWebRequest: false,
+    declarativeNetRequest: false
+  }, 'chrome', {
+    userAgent: CHROME_UA
+  });
+  assert.strictEqual(unsupported.isSupported('safeRequestNetworkEnforcement'), false);
   assert.strictEqual(
-    chrome.unsupportedMessage('safeRequestNetworkEnforcement'),
+    unsupported.unsupportedMessage('safeRequestNetworkEnforcement'),
     'Safe Request Mode for search and video providers not supported for Chrome yet.'
+  );
+  assert.match(
+    unsupported.unsupportedDetail('safeRequestNetworkEnforcement'),
+    /declarativeNetRequest API \(or blocking webRequest\)/
   );
 
   // Unknown features are never hidden.
@@ -141,7 +175,11 @@ function testFeatureAvailability() {
 
 /** Detection must survive a missing navigator (worker contexts). */
 function testMissingNavigator() {
-  const features = loadFeatures({ manifestVersion: 3, blockingWebRequest: false }, 'safari', {});
+  const features = loadFeatures({
+    manifestVersion: 3,
+    blockingWebRequest: false,
+    declarativeNetRequest: false
+  }, 'safari', {});
   assert.strictEqual(features.browser.name, 'Safari');
   assert.strictEqual(features.browser.version, null);
 }
