@@ -571,7 +571,14 @@
       <h1>🔒 Content Safety Lock</h1>
       <p>Voluntary adult content blocker with self-lock mode</p>
     </div>
-    
+
+    <div id="state-load-error" class="alert alert-error" style="display: none;">
+      <strong>Content Safety Lock couldn't load its settings.</strong>
+      <p style="margin-top: 8px;">The settings page could not reach the extension's background process, so settings are hidden to avoid showing incorrect values. Click Retry. If this keeps happening, restart your browser.</p>
+      <p id="state-load-error-detail" class="help-text"></p>
+      <button type="button" id="state-load-retry" class="btn-primary" style="margin-top: 12px; flex: none;">Retry</button>
+    </div>
+
     <div class="tabs">
       <button class="tab-button active" data-tab="general">General</button>
       <button class="tab-button" data-tab="self-lock" data-managed-hide>Self-Lock</button>

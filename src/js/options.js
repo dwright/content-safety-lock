@@ -36,6 +36,16 @@ async function loadState() {
   return currentState;
 }
 
+function showStateLoadError(err) {
+  document.querySelectorAll('.tabs, .tab-content').forEach(el => { el.style.display = 'none'; });
+  const panel = document.getElementById('state-load-error');
+  if (!panel) return;
+  const detail = document.getElementById('state-load-error-detail');
+  if (detail) detail.textContent = `Details: ${err?.message || String(err)}`;
+  panel.style.display = 'block';
+  document.getElementById('state-load-retry')?.addEventListener('click', () => location.reload(), { once: true });
+}
+
 /**
  * Show or hide tabs that should be hidden when managed lock is active.
  */
@@ -1923,7 +1933,14 @@ function showAlert(containerId, message, type) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   // Load state first
-  await loadState();
+  try {
+    await loadState();
+    if (!currentState) throw new Error('No state returned from background');
+  } catch (err) {
+    console.error('[Options] Failed to load state:', err);
+    showStateLoadError(err);
+    return;
+  }
   
   // Check if admin-managed lock, self-lock, or PIN lock applies
   if (managedLocked) {
