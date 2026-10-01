@@ -367,7 +367,7 @@ async function loadGeneralSettings() {
   }
   if (config.providers.bluesky) {
     document.getElementById('provider-bluesky-enabled').checked = config.providers.bluesky.enabled;
-    document.getElementById('provider-bluesky-age').value = config.providers.bluesky.ageSetting || '18+';
+    document.getElementById('provider-bluesky-age').value = config.providers.bluesky.ageSetting || '13+';
     populateBlueskyLabels(config.providers.bluesky.blockedLabels || []);
   }
 
@@ -496,7 +496,8 @@ const MANAGED_KEY_TO_ELEMENT_IDS = {
   'safeRequestMode.providers.tumblr':           ['provider-tumblr-enabled'],
   'safeRequestMode.providers.reddit':           ['provider-reddit-enabled'],
   'safeRequestMode.providers.bluesky':          ['provider-bluesky-enabled'],
-  'safeRequestMode.providers.bluesky.ageSetting': ['provider-bluesky-age']
+  'safeRequestMode.providers.bluesky.ageSetting': ['provider-bluesky-age'],
+  'safeRequestMode.providers.bluesky.blockedLabels': BLUESKY_OFFICIAL_LABELS.map(label => `bluesky-label-${label.id}`)
 };
 
 /**

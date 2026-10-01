@@ -19,6 +19,8 @@ to Firefox, built from a single shared source tree.
 - **Safe Request Mode enforcement**: `declarativeNetRequest` on Chrome MV3,
   Safari MV3, and Firefox MV2 where available, with blocking `webRequest` as a
   fallback on Firefox versions without DNR.
+- **Bluesky Safe Request provider**: enabled by default with a 13+ age setting
+  and all labels blocked; included in provider wildcards and managed policy.
 - **Platform abstraction layer** (`src/js/platform/`): the host browser is
   detected at runtime and application code talks to a promise-based `browserAPI`
   instead of `browser.*`/`chrome.*`.

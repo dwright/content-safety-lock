@@ -23,7 +23,7 @@
 
   // Get blocked labels from config (injected by content script)
   const blockedLabels = window.__cslBlueskyConfig?.blockedLabels || BLUESKY_LABELS;
-  const ageSetting = window.__cslBlueskyConfig?.ageSetting || '18+';
+  const ageSetting = window.__cslBlueskyConfig?.ageSetting || '13+';
 
   /**
    * Check if a post has any blocked labels

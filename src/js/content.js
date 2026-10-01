@@ -767,7 +767,7 @@ async function initBlueskyInterception() {
     configScript.textContent = `
       window.__cslBlueskyConfig = {
         blockedLabels: ${JSON.stringify(blueskyConfig.blockedLabels || [])},
-        ageSetting: ${JSON.stringify(blueskyConfig.ageSetting || '18+')}
+        ageSetting: ${JSON.stringify(blueskyConfig.ageSetting || '13+')}
       };
     `;
     (document.head || document.documentElement).appendChild(configScript);

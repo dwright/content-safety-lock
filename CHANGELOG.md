@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Cross-browser Safe Request Mode enforcement**: use `declarativeNetRequest`
   on Chrome MV3, Safari MV3, and Firefox MV2, retaining blocking `webRequest`
   as a fallback on Firefox versions without DNR.
+- **Bluesky Safe Request provider**: enabled by default with a 13+ age setting
+  and all labels blocked; included in provider wildcards and managed policy.
 - **Multi-browser support**: the extension now builds for Chrome/Edge/Brave/Opera and Safari in addition to Firefox, from one shared source tree (`src/`) plus a per-browser manifest (`platform/<browser>/manifest.json`).
 - **Platform abstraction layer** (`src/js/platform/`): `browser-api.js` detects the host browser at runtime and exposes a promise-based `browserAPI` global backed by `firefox.js`, `chrome.js`, or `safari.js`.
 - **Build system**: `build-scripts/build.js` with `npm run build:{firefox,chrome,safari,all}`; the build stamps the `package.json` version into each manifest, generates the Manifest V3 service worker entry point, and fails if a manifest references a missing file.

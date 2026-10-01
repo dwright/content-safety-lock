@@ -148,7 +148,7 @@ const DEFAULT_SAFE_REQUEST_CONFIG = {
     },
     bluesky: {
       enabled: true,
-      ageSetting: '18+',
+      ageSetting: '13+',
       blockedLabels: [
         'porn', 'sexual', 'nudity', 'sexual-figurative', 'graphic-media',
         'self-harm', 'sensitive', 'extremist', 'intolerant', 'threat',

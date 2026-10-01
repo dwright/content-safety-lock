@@ -164,6 +164,7 @@ For sections with many similar settings, use the `*` wildcard to apply the same 
 | `parental.categories` | All content categories |
 | `parental.adultProductSalesVendors` | All vendor monitors |
 | `safeRequestMode.providers` | All Safe Request Mode providers |
+| `safeRequestMode.providers.bluesky.blockedLabels` | `"*"` or `["*"]` blocks all 22 Bluesky labels |
 
 ### Example: Lock all content categories on
 
@@ -253,6 +254,9 @@ The wildcard expansion preserves any explicitly-specified entries, so you can se
 | `safeRequestMode.providers.youtube.headerMode` | object | Restriction level: `"strict"` or `"moderate"` |
 | `safeRequestMode.providers.tumblr` | object | Tumblr mature-content filter — `enabled` |
 | `safeRequestMode.providers.reddit` | object | Reddit NSFW filter — `enabled` |
+| `safeRequestMode.providers.bluesky` | object | Bluesky filter — `enabled` |
+| `safeRequestMode.providers.bluesky.ageSetting` | object | `"under13"`, `"13+"`, `"16+"` or `"18+"` (default: `"13+"`) |
+| `safeRequestMode.providers.bluesky.blockedLabels` | array or string | Label IDs: `porn`, `sexual`, `nudity`, `sexual-figurative`, `graphic-media`, `self-harm`, `sensitive`, `extremist`, `intolerant`, `threat`, `rude`, `illicit`, `security`, `unsafe-link`, `impersonation`, `misinformation`, `scam`, `engagement-farming`, `spam`, `rumor`, `misleading`, `inauthentic`; use `"*"` or `["*"]` for all (default: all 22) |
 
 ---
 
@@ -481,7 +485,11 @@ repository for ADMX/ADML files.
                 "headerMode": { "value": "strict", "locked": true }
               },
               "tumblr": { "enabled": { "value": true, "locked": true } },
-              "reddit": { "enabled": { "value": true, "locked": true } }
+              "reddit": { "enabled": { "value": true, "locked": true } },
+              "bluesky": {
+                "enabled": { "value": true, "locked": true },
+                "blockedLabels": { "value": "*", "locked": true }
+              }
             }
           }
         }

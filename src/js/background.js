@@ -244,7 +244,18 @@ const DEFAULT_STATE = {
       ddg: { enabled: true, useParam: true, useRedirect: false },
       youtube: { enabled: true, headerMode: 'strict', useRestrictHostRedirect: false },
       tumblr: { enabled: true },
-      reddit: { enabled: true }
+      reddit: { enabled: true },
+      bluesky: {
+        enabled: true,
+        ageSetting: '13+',
+        blockedLabels: [
+          'porn', 'sexual', 'nudity', 'sexual-figurative', 'graphic-media',
+          'self-harm', 'sensitive', 'extremist', 'intolerant', 'threat',
+          'rude', 'illicit', 'security', 'unsafe-link', 'impersonation',
+          'misinformation', 'scam', 'engagement-farming', 'spam', 'rumor',
+          'misleading', 'inauthentic'
+        ]
+      }
     }
   }
 };
@@ -534,9 +545,52 @@ function applyManagedPolicy(state, policy) {
           }
           if (subDef.isLocked) lockedKeys.add('safeRequestMode.providers.youtube.headerMode');
         }
+
+        if (providerName === 'bluesky') {
+          if (providerPolicy.ageSetting !== undefined) {
+            const subDef = resolveScalarField(providerPolicy.ageSetting, providerDefault.ageSetting, providerLocked);
+            if (['under13', '13+', '16+', '18+'].includes(subDef.resolvedValue)) {
+              state.safeRequestMode.providers.bluesky = {
+                ...providerDefault,
+                ...state.safeRequestMode.providers.bluesky,
+                ageSetting: subDef.resolvedValue
+              };
+            }
+            if (subDef.isLocked) lockedKeys.add('safeRequestMode.providers.bluesky.ageSetting');
+          } else if (providerLocked) {
+            lockedKeys.add('safeRequestMode.providers.bluesky.ageSetting');
+          }
+
+          if (providerPolicy.blockedLabels !== undefined) {
+            const subDef = resolveScalarField(providerPolicy.blockedLabels, providerDefault.blockedLabels, providerLocked);
+            const labels = subDef.resolvedValue;
+            let normalizedLabels = null;
+            if (labels === '*') {
+              normalizedLabels = [...providerDefault.blockedLabels];
+            } else if (Array.isArray(labels)) {
+              normalizedLabels = labels.includes('*')
+                ? [...providerDefault.blockedLabels]
+                : [...new Set(labels.filter(label => typeof label === 'string'))];
+            }
+            if (normalizedLabels !== null) {
+              state.safeRequestMode.providers.bluesky = {
+                ...providerDefault,
+                ...state.safeRequestMode.providers.bluesky,
+                blockedLabels: normalizedLabels
+              };
+            }
+            if (subDef.isLocked) lockedKeys.add('safeRequestMode.providers.bluesky.blockedLabels');
+          } else if (providerLocked) {
+            lockedKeys.add('safeRequestMode.providers.bluesky.blockedLabels');
+          }
+        }
       } else if (srmLocked) {
         // Not mentioned in policy but parent is locked — inherit lock.
         lockedKeys.add(`safeRequestMode.providers.${providerName}`);
+        if (providerName === 'bluesky') {
+          lockedKeys.add('safeRequestMode.providers.bluesky.ageSetting');
+          lockedKeys.add('safeRequestMode.providers.bluesky.blockedLabels');
+        }
       }
     }
   }
