@@ -27,26 +27,26 @@ const POLICY_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const policyPageMemoryCache = new Map();
 
 /**
- * Persist the cache entry for a hostname to browser.storage.local.
+ * Persist the cache entry for a hostname to browserAPI.storage.local.
  */
 async function savePolicyCacheEntry(hostname, entry) {
   try {
-    const stored = await browser.storage.local.get('policyPageCache');
+    const stored = await browserAPI.storage.local.get('policyPageCache');
     const cache = stored.policyPageCache || {};
     cache[hostname] = entry;
-    await browser.storage.local.set({ policyPageCache: cache });
+    await browserAPI.storage.local.set({ policyPageCache: cache });
   } catch (err) {
     console.log('[BG] Failed to save policy cache entry:', err);
   }
 }
 
 /**
- * Load the cache entry for a hostname from browser.storage.local.
+ * Load the cache entry for a hostname from browserAPI.storage.local.
  * Returns null if absent or expired.
  */
 async function loadPolicyCacheEntry(hostname) {
   try {
-    const stored = await browser.storage.local.get('policyPageCache');
+    const stored = await browserAPI.storage.local.get('policyPageCache');
     const cache = stored.policyPageCache || {};
     const entry = cache[hostname];
     if (!entry) return null;
@@ -62,7 +62,7 @@ async function loadPolicyCacheEntry(hostname) {
  */
 async function pruneStaleCache() {
   try {
-    const stored = await browser.storage.local.get('policyPageCache');
+    const stored = await browserAPI.storage.local.get('policyPageCache');
     const cache = stored.policyPageCache || {};
     const now = Date.now();
     let pruned = false;
@@ -74,7 +74,7 @@ async function pruneStaleCache() {
       }
     }
     if (pruned) {
-      await browser.storage.local.set({ policyPageCache: cache });
+      await browserAPI.storage.local.set({ policyPageCache: cache });
       console.log('[BG] Pruned stale policy page cache entries');
     }
   } catch (err) {
@@ -239,12 +239,23 @@ const DEFAULT_STATE = {
     perFrameEnforcement: 'any',
     providers: {
       google: { enabled: true, useParam: true, enforceCookie: false, useRedirect: false },
-      bing: { enabled: true, useParam: true, usePreferSafeHonor: true, useRedirect: false },
+      bing: { enabled: true, useParam: true, usePreferSafeHonor: true },
       yahoo: { enabled: true, useParam: true },
       ddg: { enabled: true, useParam: true, useRedirect: false },
       youtube: { enabled: true, headerMode: 'strict', useRestrictHostRedirect: false },
       tumblr: { enabled: true },
-      reddit: { enabled: true }
+      reddit: { enabled: true },
+      bluesky: {
+        enabled: true,
+        ageSetting: '13+',
+        blockedLabels: [
+          'porn', 'sexual', 'nudity', 'sexual-figurative', 'graphic-media',
+          'self-harm', 'sensitive', 'extremist', 'intolerant', 'threat',
+          'rude', 'illicit', 'security', 'unsafe-link', 'impersonation',
+          'misinformation', 'scam', 'engagement-farming', 'spam', 'rumor',
+          'misleading', 'inauthentic'
+        ]
+      }
     }
   }
 };
@@ -252,14 +263,14 @@ const DEFAULT_STATE = {
 // ============ Managed Policy ============
 
 /**
- * Load values from browser.storage.managed, restricted to the General-tab
+ * Load values from browserAPI.storage.managed, restricted to the General-tab
  * sections (parental and safeRequestMode) plus the top-level locked flag.
  * Returns an object containing only those keys (or an empty object when
  * managed storage is not provisioned or is inaccessible).
  */
 async function loadManagedPolicy() {
   try {
-    const managed = await browser.storage.managed.get(null);
+    const managed = await browserAPI.storage.managed.get(null);
     const policy = {};
     if (managed && typeof managed === 'object') {
       if (managed.locked) {
@@ -523,17 +534,6 @@ function applyManagedPolicy(state, policy) {
 
         // Provider sub-fields (provider-level lock is the parent).
         const providerLocked = def.isLocked;
-        if (providerName === 'bing' && providerPolicy.useRedirect !== undefined) {
-          const subDef = resolveEnabledField(providerPolicy.useRedirect, providerDefault.useRedirect, providerLocked);
-          if (subDef.resolvedValue !== null) {
-            state.safeRequestMode.providers.bing = {
-              ...providerDefault,
-              ...state.safeRequestMode.providers.bing,
-              useRedirect: subDef.resolvedValue
-            };
-          }
-          if (subDef.isLocked) lockedKeys.add('safeRequestMode.providers.bing.useRedirect');
-        }
         if (providerName === 'youtube' && providerPolicy.headerMode !== undefined) {
           const subDef = resolveScalarField(providerPolicy.headerMode, providerDefault.headerMode, providerLocked);
           if (subDef.resolvedValue !== null) {
@@ -545,9 +545,52 @@ function applyManagedPolicy(state, policy) {
           }
           if (subDef.isLocked) lockedKeys.add('safeRequestMode.providers.youtube.headerMode');
         }
+
+        if (providerName === 'bluesky') {
+          if (providerPolicy.ageSetting !== undefined) {
+            const subDef = resolveScalarField(providerPolicy.ageSetting, providerDefault.ageSetting, providerLocked);
+            if (['under13', '13+', '16+', '18+'].includes(subDef.resolvedValue)) {
+              state.safeRequestMode.providers.bluesky = {
+                ...providerDefault,
+                ...state.safeRequestMode.providers.bluesky,
+                ageSetting: subDef.resolvedValue
+              };
+            }
+            if (subDef.isLocked) lockedKeys.add('safeRequestMode.providers.bluesky.ageSetting');
+          } else if (providerLocked) {
+            lockedKeys.add('safeRequestMode.providers.bluesky.ageSetting');
+          }
+
+          if (providerPolicy.blockedLabels !== undefined) {
+            const subDef = resolveScalarField(providerPolicy.blockedLabels, providerDefault.blockedLabels, providerLocked);
+            const labels = subDef.resolvedValue;
+            let normalizedLabels = null;
+            if (labels === '*') {
+              normalizedLabels = [...providerDefault.blockedLabels];
+            } else if (Array.isArray(labels)) {
+              normalizedLabels = labels.includes('*')
+                ? [...providerDefault.blockedLabels]
+                : [...new Set(labels.filter(label => typeof label === 'string'))];
+            }
+            if (normalizedLabels !== null) {
+              state.safeRequestMode.providers.bluesky = {
+                ...providerDefault,
+                ...state.safeRequestMode.providers.bluesky,
+                blockedLabels: normalizedLabels
+              };
+            }
+            if (subDef.isLocked) lockedKeys.add('safeRequestMode.providers.bluesky.blockedLabels');
+          } else if (providerLocked) {
+            lockedKeys.add('safeRequestMode.providers.bluesky.blockedLabels');
+          }
+        }
       } else if (srmLocked) {
         // Not mentioned in policy but parent is locked — inherit lock.
         lockedKeys.add(`safeRequestMode.providers.${providerName}`);
+        if (providerName === 'bluesky') {
+          lockedKeys.add('safeRequestMode.providers.bluesky.ageSetting');
+          lockedKeys.add('safeRequestMode.providers.bluesky.blockedLabels');
+        }
       }
     }
   }
@@ -569,7 +612,7 @@ function computeManagedKeys(policy) {
  * Load state from storage
  */
 async function loadState() {
-  const result = await browser.storage.local.get('state');
+  const result = await browserAPI.storage.local.get('state');
   const stored = result.state || {};
   
   // Deep merge with defaults to ensure all properties exist
@@ -611,14 +654,14 @@ async function loadState() {
  * Save state to storage
  */
 async function saveState(state) {
-  await browser.storage.local.set({ state });
+  await browserAPI.storage.local.set({ state });
 }
 
 /**
  * Initialize state if not present
  */
 async function initializeState() {
-  const result = await browser.storage.local.get('state');
+  const result = await browserAPI.storage.local.get('state');
   if (!result.state) {
     await saveState(DEFAULT_STATE);
     return;
@@ -694,7 +737,7 @@ async function getBlockPageData(signals, url, details) {
 /**
  * Handle messages from content scripts
  */
-browser.runtime.onMessage.addListener(async (message, sender) => {
+browserAPI.runtime.onMessage.addListener(async (message, sender) => {
   console.log('[BG] *** MESSAGE RECEIVED ***', message.type);
   if (message.type === 'CHECK_BLOCK') {
     console.log('[BG] CHECK_BLOCK received. Signals:', message.signals, 'URL:', sender.url);
@@ -717,18 +760,18 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
   }
 
   if (message.type === 'GET_DEBUG_INFO') {
-    const manifest = browser.runtime.getManifest();
-    const extensionUrl = browser.runtime.getURL('');
+    const manifest = browserAPI.runtime.getManifest();
+    const extensionUrl = browserAPI.runtime.getURL('');
 
     let managedStorage = null;
     let managedError = null;
     try {
-      managedStorage = await browser.storage.managed.get(null);
+      managedStorage = await browserAPI.storage.managed.get(null);
     } catch (err) {
       managedError = err.message || String(err);
     }
 
-    const localResult = await browser.storage.local.get('state');
+    const localResult = await browserAPI.storage.local.get('state');
     const localStorage = localResult.state || null;
 
     const effectiveState = await loadState();
@@ -827,7 +870,7 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
     await saveState(state);
     
     // Set alarm to check lock status
-    await browser.alarms.create('selfLockTick', { periodInMinutes: 1 });
+    await browserAPI.alarms.create('selfLockTick', { periodInMinutes: 1 });
     
     return { success: true };
   }
@@ -891,7 +934,7 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
       state.selfLock.game = null;
       state.selfLock.cooldownUntilEpochMs = 0;
       await saveState(state);
-      await browser.alarms.clear('selfLockTick');
+      await browserAPI.alarms.clear('selfLockTick');
       return { success: true, won: true, incrementAddedMs };
     }
     
@@ -1043,9 +1086,9 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
   if (message.type === 'INJECT_TUMBLR_INTERCEPTOR') {
     console.log('[BG] Injecting Tumblr interceptor into tab', sender.tab.id);
     try {
-      await browser.scripting.executeScript({
+      await browserAPI.scripting.executeScript({
         target: { tabId: sender.tab.id },
-        files: ['tumblr-interceptor.js'],
+        files: ['js/interceptors/tumblr-interceptor.js'],
         world: 'MAIN'
       });
       return { success: true };
@@ -1058,9 +1101,9 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
   if (message.type === 'INJECT_REDDIT_INTERCEPTOR') {
     console.log('[BG] Injecting Reddit interceptor into tab', sender.tab.id);
     try {
-      await browser.scripting.executeScript({
+      await browserAPI.scripting.executeScript({
         target: { tabId: sender.tab.id },
-        files: ['reddit-interceptor.js'],
+        files: ['js/interceptors/reddit-interceptor.js'],
         world: 'MAIN'
       });
       return { success: true };
@@ -1076,12 +1119,12 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
 /**
  * Handle alarm ticks
  */
-browser.alarms.onAlarm.addListener(async (alarm) => {
+browserAPI.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'selfLockTick') {
     const state = await loadState();
     
     if (!state.selfLock.active) {
-      await browser.alarms.clear('selfLockTick');
+      await browserAPI.alarms.clear('selfLockTick');
       return;
     }
     
@@ -1101,7 +1144,7 @@ browser.alarms.onAlarm.addListener(async (alarm) => {
       state.selfLock.active = false;
       state.selfLock.pendingUnlockPhrase = null;
       state.selfLock.cooldownUntilEpochMs = 0;
-      await browser.alarms.clear('selfLockTick');
+      await browserAPI.alarms.clear('selfLockTick');
     }
     
     await saveState(state);
@@ -1113,10 +1156,10 @@ browser.alarms.onAlarm.addListener(async (alarm) => {
 /**
  * Initialize extension on install/update
  */
-browser.runtime.onInstalled.addListener(async (details) => {
+browserAPI.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
     await initializeState();
-    browser.tabs.create({ url: 'options.html' });
+    browserAPI.tabs.create({ url: browserAPI.runtime.getURL('html/options.html') });
   }
   await pruneStaleCache();
 });

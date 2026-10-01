@@ -2,11 +2,16 @@
 
 ## Installation (Development)
 
-1. **Open Firefox** and navigate to `about:debugging`
-2. **Click** "This Firefox" in the left sidebar
-3. **Click** "Load Temporary Add-on"
-4. **Select** the `manifest.json` file from this directory
-5. **Done!** The extension is now loaded
+1. **Build** the extension: `npm install && npm run build:firefox`
+2. **Open Firefox** and navigate to `about:debugging`
+3. **Click** "This Firefox" in the left sidebar
+4. **Click** "Load Temporary Add-on"
+5. **Select** `build/firefox/manifest.json`
+6. **Done!** The extension is now loaded
+
+For Chrome (`npm run build:chrome`, then load `build/chrome` unpacked from
+`chrome://extensions`) and Safari, see
+[documentation/BUILDING.md](documentation/BUILDING.md).
 
 ## First Time Setup
 
@@ -71,7 +76,7 @@ Create another test file without the meta tag. This should load normally.
 ## Troubleshooting
 
 ### Extension not loading?
-- Check that `manifest.json` exists in the directory
+- Check that `build/firefox/manifest.json` exists (run `npm run build:firefox`)
 - Try reloading the extension in `about:debugging`
 - Check browser console for errors (F12)
 
@@ -93,21 +98,26 @@ Create another test file without the meta tag. This should load normally.
 ## File Structure
 
 ```
-windsurf-project/
-├── manifest.json          # Extension configuration
-├── background.js          # Service worker (policy engine)
-├── content.js             # Content script (label detection)
-├── utils.js               # Shared utilities
-├── options.html           # Settings page
-├── options.js             # Settings script
-├── popup.html             # Quick popup
-├── popup.js               # Popup script
-├── icons/                 # Extension icons
-│   ├── icon-16.svg
-│   ├── icon-48.svg
-│   └── icon-128.svg
-├── README.md              # Full documentation
-└── QUICKSTART.md          # This file
+content-safety-lock/
+├── src/                       # Shared source for every browser
+│   ├── js/
+│   │   ├── background.js      # Policy engine, state, alarms
+│   │   ├── content.js         # Content script (label detection)
+│   │   ├── options.js         # Settings script
+│   │   ├── popup.js           # Popup script
+│   │   ├── utils.js           # Shared utilities
+│   │   └── platform/          # browser-api.js + firefox/chrome/safari adapters
+│   ├── html/                  # options.html, popup.html
+│   ├── css/
+│   └── icons/                 # SVG (Firefox) and PNG (Chrome/Safari)
+├── platform/                  # Per-browser manifests
+│   ├── firefox/manifest.json
+│   ├── chrome/manifest.json
+│   └── safari/manifest.json
+├── build-scripts/build.js     # Build orchestrator
+├── build/                     # Build output, loadable per browser (gitignored)
+├── README.md                  # Full documentation
+└── QUICKSTART.md              # This file
 ```
 
 ## Key Concepts

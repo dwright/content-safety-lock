@@ -7,7 +7,7 @@
  */
 async function updateLockStatus() {
   try {
-    const response = await browser.runtime.sendMessage({ type: 'GET_STATE' });
+    const response = await browserAPI.runtime.sendMessage({ type: 'GET_STATE' });
     const state = response.state;
     
     const statusEl = document.getElementById('lock-status');
@@ -36,14 +36,14 @@ async function updateLockStatus() {
  * Open settings page
  */
 document.getElementById('open-settings-btn').addEventListener('click', () => {
-  browser.runtime.openOptionsPage();
+  browserAPI.runtime.openOptionsPage();
 });
 
 /**
  * Open full options in new tab
  */
 document.getElementById('open-options-btn').addEventListener('click', () => {
-  browser.tabs.create({ url: browser.runtime.getURL('options.html') });
+  browserAPI.tabs.create({ url: browserAPI.runtime.getURL('html/options.html') });
 });
 
 // Update status on load and every second

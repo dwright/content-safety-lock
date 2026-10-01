@@ -1,8 +1,15 @@
 # Managed Policy for Content Safety Lock
 
 Administrators can pre-configure and lock settings in Content Safety Lock using
-Firefox's managed-storage facility.  Settings delivered via managed policy take
-precedence over anything saved by the user.
+the browser's managed-storage facility.  Settings delivered via managed policy
+take precedence over anything saved by the user.
+
+**Browser support**: this guide documents Firefox, which is the primary managed
+platform.  Chrome and Edge expose the same data through their own policy
+mechanism (`3rdparty` / `ExtensionSettings` with a managed-storage schema, keyed
+by the extension ID), so the payload below applies there too.  Safari has no
+managed-storage equivalent — the adapter resolves managed values to an empty
+object, so every setting stays user-controlled.
 
 Only settings on the **General** tab are manageable (content filtering and Safe
 Request Mode).  Self-lock and security settings are intentionally excluded.
@@ -12,7 +19,7 @@ Request Mode).  Self-lock and security settings are intentionally excluded.
 ## How it works
 
 There are two ways to deliver managed settings to the extension. Both surface
-identical data through `browser.storage.managed`.
+identical data through managed storage (`browserAPI.storage.managed`).
 
 1. **Native managed storage manifest** — a JSON file named after the extension
    ID and placed in Firefox's `ManagedStorage` directory.
@@ -146,21 +153,6 @@ settings but has no controls and no unlock button.
 }
 ```
 
-### Lock Bing on and force the strict.bing.com redirect
-
-```json
-{
-  "safeRequestMode": {
-    "providers": {
-      "bing": {
-        "enabled":     { "value": true, "locked": true },
-        "useRedirect": { "value": true, "locked": true }
-      }
-    }
-  }
-}
-```
-
 ---
 
 ## Wildcard shorthand (`*`)
@@ -172,6 +164,7 @@ For sections with many similar settings, use the `*` wildcard to apply the same 
 | `parental.categories` | All content categories |
 | `parental.adultProductSalesVendors` | All vendor monitors |
 | `safeRequestMode.providers` | All Safe Request Mode providers |
+| `safeRequestMode.providers.bluesky.blockedLabels` | `"*"` or `["*"]` blocks all 22 Bluesky labels |
 
 ### Example: Lock all content categories on
 
@@ -255,13 +248,15 @@ The wildcard expansion preserves any explicitly-specified entries, so you can se
 | `safeRequestMode.perFrameEnforcement` | string | `"any"` or `"top"` |
 | `safeRequestMode.providers.google` | object | Google SafeSearch — `enabled` |
 | `safeRequestMode.providers.bing` | object | Bing Strict Mode — `enabled` |
-| `safeRequestMode.providers.bing.useRedirect` | object | Redirect to strict.bing.com |
 | `safeRequestMode.providers.yahoo` | object | Yahoo Strict Mode — `enabled` |
 | `safeRequestMode.providers.ddg` | object | DuckDuckGo Strict Mode — `enabled` |
 | `safeRequestMode.providers.youtube` | object | YouTube Restricted Mode — `enabled` |
 | `safeRequestMode.providers.youtube.headerMode` | object | Restriction level: `"strict"` or `"moderate"` |
 | `safeRequestMode.providers.tumblr` | object | Tumblr mature-content filter — `enabled` |
 | `safeRequestMode.providers.reddit` | object | Reddit NSFW filter — `enabled` |
+| `safeRequestMode.providers.bluesky` | object | Bluesky filter — `enabled` |
+| `safeRequestMode.providers.bluesky.ageSetting` | object | `"under13"`, `"13+"`, `"16+"` or `"18+"` (default: `"13+"`) |
+| `safeRequestMode.providers.bluesky.blockedLabels` | array or string | Label IDs: `porn`, `sexual`, `nudity`, `sexual-figurative`, `graphic-media`, `self-harm`, `sensitive`, `extremist`, `intolerant`, `threat`, `rude`, `illicit`, `security`, `unsafe-link`, `impersonation`, `misinformation`, `scam`, `engagement-farming`, `spam`, `rumor`, `misleading`, `inauthentic`; use `"*"` or `["*"]` for all (default: all 22) |
 
 ---
 
@@ -482,10 +477,7 @@ repository for ADMX/ADML files.
             "perFrameEnforcement": { "value": "any", "locked": true },
             "providers": {
               "google": { "enabled": { "value": true, "locked": true } },
-              "bing": {
-                "enabled": { "value": true, "locked": true },
-                "useRedirect": { "value": true, "locked": true }
-              },
+              "bing": { "enabled": { "value": true, "locked": true } },
               "yahoo": { "enabled": { "value": true, "locked": true } },
               "ddg": { "enabled": { "value": true, "locked": true } },
               "youtube": {
@@ -493,7 +485,11 @@ repository for ADMX/ADML files.
                 "headerMode": { "value": "strict", "locked": true }
               },
               "tumblr": { "enabled": { "value": true, "locked": true } },
-              "reddit": { "enabled": { "value": true, "locked": true } }
+              "reddit": { "enabled": { "value": true, "locked": true } },
+              "bluesky": {
+                "enabled": { "value": true, "locked": true },
+                "blockedLabels": { "value": "*", "locked": true }
+              }
             }
           }
         }
