@@ -642,12 +642,73 @@ async function loadState() {
     state.selfLock.earlyUnlockMode = state.selfLock.allowEarlyUnlock ? 'phrase' : 'none';
   }
 
+  // Alarms are not a reliable expiry mechanism (e.g. Safari on iOS drops them
+  // when the non-persistent background page is suspended), so expire on read.
+  if (expireSelfLockIfDue(state.selfLock)) {
+    await saveState({ ...stored, selfLock: state.selfLock });
+    await clearSelfLockAlarm();
+  }
+
   // Managed policy overrides user values (read-only from the user's perspective).
   // applyManagedPolicy sets state.managedKeys and state.managedLocked.
   const policy = await loadManagedPolicy();
   applyManagedPolicy(state, policy);
 
   return state;
+}
+
+/**
+ * Deactivate an active self-lock whose end time has passed.
+ * Applies the clock-rollback extension first. Returns true if it expired.
+ */
+function expireSelfLockIfDue(selfLock, now = Date.now()) {
+  if (!selfLock || !selfLock.active) {
+    return false;
+  }
+
+  const tamperCheck = checkClockTamper(
+    selfLock.startedAtEpochMs,
+    selfLock.elapsedMonotonicMsAtStart
+  );
+  if (tamperCheck.rolledBack) {
+    selfLock.endsAtEpochMs += tamperCheck.extendedDuration;
+  }
+
+  if (now < selfLock.endsAtEpochMs) {
+    return false;
+  }
+
+  selfLock.active = false;
+  selfLock.pendingUnlockPhrase = null;
+  selfLock.cooldownUntilEpochMs = 0;
+  return true;
+}
+
+async function clearSelfLockAlarm() {
+  try {
+    await browserAPI.alarms.clear('selfLockTick');
+  } catch (err) {
+    console.warn('[BG] Failed to clear selfLockTick alarm:', err);
+  }
+}
+
+/**
+ * Re-create the self-lock alarm if a lock is active; browsers may drop
+ * alarms across background restarts.
+ */
+async function ensureSelfLockAlarm() {
+  try {
+    const state = await loadState();
+    if (!state.selfLock.active) {
+      return;
+    }
+    const existing = await browserAPI.alarms.get('selfLockTick');
+    if (!existing) {
+      await browserAPI.alarms.create('selfLockTick', { periodInMinutes: 1 });
+    }
+  } catch (err) {
+    console.warn('[BG] Failed to ensure selfLockTick alarm:', err);
+  }
 }
 
 /**
@@ -1121,33 +1182,11 @@ browserAPI.runtime.onMessage.addListener(async (message, sender) => {
  */
 browserAPI.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'selfLockTick') {
+    // loadState expires the lock and clears this alarm once it is due.
     const state = await loadState();
-    
     if (!state.selfLock.active) {
-      await browserAPI.alarms.clear('selfLockTick');
-      return;
+      await clearSelfLockAlarm();
     }
-    
-    const now = Date.now();
-    
-    // Check for clock tamper
-    const tamperCheck = checkClockTamper(
-      state.selfLock.startedAtEpochMs,
-      state.selfLock.elapsedMonotonicMsAtStart
-    );
-    if (tamperCheck.rolledBack) {
-      state.selfLock.endsAtEpochMs += tamperCheck.extendedDuration;
-    }
-    
-    // Check if lock has expired
-    if (now >= state.selfLock.endsAtEpochMs) {
-      state.selfLock.active = false;
-      state.selfLock.pendingUnlockPhrase = null;
-      state.selfLock.cooldownUntilEpochMs = 0;
-      await browserAPI.alarms.clear('selfLockTick');
-    }
-    
-    await saveState(state);
   }
 });
 
@@ -1165,5 +1204,5 @@ browserAPI.runtime.onInstalled.addListener(async (details) => {
 });
 
 // Initialize state on startup and prune stale cache entries.
-initializeState();
+initializeState().then(ensureSelfLockAlarm);
 pruneStaleCache();
