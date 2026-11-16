@@ -106,6 +106,13 @@ assert.deepStrictEqual(
   ALLOWED
 );
 assert.deepStrictEqual(
+  amazonSignals('https://www.amazon.com/Erotic-Astrology/dp/1605500569?node=2', {
+    breadcrumb: 'Books › Self-Help › Relationships › Love & Romance',
+    rank: ['See Top 100 in Books', 'Astrology (Books)', 'Sex & Sexuality']
+  }),
+  ALLOWED
+);
+assert.deepStrictEqual(
   amazonSignals('https://www.amazon.com/s?k=xerotic+skin+cream', { h1: ['Results'] }),
   ALLOWED
 );

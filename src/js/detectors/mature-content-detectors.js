@@ -57,6 +57,10 @@ function isBlockedAmazonCategoryPage(url, matchesBlocked) {
   const params = parsed.searchParams;
   const rh = params.get('rh') || '';
 
+  // Product pages can carry ?node= and a product-title slug; they are
+  // judged on their own categories, not as category listings.
+  if (/\/(dp|gp\/product|gp\/aw\/d)\//.test(path)) return false;
+
   const isBrowsePage = /(^|\/)b(\/|$)/.test(path) || params.has('node');
   const isRankList = /\/(zgbs|gp\/bestsellers|gp\/new-releases|gp\/movers-and-shakers|gp\/most-wished-for|gp\/most-gifted)(\/|$)/.test(path);
   const isNodeSearch = /^\/s(\/|$)/.test(path) && /(^|,)n:\d+/.test(rh);
