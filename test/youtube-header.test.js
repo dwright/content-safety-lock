@@ -29,10 +29,12 @@ function getHeader(headers, name) {
   vm.createContext(ctx);
 
   loadFileIntoContext(ctx, [
+    'src/js/safe-request/safe-request-config.js',
     'js/safe-request/safe-request-config.js',
     'safe-request-config.js'
   ]);
   loadFileIntoContext(ctx, [
+    'src/js/safe-request/safe-request-utils.js',
     'js/safe-request/safe-request-utils.js',
     'safe-request-utils.js'
   ]);

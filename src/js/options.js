@@ -28,12 +28,22 @@ let activeMastermindBoard = null;
  * Load state from background
  */
 async function loadState() {
-  const response = await browser.runtime.sendMessage({ type: 'GET_STATE' });
+  const response = await browserAPI.runtime.sendMessage({ type: 'GET_STATE' });
   currentState = response.state;
   managedKeys = response.managedKeys || [];
   managedLocked = Boolean(response.managedLocked);
   applyManagedTabVisibility();
   return currentState;
+}
+
+function showStateLoadError(err) {
+  document.querySelectorAll('.tabs, .tab-content').forEach(el => { el.style.display = 'none'; });
+  const panel = document.getElementById('state-load-error');
+  if (!panel) return;
+  const detail = document.getElementById('state-load-error-detail');
+  if (detail) detail.textContent = `Details: ${err?.message || String(err)}`;
+  panel.style.display = 'block';
+  document.getElementById('state-load-retry')?.addEventListener('click', () => location.reload(), { once: true });
 }
 
 /**
@@ -49,7 +59,7 @@ function applyManagedTabVisibility() {
  * Update state in background
  */
 async function updateState(updates) {
-  await browser.runtime.sendMessage({
+  await browserAPI.runtime.sendMessage({
     type: 'UPDATE_STATE',
     updates
   });
@@ -74,7 +84,7 @@ document.querySelectorAll('.tab-button').forEach(button => {
         isGeneralTabLocked = true;
       } else {
         // Otherwise check PIN status
-        const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
+        const pinStatus = await browserAPI.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
         if (pinStatus.isLocked) {
           isGeneralTabLocked = true;
         } else {
@@ -131,7 +141,7 @@ async function updateGeneralTabView() {
     
     // Show lock button only if PIN is set
     try {
-      const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
+      const pinStatus = await browserAPI.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
       if (lockButtonContainer) {
         lockButtonContainer.style.display = pinStatus.hasPIN ? 'block' : 'none';
       }
@@ -217,13 +227,18 @@ async function displayLockedSettings() {
     enabledCategories.push(`Adult Product Sales (${enabledVendors.length} vendors: ${enabledVendors.join(', ')})`);
   }
   
-  // Build provider list
+  // Build provider list. Search/video providers rely on network enforcement,
+  // so they are omitted where the browser cannot perform it.
   const enabledProviders = [];
-  if (safeRequest.providers.google.enabled) enabledProviders.push('Google');
-  if (safeRequest.providers.bing.enabled) enabledProviders.push('Bing');
-  if (safeRequest.providers.yahoo.enabled) enabledProviders.push('Yahoo');
-  if (safeRequest.providers.ddg.enabled) enabledProviders.push('DuckDuckGo');
-  if (safeRequest.providers.youtube.enabled) enabledProviders.push('YouTube');
+  const networkEnforcement = typeof CSLFeatures === 'undefined' ||
+    CSLFeatures.isSupported('safeRequestNetworkEnforcement');
+  if (networkEnforcement) {
+    if (safeRequest.providers.google.enabled) enabledProviders.push('Google');
+    if (safeRequest.providers.bing.enabled) enabledProviders.push('Bing');
+    if (safeRequest.providers.yahoo.enabled) enabledProviders.push('Yahoo');
+    if (safeRequest.providers.ddg.enabled) enabledProviders.push('DuckDuckGo');
+    if (safeRequest.providers.youtube.enabled) enabledProviders.push('YouTube');
+  }
   if (safeRequest.providers.tumblr?.enabled) enabledProviders.push('Tumblr');
   if (safeRequest.providers.reddit?.enabled) enabledProviders.push('Reddit');
   if (safeRequest.providers.bluesky?.enabled) enabledProviders.push('Bluesky');
@@ -340,7 +355,6 @@ async function loadGeneralSettings() {
   // Load provider settings
   document.getElementById('provider-google-enabled').checked = config.providers.google.enabled;
   document.getElementById('provider-bing-enabled').checked = config.providers.bing.enabled;
-  document.getElementById('provider-bing-redirect').checked = config.providers.bing.useRedirect;
   document.getElementById('provider-yahoo-enabled').checked = config.providers.yahoo.enabled;
   document.getElementById('provider-ddg-enabled').checked = config.providers.ddg.enabled;
   document.getElementById('provider-youtube-enabled').checked = config.providers.youtube.enabled;
@@ -353,7 +367,7 @@ async function loadGeneralSettings() {
   }
   if (config.providers.bluesky) {
     document.getElementById('provider-bluesky-enabled').checked = config.providers.bluesky.enabled;
-    document.getElementById('provider-bluesky-age').value = config.providers.bluesky.ageSetting || '18+';
+    document.getElementById('provider-bluesky-age').value = config.providers.bluesky.ageSetting || '13+';
     populateBlueskyLabels(config.providers.bluesky.blockedLabels || []);
   }
 
@@ -475,7 +489,6 @@ const MANAGED_KEY_TO_ELEMENT_IDS = {
   'safeRequestMode.applyInPrivateWindows':      ['safe-request-private-windows'],
   'safeRequestMode.providers.google':           ['provider-google-enabled'],
   'safeRequestMode.providers.bing':             ['provider-bing-enabled'],
-  'safeRequestMode.providers.bing.useRedirect': ['provider-bing-redirect'],
   'safeRequestMode.providers.yahoo':            ['provider-yahoo-enabled'],
   'safeRequestMode.providers.ddg':              ['provider-ddg-enabled'],
   'safeRequestMode.providers.youtube':          ['provider-youtube-enabled'],
@@ -483,7 +496,8 @@ const MANAGED_KEY_TO_ELEMENT_IDS = {
   'safeRequestMode.providers.tumblr':           ['provider-tumblr-enabled'],
   'safeRequestMode.providers.reddit':           ['provider-reddit-enabled'],
   'safeRequestMode.providers.bluesky':          ['provider-bluesky-enabled'],
-  'safeRequestMode.providers.bluesky.ageSetting': ['provider-bluesky-age']
+  'safeRequestMode.providers.bluesky.ageSetting': ['provider-bluesky-age'],
+  'safeRequestMode.providers.bluesky.blockedLabels': BLUESKY_OFFICIAL_LABELS.map(label => `bluesky-label-${label.id}`)
 };
 
 /**
@@ -587,8 +601,7 @@ async function saveGeneralSettings(showSuccessMessage = false) {
         },
         bing: {
           ...currentState.safeRequestMode.providers.bing,
-          enabled: document.getElementById('provider-bing-enabled').checked,
-          useRedirect: document.getElementById('provider-bing-redirect').checked
+          enabled: document.getElementById('provider-bing-enabled').checked
         },
         yahoo: {
           ...currentState.safeRequestMode.providers.yahoo,
@@ -758,7 +771,7 @@ function setupAutoSave() {
  */
 async function updatePINStatusDisplay() {
   try {
-    const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
+    const pinStatus = await browserAPI.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
     const display = document.getElementById('pin-status-display');
     const currentPinGroup = document.getElementById('current-pin-group');
     const newPinLabel = document.getElementById('new-pin-label');
@@ -868,7 +881,7 @@ function showPINUnlockDialog() {
     }
     
     try {
-      const response = await browser.runtime.sendMessage({
+      const response = await browserAPI.runtime.sendMessage({
         type: 'PIN_UNLOCK',
         pin
       });
@@ -914,7 +927,7 @@ function resetPINInactivityTimer() {
   }
   
   pinLockTimeout = setTimeout(async () => {
-    const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
+    const pinStatus = await browserAPI.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
     if (pinStatus.hasPIN) {
       // Lock the general tab view
       const generalTab = document.getElementById('general');
@@ -933,7 +946,7 @@ function resetPINInactivityTimer() {
 async function updatePIN() {
   const currentPinInput = document.getElementById('current-pin');
   const newPin = document.getElementById('new-pin').value;
-  const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
+  const pinStatus = await browserAPI.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
   
   // If PIN is already set, verify the current PIN
   if (pinStatus.hasPIN) {
@@ -946,7 +959,7 @@ async function updatePIN() {
     
     try {
       // Verify current PIN
-      const response = await browser.runtime.sendMessage({
+      const response = await browserAPI.runtime.sendMessage({
         type: 'VERIFY_PASSPHRASE',
         passphrase: currentPin,
         passType: 'settings'
@@ -1001,7 +1014,7 @@ async function updatePIN() {
     }
     
     try {
-      await browser.runtime.sendMessage({
+      await browserAPI.runtime.sendMessage({
         type: 'SET_SETTINGS_PIN',
         pin: newPin
       });
@@ -1326,8 +1339,8 @@ function renderActiveGameBoard() {
   panel.appendChild(wrap);
   
   activeMastermindBoard = new MastermindBoard(boardContainer, {
-    getState: async () => browser.runtime.sendMessage({ type: 'GET_GAME_STATE' }),
-    submitGuess: async (guess) => browser.runtime.sendMessage({ type: 'SUBMIT_GAME_GUESS', guess }),
+    getState: async () => browserAPI.runtime.sendMessage({ type: 'GET_GAME_STATE' }),
+    submitGuess: async (guess) => browserAPI.runtime.sendMessage({ type: 'SUBMIT_GAME_GUESS', guess }),
     onWin: async () => {
       showAlert('self-lock-alerts', 'Correct sequence! Self-Lock released.', 'success');
       setTimeout(() => refreshSelfLockStatus(), 800);
@@ -1641,7 +1654,7 @@ async function activateSelfLock() {
       const incrementValue = incrementDurationPicker.getValue();
       const incrementMinutes = toTotalMinutes(incrementValue, incrementDurationPicker.config);
       
-      await browser.runtime.sendMessage({
+      await browserAPI.runtime.sendMessage({
         type: 'ACTIVATE_SELF_LOCK',
         durationMs: selectedDuration,
         earlyUnlockMode: mode,
@@ -1685,16 +1698,85 @@ document.getElementById('lock-increment-on-block').addEventListener('change', to
   if (el) el.addEventListener('input', updateGameDifficultyFeedback);
 });
 
+// ============ Platform Feature Gating ============
+
+/**
+ * Hide controls for features the running browser cannot support and explain
+ * why, so a Chrome user is not left toggling settings that do nothing.
+ */
+function applyPlatformFeatureGating() {
+  if (typeof CSLFeatures === 'undefined') return;
+
+  const gated = [
+    { feature: 'safeRequestNetworkEnforcement', group: 'safe-request-network-group', notice: 'safe-request-unsupported' }
+  ];
+
+  for (const { feature, group, notice } of gated) {
+    const groupEl = document.getElementById(group);
+    const noticeEl = document.getElementById(notice);
+    if (CSLFeatures.isSupported(feature)) {
+      if (noticeEl) noticeEl.style.display = 'none';
+      continue;
+    }
+
+    if (groupEl) groupEl.style.display = 'none';
+    if (!noticeEl) continue;
+
+    noticeEl.textContent = '';
+    const headline = document.createElement('strong');
+    headline.textContent = CSLFeatures.unsupportedMessage(feature);
+    noticeEl.appendChild(headline);
+
+    const detail = CSLFeatures.unsupportedDetail(feature);
+    if (detail) {
+      noticeEl.appendChild(document.createElement('br'));
+      noticeEl.appendChild(document.createTextNode(detail));
+    }
+    noticeEl.style.display = 'block';
+  }
+}
+
 // ============ About Tab ============
+
+/**
+ * Human-readable browser line for the About tab and debug report, e.g.
+ * "Chrome 141.0.7390.65 (chrome build, Manifest V3)".
+ */
+function describeBrowser(info) {
+  const browser = typeof CSLFeatures !== 'undefined' ? CSLFeatures.browser : null;
+  if (!browser) return 'unknown';
+
+  const name = browser.version ? `${browser.name} ${browser.version}` : browser.name;
+  const details = [`${browser.platform} build`];
+  const manifestVersion = browser.manifestVersion ?? info?.manifestVersion;
+  if (manifestVersion) details.push(`Manifest V${manifestVersion}`);
+
+  return `${name} (${details.join(', ')})`;
+}
+
+/**
+ * Features unavailable on this browser, for the debug report.
+ */
+function describeUnsupportedFeatures() {
+  if (typeof CSLFeatures === 'undefined') return 'unknown';
+
+  const unsupported = CSLFeatures.names.filter((name) => !CSLFeatures.isSupported(name));
+  if (unsupported.length === 0) return '(none)';
+
+  return unsupported.map((name) => CSLFeatures.label(name)).join(', ');
+}
 
 /**
  * Load and display debug information on the About tab.
  */
 async function loadAboutTab() {
-  const info = await browser.runtime.sendMessage({ type: 'GET_DEBUG_INFO' });
+  const info = await browserAPI.runtime.sendMessage({ type: 'GET_DEBUG_INFO' });
 
   document.getElementById('about-version-value').textContent = info.version;
   document.getElementById('about-location-value').textContent = info.extensionUrl;
+
+  const browserText = describeBrowser(info);
+  document.getElementById('about-browser-value').textContent = browserText;
 
   const managedDump = document.getElementById('about-managed-dump');
   const managedError = document.getElementById('about-managed-error');
@@ -1750,6 +1832,8 @@ async function loadAboutTab() {
         '===================================',
         '',
         'Version:        ' + info.version,
+        'Browser:        ' + browserText,
+        'Unsupported:    ' + describeUnsupportedFeatures(),
         'Install URL:    ' + info.extensionUrl,
         'Extension ID:   content-safety-lock@dwright.org',
         '',
@@ -1850,7 +1934,14 @@ function showAlert(containerId, message, type) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   // Load state first
-  await loadState();
+  try {
+    await loadState();
+    if (!currentState) throw new Error('No state returned from background');
+  } catch (err) {
+    console.error('[Options] Failed to load state:', err);
+    showStateLoadError(err);
+    return;
+  }
   
   // Check if admin-managed lock, self-lock, or PIN lock applies
   if (managedLocked) {
@@ -1861,7 +1952,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     isGeneralTabLocked = true;
   } else {
     // Check PIN status
-    const pinStatus = await browser.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
+    const pinStatus = await browserAPI.runtime.sendMessage({ type: 'CHECK_PIN_STATUS' });
     if (pinStatus.isLocked) {
       // PIN is set and locked - show locked view
       isGeneralTabLocked = true;
@@ -1876,6 +1967,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Update the view based on lock status
   await updateGeneralTabView();
+  
+  // Hide options for features this browser cannot support
+  applyPlatformFeatureGating();
   
   // Setup collapsible sections
   setupCollapsibleSections();

@@ -1,5 +1,13 @@
 # Safe Request Mode Implementation Plan
 
+> Safe Request Mode uses `declarativeNetRequest` on Chrome MV3, Safari MV3, and
+> Firefox MV2 where available, with blocking `webRequest` as a fallback on older
+> Firefox versions. DNR replaces any existing safe-search parameter value with
+> the enforced value, including values the earlier implementation left unchanged.
+>
+> File paths below predate the 1.5.0 restructure: sources now live under
+> `src/js/` and manifests under `platform/<browser>/`.
+
 ## Overview
 
 This document outlines the implementation of "Request Safe Content from Server" mode for Content Safety Lock. This feature adds standardized headers and provider-specific URL parameters/redirects to request safer content at the source, complementing the existing parental filtering system.
@@ -40,7 +48,7 @@ safeRequestMode: {
   perFrameEnforcement: "any",
   providers: {
     google: { enabled: true, useParam: true, enforceCookie: false, useRedirect: false },
-    bing: { enabled: true, useParam: true, usePreferSafeHonor: true, useRedirect: false },
+    bing: { enabled: true, useParam: true, usePreferSafeHonor: true },
     yahoo: { enabled: true, useParam: true },
     ddg: { enabled: true, useParam: true, useRedirect: false },
     youtube: { enabled: true, headerMode: "strict", useRestrictHostRedirect: false },
@@ -83,8 +91,6 @@ safeRequestMode: {
 **Parameter**: `adlt=strict`
 
 **Override relaxed values**: `off`, `moderate`
-
-**Optional Redirect**: `www.bing.com` → `strict.bing.com` (default OFF)
 
 ---
 
@@ -193,8 +199,6 @@ IF safeRequestMode.enabled:
     IF provider.enabled AND hostname matches provider pattern:
       IF blockUserParamDowngrade:
         APPLY parameter enforcement (add/replace relaxed params)
-      IF provider.useRedirect:
-        APPLY hostname redirect
 ```
 
 ---

@@ -1,7 +1,26 @@
 /**
  * Safe Request Mode Handler
- * Implements webRequest hooks for header and URL parameter enforcement
+ * Implements DNR rules with blocking webRequest as a fallback
  */
+
+const safeRequestUsesDNR = Boolean(browserAPI.capabilities.declarativeNetRequest);
+
+if (safeRequestUsesDNR) {
+  browserAPI.storage.onChanged.addListener((changes, area) => {
+    if ((area === 'local' && changes.state) || area === 'managed') {
+      refreshSafeRequestRules();
+    }
+  });
+}
+
+async function refreshSafeRequestRules() {
+  try {
+    const state = await loadState();
+    await syncSafeRequestRules(browserAPI.declarativeNetRequest, state.safeRequestMode);
+  } catch (err) {
+    console.error('[CSL] Failed to refresh Safe Request Mode rules:', err);
+  }
+}
 
 // ============ Request Hooks ============
 
@@ -109,19 +128,28 @@ async function handleBeforeRequest(details) {
  * Initialize Safe Request Mode handlers
  */
 function initializeSafeRequestHandlers() {
-  if (!browser?.webRequest) {
-    console.error('[CSL] ERROR: browser.webRequest API is not available');
+  if (safeRequestUsesDNR) {
+    refreshSafeRequestRules();
+    console.debug('[CSL] Safe Request Mode DNR rules initialized');
+    return;
+  }
+
+  if (!browserAPI.capabilities.blockingWebRequest) {
+    console.warn(
+      `[CSL] Safe Request Mode is unavailable on ${browserAPI.platform}: ` +
+      'the blocking webRequest API is not supported'
+    );
     return;
   }
   
   try {
-    browser.webRequest.onBeforeSendHeaders.addListener(
+    browserAPI.webRequest.onBeforeSendHeaders.addListener(
       handleBeforeSendHeaders,
       { urls: ['<all_urls>'] },
       ['blocking', 'requestHeaders']
     );
     
-    browser.webRequest.onBeforeRequest.addListener(
+    browserAPI.webRequest.onBeforeRequest.addListener(
       handleBeforeRequest,
       { urls: ['<all_urls>'] },
       ['blocking']

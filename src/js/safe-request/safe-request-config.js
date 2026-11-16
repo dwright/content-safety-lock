@@ -39,12 +39,6 @@ const PROVIDER_RULES = {
       if (!currentAdlt || ['off', 'moderate'].includes(currentAdlt)) {
         urlObj.searchParams.set('adlt', 'strict');
       }
-      
-      // Optional redirect
-      if (config.providers.bing.useRedirect && urlObj.hostname === 'www.bing.com') {
-        urlObj.hostname = 'strict.bing.com';
-      }
-      
       return urlObj.toString();
     }
   },
@@ -128,8 +122,7 @@ const DEFAULT_SAFE_REQUEST_CONFIG = {
     bing: {
       enabled: true,
       useParam: true,
-      usePreferSafeHonor: true,
-      useRedirect: false
+      usePreferSafeHonor: true
     },
     yahoo: {
       enabled: true,
@@ -155,7 +148,7 @@ const DEFAULT_SAFE_REQUEST_CONFIG = {
     },
     bluesky: {
       enabled: true,
-      ageSetting: '18+',
+      ageSetting: '13+',
       blockedLabels: [
         'porn', 'sexual', 'nudity', 'sexual-figurative', 'graphic-media',
         'self-harm', 'sensitive', 'extremist', 'intolerant', 'threat',

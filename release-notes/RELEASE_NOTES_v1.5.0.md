@@ -1,0 +1,50 @@
+# Content Safety Lock v1.5.0 — Multi-browser support
+
+Content Safety Lock now runs on Chrome, Edge, Brave, Opera and Safari in addition
+to Firefox, built from a single shared source tree.
+
+## Downloads
+
+| Browser | Asset | How to install |
+|---|---|---|
+| Firefox | `content-safety-lock-firefox-1.5.0.zip` | Unzip, then `about:debugging` → This Firefox → Load Temporary Add-on → `manifest.json` (or install the signed build from AMO) |
+| Chrome / Edge / Brave / Opera | `content-safety-lock-chrome-1.5.0.zip` | Unzip, then `chrome://extensions` → Developer mode → Load unpacked → the unzipped folder |
+| Safari (macOS) | `content-safety-lock-safari-1.5.0.zip` | Unzip, then `xcrun safari-web-extension-converter <folder>` and run the generated Xcode project |
+
+## Added
+
+- **Multi-browser builds**: Firefox (Manifest V2), Chrome/Chromium (Manifest V3
+  service worker) and Safari (Manifest V3) from one `src/` tree plus a
+  per-browser manifest in `platform/<browser>/`.
+- **Safe Request Mode enforcement**: `declarativeNetRequest` on Chrome MV3,
+  Safari MV3, and Firefox MV2 where available, with blocking `webRequest` as a
+  fallback on Firefox versions without DNR.
+- **Bluesky Safe Request provider**: enabled by default with a 13+ age setting
+  and all labels blocked; included in provider wildcards and managed policy.
+- **Platform abstraction layer** (`src/js/platform/`): the host browser is
+  detected at runtime and application code talks to a promise-based `browserAPI`
+  instead of `browser.*`/`chrome.*`.
+- **Build and packaging system**: `npm run build:all` and `npm run package:all`
+  produce `build/<browser>/` and one release archive per browser in `dist/`.
+- **Automated releases**: pushing a `v<version>` tag builds, tests and publishes
+  all three archives (`.github/workflows/release.yml`).
+- `documentation/BUILDING.md` for the build/packaging workflow.
+
+## Changed
+
+- The repository root is no longer a loadable extension; load
+  `build/<browser>/` instead.
+- The version lives only in `package.json` and is stamped into every manifest at
+  build time.
+- Removed Bing's optional redirect to `strict.bing.com`, which now redirects back
+  to `www.bing.com` and caused a loop; `adlt=strict` enforcement is unchanged.
+
+## Fixed
+
+- The popup's active-lock countdown no longer fails with
+  `formatDuration is not defined`.
+
+## Known limitations
+
+- Safari builds must be converted and signed locally with Xcode; there is no
+  prebuilt Safari app yet.
