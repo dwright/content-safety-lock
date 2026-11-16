@@ -14,14 +14,14 @@ This directory contains **30 HTML test files** (plus index and README) for verif
 - **Gambling:** 2 files (1 pass, 1 fail)
 - **Age Verification:** 2 files (1 pass, 1 fail)
 
-### Adult Product Sales Vendors (18 files)
+### Adult Product Sales Vendors (20 files)
 - **Etsy:** 2 files (1 pass, 1 fail)
 - **Redbubble:** 2 files (1 pass, 1 fail)
 - **TeePublic:** 2 files (1 pass, 1 fail)
 - **Zazzle:** 2 files (1 pass, 1 fail)
 - **itch.io:** 2 files (1 pass, 1 fail)
 - **eBay:** 2 files (1 pass, 1 fail)
-- **Amazon:** 2 files (1 pass, 1 fail)
+- **Amazon:** 4 files (3 pass, 1 fail)
 - **Patreon:** 2 files (1 pass, 1 fail)
 - **Shopify:** 2 files (1 pass, 1 fail)
 

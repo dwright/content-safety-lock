@@ -68,11 +68,13 @@ The extension now detects mature/adult product pages on major shopping and creat
 **Score Threshold:** 0.65
 
 ### 7. Amazon
-**Detection Method:** Detects "Sexual Wellness" in breadcrumbs and JSON-LD
+**Detection Method:** Detects "Sexual Wellness", "Exotic Apparel", or "Erotic"/"Erotica" in product breadcrumbs, JSON-LD, or Best Sellers Rank categories, and on category pages by browse node, URL slug, heading, or title
 **Test URLs:**
 - Navigate to Sexual Wellness category
 - Check breadcrumbs: `#wayfinding-breadcrumbs_feature_div`
 - Also checks JSON-LD structured data
+- Books ranked in any erotica sub-category (Best Sellers Rank, e.g. "Romantic Erotica (Books)")
+- Erotica category pages, e.g. https://www.amazon.com/Erotica-Fiction-eBooks/b/ref=dp_bc_4?ie=UTF8&node=157057011
 
 **Expected Signals:** `VENDOR:amazon:mature`
 **Score Threshold:** 0.75

@@ -55,6 +55,8 @@ Located in `adult-product-sales/` subdirectory:
 - `ebay-fail.html` - Should NOT be blocked
 - `amazon-pass.html` - Should be blocked (Sexual Wellness breadcrumb)
 - `amazon-fail.html` - Should NOT be blocked
+- `amazon-erotica-rank-pass.html` - Should be blocked (erotica sub-category in Best Sellers Rank)
+- `amazon-erotica-category-pass.html` - Should be blocked (erotica category page, via `test-path` meta)
 - `patreon-pass.html` - Should be blocked (18+ interstitial)
 - `patreon-fail.html` - Should NOT be blocked
 - `shopify-pass.html` - Should be blocked (age gate)

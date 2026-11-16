@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Amazon erotica blocking**: `js/detectors/mature-content-detectors.js` now
+  blocks a product page when any of its Best Sellers Rank categories (the
+  other categories and sub-categories Amazon ranks the item in, e.g.
+  "Romantic Erotica (Books)") matches a blocked category, not only its primary
+  breadcrumb. It also blocks erotica category pages (`/<Slug>/b?node=`,
+  `/b?node=`, `/zgbs/`, `/gp/bestsellers/`, `/s?rh=n:`) by browse node ID
+  (Kindle Erotica `157057011`, Books Erotica `10141`, Sexual Wellness, Exotic
+  Apparel) or by the category name in the URL slug, `<h1>`, or page title.
+
 ## [1.5.0] - 2026-07-29
 
 ### Added
