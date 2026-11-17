@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-11-17
+
 ### Changed
 
 - **Amazon erotica blocking**: `js/detectors/mature-content-detectors.js` now
@@ -17,6 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `/b?node=`, `/zgbs/`, `/gp/bestsellers/`, `/s?rh=n:`) by browse node ID
   (Kindle Erotica `157057011`, Books Erotica `10141`, Sexual Wellness, Exotic
   Apparel) or by the category name in the URL slug, `<h1>`, or page title.
+
+### Fixed
+
+- **iOS duration steppers**: the up/down buttons of the duration picker
+  (`src/js/components/time-interval-picker.js`) now respond to taps on iOS
+  Safari. The `touchstart` handler no longer calls `preventDefault()` (which
+  suppressed the synthesized click); long-press repeat uses a passive
+  `touchstart`, handles `touchcancel`, skips the click that trails a
+  long-press, and the buttons use `touch-action: manipulation`.
 
 ## [1.5.0] - 2026-07-29
 
