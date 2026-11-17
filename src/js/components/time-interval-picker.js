@@ -579,9 +579,9 @@ class TimeIntervalPicker {
     
     // Start long-press repeat
     this.longPressTimer = setTimeout(() => {
-      this.longPressActive = true;
       let delay = 200;
       this.longPressInterval = setInterval(() => {
+        this.longPressActive = true;
         if (action === 'inc') {
           this.increment(field, 1);
         } else {
@@ -593,6 +593,7 @@ class TimeIntervalPicker {
           clearInterval(this.longPressInterval);
           delay = Math.max(70, delay - 50);
           this.longPressInterval = setInterval(() => {
+            this.longPressActive = true;
             if (action === 'inc') {
               this.increment(field, 1);
             } else {
