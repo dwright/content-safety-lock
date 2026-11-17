@@ -479,8 +479,11 @@ class TimeIntervalPicker {
       button.addEventListener('mousedown', (e) => this.handleStepperMouseDown(e));
       button.addEventListener('mouseup', () => this.handleStepperMouseUp());
       button.addEventListener('mouseleave', () => this.handleStepperMouseUp());
-      button.addEventListener('touchstart', (e) => this.handleStepperMouseDown(e));
+      // Passive: calling preventDefault() on touchstart makes iOS Safari
+      // suppress the synthesized click, so taps would never step the value.
+      button.addEventListener('touchstart', (e) => this.handleStepperTouchStart(e), { passive: true });
       button.addEventListener('touchend', () => this.handleStepperMouseUp());
+      button.addEventListener('touchcancel', () => this.handleStepperMouseUp());
     });
   }
   
@@ -537,6 +540,12 @@ class TimeIntervalPicker {
   }
   
   handleStepperClick(e) {
+    // A long-press already stepped the value; skip the click that follows it.
+    if (this.suppressClickUntil && Date.now() < this.suppressClickUntil) {
+      this.suppressClickUntil = 0;
+      return;
+    }
+    
     const button = e.currentTarget;
     const field = button.dataset.field;
     const action = button.dataset.action;
@@ -556,7 +565,15 @@ class TimeIntervalPicker {
   
   handleStepperMouseDown(e) {
     e.preventDefault();
-    const button = e.currentTarget;
+    this.startStepperRepeat(e.currentTarget);
+  }
+  
+  handleStepperTouchStart(e) {
+    this.startStepperRepeat(e.currentTarget);
+  }
+  
+  startStepperRepeat(button) {
+    this.handleStepperMouseUp();
     const field = button.dataset.field;
     const action = button.dataset.action;
     
@@ -564,6 +581,7 @@ class TimeIntervalPicker {
     this.longPressTimer = setTimeout(() => {
       let delay = 200;
       this.longPressInterval = setInterval(() => {
+        this.longPressActive = true;
         if (action === 'inc') {
           this.increment(field, 1);
         } else {
@@ -575,6 +593,7 @@ class TimeIntervalPicker {
           clearInterval(this.longPressInterval);
           delay = Math.max(70, delay - 50);
           this.longPressInterval = setInterval(() => {
+            this.longPressActive = true;
             if (action === 'inc') {
               this.increment(field, 1);
             } else {
@@ -587,6 +606,10 @@ class TimeIntervalPicker {
   }
   
   handleStepperMouseUp() {
+    if (this.longPressActive) {
+      this.longPressActive = false;
+      this.suppressClickUntil = Date.now() + 400;
+    }
     if (this.longPressTimer) {
       clearTimeout(this.longPressTimer);
       this.longPressTimer = null;
