@@ -26,3 +26,7 @@ build/
 dist/
 safari-project/
 generated-notes.md
+
+# Agent symlinks & local state
+.agents
+
