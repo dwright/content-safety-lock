@@ -3,7 +3,9 @@
 > **Smarter content filtering for Firefox, Chrome and Safari — no subscription, no cloud, no compromises.**
 
 [![Firefox Add-on](https://img.shields.io/badge/Firefox-Add--on-orange?logo=firefox)](https://addons.mozilla.org/en-US/firefox/addon/content-safety-lock/)
-[![Version](https://img.shields.io/badge/version-1.5.0-blue)](CHANGELOG.md)
+[![Chrome](https://img.shields.io/badge/Chrome-Submitted%20to%20Web%20Store-yellow?logo=googlechrome)](#installation)
+[![Safari](https://img.shields.io/badge/Safari-Build%20from%20source-lightgrey?logo=safari)](documentation/BUILDING.md)
+[![Version](https://img.shields.io/badge/version-1.5.3-blue)](CHANGELOG.md)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue)](LICENSE)
 [![Privacy: 100% Local](https://img.shields.io/badge/Privacy-100%25%20Local-brightgreen)](#privacy-first-by-design)
 
@@ -53,9 +55,6 @@ There is no database to maintain and no cloud service to pay for. The work happe
 
 Self-Lock is the most distinctive feature of this extension. You set a duration — minutes, hours, days, weeks, even months — and the General settings tab becomes read-only until the timer expires.
 
-![Self-Lock activation screen](docs/screenshots/self-lock-activate.png)
-*The Self-Lock tab lets you configure duration and anti-tamper options before committing.*
-
 **What makes it hard to cheat:**
 
 - **Mandatory cool-down period** — Even if you allow early unlock, you must wait a configurable delay (minutes to hours) before the lock releases. There is no "just this once" button.
@@ -64,16 +63,11 @@ Self-Lock is the most distinctive feature of this extension. You set a duration 
 - **Mastermind puzzle unlock** *(new in 1.4)* — Replace the passphrase flow with a Mastermind-style color-sequence puzzle. Every wrong guess can add time to the lock, turning impatience into a longer commitment.
 - **Clock manipulation protection** — Attempting to trick the lock by rolling back your system clock is detected and backfires: the lock duration is extended by exactly the amount you tried to shave off.
 
-![Self-Lock active state](docs/screenshots/self-lock-active.png)
-*When Self-Lock is active, the General settings tab remains locked until the selected duration ends.*
-
 ---
 
 ### Safe Request Mode — Enforce Safe Search at the Network Level
 
 Before a page even loads, Content Safety Lock modifies outbound requests to major platforms to enforce their own safe-content modes.
-
-![Safe Request Mode settings](docs/screenshots/safe-request-mode.png)
 
 | Service | What it does |
 |---------|--------------|
@@ -95,8 +89,6 @@ Before a page even loads, Content Safety Lock modifies outbound requests to majo
 ### Parental Controls — Surgical, Category-Based Filtering
 
 The General settings tab gives parents and administrators fine-grained control over what gets blocked.
-
-![General settings tab](docs/screenshots/general-settings.png)
 
 **Content categories** — Enable or disable blocking independently for:
 - Sexual / Nudity
@@ -173,6 +165,10 @@ All state — settings, lock status, passphrases (stored as SHA-256 hashes) — 
 
 > [Install from addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/content-safety-lock/)
 
+### From the Chrome Web Store
+
+The extension has been submitted to the Chrome Web Store and is currently pending review. A store link will be added here once it is approved. In the meantime, install it from the GitHub release zip below or build it from source.
+
 ### From a GitHub release
 
 Every [release](https://github.com/dwright/content-safety-lock/releases) contains
@@ -183,6 +179,17 @@ one archive per browser:
 | Firefox | `content-safety-lock-firefox-<version>.zip` | Unzip, then `about:debugging` → This Firefox → Load Temporary Add-on → `manifest.json` |
 | Chrome / Edge / Brave / Opera | `content-safety-lock-chrome-<version>.zip` | Unzip, then `chrome://extensions` → Developer mode → Load unpacked → the unzipped folder |
 | Safari (macOS) | `content-safety-lock-safari-<version>.zip` | Unzip, then `xcrun safari-web-extension-converter <folder>` and run the Xcode project |
+
+### Safari (build from source)
+
+There is no App Store or Safari Extensions Gallery release; on macOS you build the Safari extension from source:
+
+```bash
+npm run build:safari   # -> build/safari
+npm run xcode:safari   # converts it into an Xcode project via safari-web-extension-converter
+```
+
+See [documentation/BUILDING.md](documentation/BUILDING.md) for the full Xcode build and run steps.
 
 ### From source (Firefox, Chrome, Safari)
 
@@ -233,7 +240,7 @@ This extension is a voluntary tool. It is designed to raise the cost of impulsiv
 - **OS-level clock changes are detected but not prevented.** Clock rollback extends the lock duration by the manipulated amount.
 - **Deleting the browser profile removes all lock state.** Store recovery codes somewhere safe and offline.
 
-For tips on stronger setups see [documentation/SECURITY.md](documentation/SECURITY.md).
+Keeping your browser and OS up to date, and pairing the extension with a separate non-admin OS account, will always strengthen the setup.
 
 ---
 
@@ -244,6 +251,7 @@ For tips on stronger setups see [documentation/SECURITY.md](documentation/SECURI
 | [QUICKSTART.md](QUICKSTART.md) | 5-minute setup guide |
 | [CHANGELOG.md](CHANGELOG.md) | Full version history |
 | [documentation/FEATURES.md](documentation/FEATURES.md) | Complete feature reference |
+| [documentation/BUILDING.md](documentation/BUILDING.md) | Per-browser build, packaging, and loading |
 | [documentation/MANAGED_POLICY.md](documentation/MANAGED_POLICY.md) | Enterprise policy reference |
 | [documentation/DEPLOYMENT.md](documentation/DEPLOYMENT.md) | Build, sign, and submit |
 | [documentation/ROADMAP.md](documentation/ROADMAP.md) | Long-term vision |

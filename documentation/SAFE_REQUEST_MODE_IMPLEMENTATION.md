@@ -17,7 +17,7 @@ This document outlines the implementation of "Request Safe Content from Server" 
 ## 1. Architecture & Integration Points
 
 ### Current System Structure
-- **manifest.json**: MV3 extension with webRequest permissions
+- **manifest.json**: MV3 extension with declarativeNetRequest permissions
 - **background.js**: Service worker handling policy engine and state management
 - **content.js**: Content script detecting labels and communicating with background
 - **utils.js**: Shared utilities for crypto, time, label parsing, and URL handling
@@ -244,9 +244,11 @@ IF safeRequestMode.enabled:
 
 **Changes**:
 
-1. Add webRequest permission:
+1. Declare the request permissions. On Chrome MV3 (and Safari MV3) this is
+   `declarativeNetRequestWithHostAccess`; the Firefox MV2 build keeps
+   `webRequest`/`webRequestBlocking` as its fallback:
 ```json
-"permissions": ["storage", "tabs", "alarms", "webRequest"]
+"permissions": ["storage", "alarms", "scripting", "declarativeNetRequestWithHostAccess"]
 ```
 
 2. Add host permissions:

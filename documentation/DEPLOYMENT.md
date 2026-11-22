@@ -138,10 +138,10 @@ For testing and development:
 2. **Upload**: [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole)
    → Add new item → upload the archive.
 
-3. **Declare permissions**: the Manifest V3 build requests `storage`, `tabs`,
-   `alarms`, `scripting`, and `host_permissions` for all URLs (needed to scan
-   page metadata). Explain the content-scanning purpose in the justification
-   fields, or review is rejected.
+3. **Declare permissions**: the Manifest V3 build requests `storage`, `alarms`,
+   `scripting`, and `declarativeNetRequestWithHostAccess`, plus
+   `host_permissions` for all URLs (needed to scan page metadata). Explain the
+   content-scanning purpose in the justification fields, or review is rejected.
 
 4. **Review**: automated plus manual review; broad host permissions typically
    extend it to several days.

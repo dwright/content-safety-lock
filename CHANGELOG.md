@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.3] - 2026-11-21
+
+### Changed
+
+- Chrome: removed the unused `tabs` permission from
+  `platform/chrome/manifest.json` to satisfy Chrome Web Store review (the
+  extension only uses `tabs.create`, which needs no permission).
+
+## [1.5.2] - 2026-11-19
+
+### Fixed
+
+- Block list now enforced for blacklisted domains even when no content-safety/RTA signals are detected
+
 ## [1.5.1] - 2026-11-17
 
 ### Changed

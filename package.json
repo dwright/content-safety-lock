@@ -1,6 +1,6 @@
 {
   "name": "content-safety-lock",
-  "version": "1.5.1",
+  "version": "1.5.3",
   "description": "Voluntary adult content blocker with self-lock mode for adults seeking structured guardrails",
   "license": "GPL-3.0-or-later",
   "private": true,

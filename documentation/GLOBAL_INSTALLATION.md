@@ -489,6 +489,6 @@ Write-Host "Restart Firefox to activate."
 ---
 
 **Last Updated**: 2026-07-29
-**Version**: 1.5.0
+**Version**: 1.5.3
 
 For questions or issues, refer to the main README.md or DEPLOYMENT.md.

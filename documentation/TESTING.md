@@ -422,7 +422,7 @@ If you find issues during testing:
 Test Date: [DATE]
 Browser & Version: [e.g. Firefox 139 / Chrome 138 / Safari 18]
 Build tested: build/[firefox|chrome|safari]
-Extension Version: 1.5.0
+Extension Version: 1.5.3
 
 Test Results:
 - Test 1 (Basic Label Detection): [PASS/FAIL]
