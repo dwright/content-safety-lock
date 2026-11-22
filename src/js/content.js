@@ -399,33 +399,29 @@ async function checkAndBlock() {
   const { signals, details } = detectLabels();
   console.log('[CSL] checkAndBlock - signals:', signals);
   
-  if (signals.length > 0) {
-    try {
-      console.log('[CSL] Sending CHECK_BLOCK message with signals:', signals);
-      console.log('[CSL] *** ABOUT TO SEND MESSAGE TO BACKGROUND ***');
-      const response = await browserAPI.runtime.sendMessage({
-        type: 'CHECK_BLOCK',
-        signals,
-        details
-      });
-      
-      console.log('[CSL] *** RESPONSE RECEIVED FROM BACKGROUND ***', response);
-      console.log('[CSL] Response from background:', response);
-      
-      if (response.shouldBlock) {
-        console.log('[CSL] *** BLOCKING PAGE ***');
-        console.log('[CSL] Blocking page - injecting overlay');
-        injectBlockOverlay(response.blockData);
-      } else {
-        console.log('[CSL] *** PAGE ALLOWED ***');
-        console.log('[CSL] Page allowed - no block');
-      }
-    } catch (err) {
-      console.error('[CSL] *** BLOCK CHECK FAILED ***', err);
-      console.error('[CSL] Block check failed:', err);
+  try {
+    console.log('[CSL] Sending CHECK_BLOCK message with signals:', signals);
+    console.log('[CSL] *** ABOUT TO SEND MESSAGE TO BACKGROUND ***');
+    const response = await browserAPI.runtime.sendMessage({
+      type: 'CHECK_BLOCK',
+      signals,
+      details
+    });
+    
+    console.log('[CSL] *** RESPONSE RECEIVED FROM BACKGROUND ***', response);
+    console.log('[CSL] Response from background:', response);
+    
+    if (response.shouldBlock) {
+      console.log('[CSL] *** BLOCKING PAGE ***');
+      console.log('[CSL] Blocking page - injecting overlay');
+      injectBlockOverlay(response.blockData);
+    } else {
+      console.log('[CSL] *** PAGE ALLOWED ***');
+      console.log('[CSL] Page allowed - no block');
     }
-  } else {
-    console.log('[CSL] No signals detected - page allowed');
+  } catch (err) {
+    console.error('[CSL] *** BLOCK CHECK FAILED ***', err);
+    console.error('[CSL] Block check failed:', err);
   }
 }
 

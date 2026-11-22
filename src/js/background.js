@@ -687,11 +687,6 @@ async function initializeState() {
 async function shouldBlock(signals, url) {
   const state = await loadState();
   
-  // If no signals, don't block
-  if (!signals || signals.length === 0) {
-    return false;
-  }
-  
   // Parental mode - ALWAYS CHECK if enabled (regardless of self-lock)
   if (state.parental.enabled) {
     console.log('[BG] Parental mode enabled. Checking policies...');
@@ -705,6 +700,11 @@ async function shouldBlock(signals, url) {
     if (isInBlockList(url, state.parental.blockList)) {
       console.log('[BG] URL is in block-list');
       return true;
+    }
+    
+    // Category policy requires signals
+    if (!signals || signals.length === 0) {
+      return false;
     }
     
     // Check category policy
